@@ -11,7 +11,7 @@ include(FetchContent)
 
 # 配置变量
 
-set(DOXYGEN_CONFIG_FILE "./Doxyfile")
+set(DOXYGEN_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
 set(SYSYUST_PUBLIC_HEADER_DIR ${CMAKE_SOURCE_DIR}/include)
 
 include_directories(include)
@@ -55,8 +55,9 @@ add_subdirectory(src)
 
 # 准备生成文档的目标
 
-if (${GeneratedDocument} AND NOT DEFINED DOXYGEN_FOUND)
+if (${GeneratedDocument} AND DEFINED DOXYGEN_FOUND)
     add_custom_target(Document
         COMMAND Doxygen::doxygen ${DOXYGEN_CONFIG_FILE}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
 endif ()

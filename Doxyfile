@@ -4,5 +4,7 @@ PROJECT_BRIEF = "一个SysYust的RISC-V编译器"
 OUTPUT_DIRECTORY = "doc/generated"
 OUTPUT_LANGUAGE = Chinese
 
-INPUT = "src include"
+# src 中有所有 include 中所包含的头文件， 所以不在搜索
+INPUT = src
+RECURSIVE = true
 EXCLUDE =
