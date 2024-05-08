@@ -20,7 +20,7 @@ include_directories(include)
 
 find_package(Doxygen)
 
-if (NOT ${DOXYGEN_FOUND})
+if (NOT DEFINED DOXYGEN_FOUND)
     message("Doxygen is not found")
 endif ()
 
@@ -49,7 +49,7 @@ add_subdirectory(src)
 
 # 准备生成文档的目标
 
-if (${GeneratedDocument})
+if (${GeneratedDocument} AND NOT DEFINED DOXYGEN_FOUND)
     add_custom_target(Document
         COMMAND Doxygen::doxygen ${DOXYGEN_CONFIG_FILE}
     )
