@@ -35,8 +35,14 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 # 添加 fmt
-
 add_subdirectory(lib/fmt)
+
+# 添加 argparse
+FetchContent_Declare(
+        argparse
+        GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+)
+FetchContent_MakeAvailable(argparse)
 
 # 启用 ctest
 enable_testing()
