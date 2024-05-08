@@ -18,9 +18,6 @@ foreach (CurrentClass ${Antlr4_SysY_Class})
     list(APPEND SYSY_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/generated/${CurrentClass}.cpp)
 endforeach ()
 
-message(${SYSY_HEADER})
-message(${SYSY_SOURCE})
-
 # 生成语法文件的cpp目标
 add_custom_command(OUTPUT ${SYSY_HEADER} ${SYSY_SOURCE}
     COMMAND antlr4 -o ${CMAKE_CURRENT_SOURCE_DIR}/generated -visitor ${CMAKE_CURRENT_SOURCE_DIR}/SysY.g4
