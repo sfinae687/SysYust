@@ -38,11 +38,7 @@ FetchContent_MakeAvailable(googletest)
 add_subdirectory(lib/fmt)
 
 # 添加 argparse
-FetchContent_Declare(
-        argparse
-        GIT_REPOSITORY https://github.com/p-ranav/argparse.git
-)
-FetchContent_MakeAvailable(argparse)
+add_subdirectory(lib/argparse)
 
 # 启用 ctest
 enable_testing()
