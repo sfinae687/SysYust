@@ -4,7 +4,6 @@
 
 目录 `lib` 中的所有文件均为第三方库文件。本项目引用了以下库
 
-- `clutchlog`
 - `{fmt}`
 - `argparse`
 
