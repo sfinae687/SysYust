@@ -45,8 +45,9 @@ enable_testing()
 include(GoogleTest)
 add_subdirectory(test)
 
-# 添加子目录
+# 添加本项目的模块
 
+add_subdirectory(include)
 add_subdirectory(src)
 
 # 准备生成文档的目标
