@@ -1,2 +1,2 @@
-# SySYust
-SySY2022编译器项目
+# SysYust
+SysY2022编译器项目
