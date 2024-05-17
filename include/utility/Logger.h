@@ -92,6 +92,30 @@ namespace SysYust {
          */
          void log(const Record&);
 
+         /**
+          * @brief 设置日志格式化的格式
+          * @param pattern 格式字符串，使用 `fmt` 库的格式. 其中可以使用具名参数 `file` , `func`, `file`, `message`, `level`.
+          */
+        void setPattern(std::string_view pattern);
+
+        /**
+         * @brief 获取格式化字符串
+         * @return 当前的格式化字符串
+         */
+        std::string getPattern();
+
+        /**
+         * @brief 设置消息被记录的最低等级
+         * @param level 过滤等级
+         */
+        void setLevel(LoggerLevel level);
+
+        /**
+         * @brief 获取当前消息等级过滤的等级
+         * @return 过滤的等级
+         */
+        LoggerLevel getLevel();
+
     protected:
 
         /**
@@ -108,8 +132,8 @@ namespace SysYust {
         virtual void write(std::string_view record) = 0;
 
     private:
-        LoggerLevel currentLevel = LoggerLevel::all; ///< 记录的日志等级
-        std::string pattern = "[{level} {file}:{line} @ {func}]:\n{message}\n";
+        LoggerLevel _currentLevel = LoggerLevel::all; ///< 记录的日志等级
+        std::string _pattern = "[{level} {file}:{line} @ {func}]:\n{message}\n";
 
         static std::unique_ptr<Logger> _global;
     };
