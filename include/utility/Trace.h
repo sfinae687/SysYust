@@ -10,6 +10,7 @@
 #include <tuple>
 
 #include <fmt/core.h>
+#include <fmt/ranges.h>
 
 namespace SysYust {
 
@@ -20,6 +21,25 @@ namespace SysYust {
     class Trace {
     public:
         static thread_local Trace* TopTrace;
+
+        /**
+         * @brief 构建一个追踪点
+         * @tparam Args 被记录的参数类型
+         * @param func 函数名
+         * @param args 被记录的参数的值
+         */
+        template<typename... Args>
+        explicit Trace(std::string_view func, Args&&... args)
+        : prevTrace(TopTrace)
+        , functionName(func)
+        , depth(TopTrace && func == TopTrace->functionName ? TopTrace->depth+1 : 1) {
+            TopTrace = this;
+            if constexpr (sizeof...(Args) != 0) {
+                argRecords = fmt::format("{}", std::make_tuple(std::forward<Args>(args)...));
+            } else {
+                argRecords = "[void]";
+            }
+        }
 
         ~Trace() {
             TopTrace = prevTrace;
@@ -35,36 +55,30 @@ namespace SysYust {
          */
         std::string_view functionName;
 
-        /**
-         * @brief 函数参数记录
-         */
-        const std::string argRecords;
 
         /**
          * @brief 递归深度
          */
         const std::size_t depth;
 
+        /**
+         * @brief 获取参数记录
+         * @return 参数记录的视图
+         */
+        std::string_view getArgRecords() {
+            return argRecords;
+        }
 
     private:
         /**
-         * @brief 构建一个追踪点
-         * @tparam Args 被记录的参数类型
-         * @param func 函数名
-         * @param args 被记录的参数的值
+         * @brief 函数参数记录
          */
-        template<typename... Args>
-        explicit Trace(std::string_view func, Args&&... args)
-        : prevTrace(TopTrace)
-        , functionName(func)
-        , argRecords(fmt::format("{}", std::make_tuple(std::forward<Args>(args)...)))
-        , depth(TopTrace && func == TopTrace->functionName ? TopTrace->depth+1 : 1) {
-            TopTrace = this;
-        }
-
+        std::string argRecords;
     };
 
-    auto format_as(const Trace& t) {
+    inline  thread_local Trace* Trace::TopTrace = nullptr;
+
+    inline auto format_as(const Trace& t) {
         return fmt::format("{}#{}", t.functionName, t.depth);
     }
 

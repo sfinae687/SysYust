@@ -7,6 +7,7 @@
 #include "Logger.h"
 #include "FileLogger.h"
 #include "StringLogger.h"
+#include "Trace.h"
 
 using SysYust::Logger;
 using SysYust::LoggerLevel;
@@ -27,5 +28,25 @@ TEST(LoggerTest, StringLoggerTest) {
     Logger::setLogger(new SysYust::StringLogger());
     LOG_INFO("HelloWorld");
     LOG_INFO("ByeWorld");
-    std::cout << static_cast<SysYust::StringLogger&>(SysYust::Logger::getLogger()).getString() << std::endl;
+    std::cout << dynamic_cast<SysYust::StringLogger&>(SysYust::Logger::getLogger()).getString() << std::endl;
+}
+
+void Recurrence(int n, int i = 0) {
+    TRACEPOINT(i, n);
+    auto & TopTrace = SysYust::Trace::TopTrace;
+    ASSERT_EQ(i+1, TopTrace->depth);
+    LOG_TRACE(TopTrace->getArgRecords());
+    if (i != n) {
+        return Recurrence(n, i+1);
+    } else {
+        return;
+    }
+}
+
+TEST(LoggerTest, TraceDepthTest) {
+    TRACEPOINT();
+    Logger::setLogger(new SysYust::FileLogger(std::fopen("log/TraceLog.log", "a")));
+    auto current = SysYust::Trace::TopTrace;
+    Recurrence(10);
+    ASSERT_EQ(SysYust::Trace::TopTrace, current) << "Unable to destruct Trace correctly";
 }
