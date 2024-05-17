@@ -12,6 +12,9 @@
 
 namespace SysYust {
 
+    /**
+     * @brief 将日志记录写入字符串缓存
+     */
     class StringLogger: public Logger {
     public:
         /**

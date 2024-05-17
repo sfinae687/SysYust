@@ -9,6 +9,9 @@
 
 namespace SysYust {
 
+    /**
+     * @brief 将日志记录写入文件
+     */
     class FileLogger: public Logger {
     public:
         /**
