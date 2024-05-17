@@ -1,21 +1,21 @@
 /// @file 日志库的实现文件
 
-#include "logger.h"
+#include "Logger.h"
 
 namespace SysYust {
-    void logger::setLogger(logger *e) noexcept {
+    void Logger::setLogger(Logger *e) noexcept {
         _global.reset(e);
     }
 
-    logger &logger::getLogger() noexcept {
+    Logger &Logger::getLogger() noexcept {
         return *_global;
     }
 
-    void logger::cleanLogger() noexcept {
+    void Logger::cleanLogger() noexcept {
         _global.reset();
     }
 
-    void logger::log(const Record &record) {
+    void Logger::log(const Record &record) {
         if (filter(record)) {
             return ;
         }
@@ -28,10 +28,10 @@ namespace SysYust {
                              ));
     }
 
-    bool logger::filter(const logger::Record &record) {
+    bool Logger::filter(const Logger::Record &record) {
         return record.level > currentLevel;
     }
 
-    std::unique_ptr<logger> logger::_global{};
+    std::unique_ptr<Logger> Logger::_global{};
 
 } // SysYust

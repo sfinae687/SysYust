@@ -1,7 +1,8 @@
 # 添加源文件列表
 set(SYSYUST_UTILITY_SOURCE
-    logger.cpp
-    FileLogger.cpp
+        Logger.cpp
+        FileLogger.cpp
+        StringLogger.cpp
 )
 add_library(utility
         ${SYSYUST_UTILITY_PUBLIC_HEADER}

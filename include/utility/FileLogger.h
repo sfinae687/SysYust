@@ -5,11 +5,11 @@
 
 #include <cstdio>
 
-#include "logger.h"
+#include "Logger.h"
 
 namespace SysYust {
 
-    class FileLogger: public logger {
+    class FileLogger: public Logger {
     public:
         /**
          * @brief 默认构造，以标准错误输出流构造

@@ -1,4 +1,5 @@
 /// @file 调试日志库头文件
+/// @todo 栈踪支持
 
 #ifndef SYSYUST_UTILITY_LOGGER_H
 #define SYSYUST_UTILITY_LOGGER_H
@@ -52,11 +53,11 @@ namespace SysYust {
      *
      * 程序可以构建多个日志器，并将其中之一设置为全局日志器
      */
-    class logger {
+    class Logger {
     public:
-        logger() = default;
-        logger(const logger&) = delete;
-        virtual ~logger() = default;
+        Logger() = default;
+        Logger(const Logger&) = delete;
+        virtual ~Logger() = default;
 
         /**
          * @brief 包含一个筛选和格式化一个日志记录所需要的信息
@@ -72,14 +73,14 @@ namespace SysYust {
 
         /**
          * @brief 设置当前的全局日志器
-         * @param e 将要设置为全局日志器的日志器的指针，设置后 logger 类接管该对象。
+         * @param e 将要设置为全局日志器的日志器的指针，设置后 Logger 类接管该对象。
          */
-        static void setLogger(logger* e) noexcept;
+        static void setLogger(Logger* e) noexcept;
         /**
          * @brief 获取当前的全局日志器
          * @return 全局日志器的指针，如果未设置则返回 nullptr。
          */
-        static logger& getLogger() noexcept;
+        static Logger& getLogger() noexcept;
         /**
          * @brief 析构并移除移除全局日志器
          */
@@ -108,14 +109,14 @@ namespace SysYust {
 
     private:
         LoggerLevel currentLevel = LoggerLevel::all; ///< 记录的日志等级
-        std::string pattern = "[{level} {file}:{line} @ {func}]:\n{message}\n\n";
+        std::string pattern = "[{level} {file}:{line} @ {func}]:\n{message}\n";
 
-        static std::unique_ptr<logger> _global;
+        static std::unique_ptr<Logger> _global;
     };
 
-#define LOG_RECORD(level, message) (::SysYust::logger::Record{__FILE__, __func__, ((message)), __LINE__, ((level))})
+#define LOG_RECORD(level, message) (::SysYust::Logger::Record{__FILE__, __func__, ((message)), __LINE__, ((level))})
 #ifndef NLOG
-#define LOG(level, message) (::SysYust::logger::getLogger().log(LOG_RECORD(((level)), ((message)))))
+#define LOG(level, message) (::SysYust::Logger::getLogger().log(LOG_RECORD(((level)), ((message)))))
 #else
 #define LOG(level, message) void
 #endif
