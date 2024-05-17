@@ -40,6 +40,9 @@ add_subdirectory(lib/fmt)
 # 添加 argparse
 add_subdirectory(lib/argparse)
 
+# 添加 antlr4-cpp-runtime
+add_subdirectory(lib/antlr4-cpp-runtime)
+
 # 启用 ctest
 enable_testing()
 include(GoogleTest)
