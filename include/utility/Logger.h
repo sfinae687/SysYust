@@ -10,6 +10,8 @@
 
 #include <fmt/core.h>
 
+#include "Trace.h"
+
 
 namespace SysYust {
 
@@ -142,7 +144,7 @@ namespace SysYust {
 #ifndef NLOG
 #define LOG(level, message) (::SysYust::Logger::getLogger().log(LOG_RECORD(((level)), ((message)))))
 #else
-#define LOG(level, message) void
+#define LOG(level, message) (0)
 #endif
 #define LOG_FMT(level, ...) LOG(((level)), ::fmt::format(__VA_ARGS__))
 #define LOG_INFO(...) LOG_FMT(::SysYust::LoggerLevel::info,  __VA_ARGS__)
