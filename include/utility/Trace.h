@@ -8,6 +8,7 @@
 #include <string_view>
 #include <list>
 #include <tuple>
+#include <functional>
 
 #include <fmt/core.h>
 #include <fmt/ranges.h>
@@ -30,17 +31,19 @@ namespace SysYust {
          */
         template<typename... Args>
         explicit Trace(std::string_view func, Args&&... args)
-        : prevTrace(TopTrace)
-        , functionName(func)
-        , depth(TopTrace && func == TopTrace->functionName ? TopTrace->depth+1 : 1) {
+            : prevTrace(TopTrace)
+            , functionName(func)
+            , depth(TopTrace && func == TopTrace->functionName ? TopTrace->depth+1 : 1) {
             TopTrace = this;
             if constexpr (sizeof...(Args) != 0) {
                 argRecords = fmt::format("{}", std::make_tuple(std::forward<Args>(args)...));
             } else {
-                argRecords = "[void]";
+                argRecords = "(void)";
             }
         }
 
+        Trace(const Trace&) = delete;
+        Trace(Trace&&) = default;
         ~Trace() {
             TopTrace = prevTrace;
         }
@@ -65,7 +68,7 @@ namespace SysYust {
          * @brief 获取参数记录
          * @return 参数记录的视图
          */
-        std::string_view getArgRecords() {
+        std::string_view getArgRecords() const {
             return argRecords;
         }
 
@@ -79,11 +82,18 @@ namespace SysYust {
     inline  thread_local Trace* Trace::TopTrace = nullptr;
 
     inline auto format_as(const Trace& t) {
-        return fmt::format("{}#{}", t.functionName, t.depth);
+        if (t.depth > 1) {
+            return fmt::format("{}#{}", t.functionName, t.depth);
+        } else {
+            return fmt::format("{}", t.functionName);
+        }
     }
 
 #ifndef NLOG
 #define TRACEPOINT(...) ::SysYust::Trace _trace_point(__func__, ##__VA_ARGS__)
+#define TRACER (::SysYust::Trace::TopTrace && __func__ == ::SysYust::Trace::TopTrace->functionName ? \
+*::SysYust::Trace::TopTrace : \
+static_cast<const ::SysYust::Trace&>(::SysYust::Trace(__func__)) )
 #else
 #define TRACEPOINT(...) (0)
 #endif

@@ -33,20 +33,35 @@ TEST(LoggerTest, StringLoggerTest) {
 
 void Recurrence(int n, int i = 0) {
     TRACEPOINT(i, n);
-    auto & TopTrace = SysYust::Trace::TopTrace;
+    auto TopTrace = SysYust::Trace::TopTrace;
     ASSERT_EQ(i+1, TopTrace->depth);
     LOG_TRACE(TopTrace->getArgRecords());
-    if (i != n) {
+    ASSERT_EQ(TopTrace, SysYust::Trace::TopTrace);
+    if (i < n) {
         return Recurrence(n, i+1);
     } else {
         return;
     }
 }
 
-TEST(LoggerTest, TraceDepthTest) {
-    TRACEPOINT();
+TEST(LoggerTest, TraceTest) {
     Logger::setLogger(new SysYust::FileLogger(std::fopen("log/TraceLog.log", "a")));
     auto current = SysYust::Trace::TopTrace;
     Recurrence(10);
     ASSERT_EQ(SysYust::Trace::TopTrace, current) << "Unable to destruct Trace correctly";
+}
+
+void StackPrinterRe(int n, int i=0) {
+    if (i < n) {
+        LOG_STACK();
+        ASSERT_EQ(i+1, SysYust::Trace::TopTrace->depth) << "depth untracked";
+        StackPrinterRe(n, i+1);
+    } else {
+        return;
+    }
+}
+
+TEST(LoggerTest, StackPrinterTest) {
+    Logger::setLogger(new SysYust::FileLogger(std::fopen("log/StackPrinter.log", "a")));
+    StackPrinterRe(10);
 }

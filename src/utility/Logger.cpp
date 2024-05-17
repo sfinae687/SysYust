@@ -2,6 +2,8 @@
 
 #include "Logger.h"
 
+#include <utility>
+
 namespace SysYust {
     void Logger::setLogger(Logger *e) noexcept {
         _global.reset(e);
@@ -50,4 +52,14 @@ namespace SysYust {
         _pattern = pattern;
     }
 
+    _tracer::_tracer(Logger::Record r)
+        : _r(std::move(r)) {
+        _r.message = fmt::format("Entry with Args{}", _r.func.getArgRecords());
+        Logger::getLogger().log(_r);
+    }
+
+    _tracer::~_tracer() {
+        _r.message = "Exit";
+        Logger::getLogger().log(_r);
+    }
 } // SysYust
