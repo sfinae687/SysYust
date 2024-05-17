@@ -28,4 +28,4 @@ add_custom_target(Antlr4_SysY_Generate DEPENDS ${SYSY_HEADER} ${SYSY_SOURCE})
 # 添加接口目标和自省
 add_library(Antlr4_SysY STATIC ${SYSY_SOURCE} ${SYSY_HEADER})
 add_dependencies(Antlr4_SysY Antlr4_SysY_Generate)
-target_include_directories(Antlr4_SysY INTERFACE ${SYSYUST_PUBLIC_HEADER_DIR}/antlr4_target)
+target_include_directories(Antlr4_SysY PUBLIC ${SYSYUST_PUBLIC_HEADER_DIR}/antlr4_target)

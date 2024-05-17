@@ -40,14 +40,15 @@ add_subdirectory(lib/fmt)
 # 添加 argparse
 add_subdirectory(lib/argparse)
 
-# 启用 ctest
-enable_testing()
-include(GoogleTest)
-
 # 添加本项目的模块
 
 add_subdirectory(include)
 add_subdirectory(src)
+
+
+# 启用 ctest
+enable_testing()
+include(GoogleTest)
 add_subdirectory(test)
 
 # 准备生成文档的目标
