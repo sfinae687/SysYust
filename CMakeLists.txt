@@ -40,8 +40,10 @@ add_subdirectory(lib/fmt)
 # 添加 argparse
 add_subdirectory(lib/argparse)
 
-# 添加本项目的模块
+# 添加 antlr4-cpp-runtime
+add_subdirectory(lib/antlr4-cpp-runtime)
 
+# 添加本项目的模块
 add_subdirectory(include)
 add_subdirectory(src)
 
