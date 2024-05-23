@@ -1,5 +1,4 @@
 /// @file 调试日志库头文件
-/// @todo 栈踪支持
 
 #ifndef SYSYUST_UTILITY_LOGGER_H
 #define SYSYUST_UTILITY_LOGGER_H
@@ -9,6 +8,8 @@
 #include <cstdarg>
 
 #include <fmt/core.h>
+
+#include "Trace.h"
 
 
 namespace SysYust {
@@ -50,6 +51,7 @@ namespace SysYust {
      * - 日志点的函数名 func
      * - 日志点的行号 line
      * - 一行传入的日志信息 message
+     * - 日志的等级 level
      *
      * 程序可以构建多个日志器，并将其中之一设置为全局日志器
      */
@@ -63,12 +65,11 @@ namespace SysYust {
          * @brief 包含一个筛选和格式化一个日志记录所需要的信息
          */
         struct Record {
-            std::string_view file;
-            std::string_view func;
-            std::string_view message;
-            std::size_t line;
-            LoggerLevel level;
-
+            std::string_view file; ///< 文件名
+            const Trace& func; ///< 函数名, 使用 Trace 进行追踪
+            std::string message; ///< 用户提供的日志消息
+            std::size_t line; ///< 进行记录的代码行数
+            LoggerLevel level; ///< 日志等级
         };
 
         /**
@@ -92,6 +93,37 @@ namespace SysYust {
          */
          void log(const Record&);
 
+         /**
+          * @brief 设置日志格式化的格式
+          * @details 格式化字符串使用 `fmt` 库的格式. 所有参数以具名参数提供
+          *
+          * - file 当前文件名
+          * - line 当前行号
+          * - func 当前函数名
+          * - level 记录等级
+          *
+          * @param pattern 格式字符串. 使用 `fmt` 库的格式.
+          */
+        void setPattern(std::string_view pattern);
+
+        /**
+         * @brief 获取格式化字符串
+         * @return 当前的格式化字符串
+         */
+        std::string getPattern();
+
+        /**
+         * @brief 设置消息被记录的最低等级
+         * @param level 过滤等级
+         */
+        void setLevel(LoggerLevel level);
+
+        /**
+         * @brief 获取当前消息等级过滤的等级
+         * @return 过滤的等级
+         */
+        LoggerLevel getLevel();
+
     protected:
 
         /**
@@ -108,17 +140,29 @@ namespace SysYust {
         virtual void write(std::string_view record) = 0;
 
     private:
-        LoggerLevel currentLevel = LoggerLevel::all; ///< 记录的日志等级
-        std::string pattern = "[{level} {file}:{line} @ {func}]:\n{message}\n";
+        LoggerLevel _currentLevel = LoggerLevel::all; ///< 记录的日志等级
+        std::string _pattern = "[{level} {file}:{line} @ {func}]:{message}\n";
 
         static std::unique_ptr<Logger> _global;
     };
 
-#define LOG_RECORD(level, message) (::SysYust::Logger::Record{__FILE__, __func__, ((message)), __LINE__, ((level))})
+    /**
+     * @brief 内部实现用类,用于进行站追踪日志
+     * @details 通过一个包含栈踪信息的 Record 对象进行构造, 使用 RAII 控制日志消息发出的时机.
+     */
+    class _tracer {
+    public:
+        explicit _tracer(Logger::Record  r);
+        ~_tracer();
+    private:
+        Logger::Record _r;
+    };
+
+#define LOG_RECORD(level, message) (::SysYust::Logger::Record{__FILE__, TRACER, ((message)), __LINE__, ((level))})
 #ifndef NLOG
 #define LOG(level, message) (::SysYust::Logger::getLogger().log(LOG_RECORD(((level)), ((message)))))
 #else
-#define LOG(level, message) void
+#define LOG(level, message) (0)
 #endif
 #define LOG_FMT(level, ...) LOG(((level)), ::fmt::format(__VA_ARGS__))
 #define LOG_INFO(...) LOG_FMT(::SysYust::LoggerLevel::info,  __VA_ARGS__)
@@ -127,8 +171,8 @@ namespace SysYust {
 #define LOG_WARN(...) LOG_FMT(::SysYust::LoggerLevel::warn,  __VA_ARGS__)
 #define LOG_TRACE(...) LOG_FMT(::SysYust::LoggerLevel::trace,  __VA_ARGS__)
 #define LOG_DEBUG(...) LOG_FMT(::SysYust::LoggerLevel::debug,  __VA_ARGS__)
-
-
+#define LOG_STACK(...) TRACEPOINT(__VA_ARGS__); \
+::SysYust::_tracer _stack_printer(LOG_RECORD(::SysYust::LoggerLevel::trace, ""))
 } // SysYust
 
 #endif //SYSYUST_UTILITY_LOGGER_H
