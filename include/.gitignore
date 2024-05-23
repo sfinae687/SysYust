@@ -1,0 +1,2 @@
+# antlr4 的头文件时自动生成的它会被自动拷贝到此目录。这些头文件的原件位于src/frontend/generated
+antlr4_target/*

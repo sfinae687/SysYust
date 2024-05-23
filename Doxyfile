@@ -1,0 +1,9 @@
+PROJECT_NAME = SysYust
+PROJECT_BRIEF = "一个SysYust的RISC-V编译器"
+
+OUTPUT_DIRECTORY = "doc/generated"
+OUTPUT_LANGUAGE = Chinese
+
+INPUT = src include
+RECURSIVE = true
+EXCLUDE = include/antlr4_target

@@ -1,0 +1,26 @@
+# 忽略针对与特定ide的配置文件
+.idea/
+.vscode/
+
+# 忽略构建文件夹
+cmake-build*
+
+# 忽略编译器生成文件
+*.a
+*.o
+*.so
+*.so.*
+*.dll
+*.lib
+*.exe
+a.out
+
+# 忽略汇编代码，不忽略部分请在对应目录排除
+*.s
+
+# 版本库中忽略生成的文档
+doc/generated
+
+# 忽略日志
+log/*
+*.log
