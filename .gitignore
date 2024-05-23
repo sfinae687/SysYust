@@ -20,3 +20,7 @@ a.out
 
 # 版本库中忽略生成的文档
 doc/generated
+
+# 忽略日志
+log/*
+*.log

@@ -43,14 +43,15 @@ add_subdirectory(lib/argparse)
 # 添加 antlr4-cpp-runtime
 add_subdirectory(lib/antlr4-cpp-runtime)
 
+# 添加本项目的模块
+add_subdirectory(include)
+add_subdirectory(src)
+
+
 # 启用 ctest
 enable_testing()
 include(GoogleTest)
 add_subdirectory(test)
-
-# 添加子目录
-
-add_subdirectory(src)
 
 # 准备生成文档的目标
 
