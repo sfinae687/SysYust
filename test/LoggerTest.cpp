@@ -4,16 +4,46 @@
 #include <iostream>
 #include <cstdio>
 
+#include <filesystem>
+
 #include "Logger.h"
 #include "FileLogger.h"
 #include "StringLogger.h"
 #include "Trace.h"
 
+namespace fs = std::filesystem;
+
 using SysYust::Logger;
 using SysYust::LoggerLevel;
 
+std::FILE *getFile(const char *path) {
+    std::error_code ec;
+    fs::path logFile(path);
+    auto logDir = logFile.parent_path();
+
+    // 文件已经存在，那么打开并返回
+    if (fs::exists(logFile)) {
+        if (!fs::is_regular_file(logFile)) {
+            std::cerr << path << "is not a regular file" << std::endl;
+            std::exit(EXIT_FAILURE);
+        } else {
+            return std::fopen(path, "a");
+        }
+    }
+
+    // 否则创建它的父目录们
+    if (!fs::exists(logDir)) {
+        fs::create_directories(logDir, ec);
+        if (ec) {
+            std::cerr << ec.message() << std:: endl;
+            std::exit(EXIT_FAILURE);
+        }
+        return std::fopen(path, "a");
+    }
+}
+
 TEST(LoggerTest, FileLoggerTest) {
-    std::FILE *logfile = std::fopen("log/logTest.txt", "a");
+    std::FILE *logfile = getFile("log/FileTest.log");
     if (logfile != nullptr) {
         Logger::setLogger(new SysYust::FileLogger(logfile));
     } else {
@@ -45,7 +75,7 @@ void Recurrence(int n, int i = 0) {
 }
 
 TEST(LoggerTest, TraceTest) {
-    Logger::setLogger(new SysYust::FileLogger(std::fopen("log/TraceLog.log", "a")));
+    Logger::setLogger(new SysYust::FileLogger(getFile("log/FileTest.log"), "a"));
     auto current = SysYust::Trace::TopTrace;
     Recurrence(10);
     ASSERT_EQ(SysYust::Trace::TopTrace, current) << "Unable to destruct Trace correctly";
@@ -62,6 +92,6 @@ void StackPrinterRe(int n, int i=0) {
 }
 
 TEST(LoggerTest, StackPrinterTest) {
-    Logger::setLogger(new SysYust::FileLogger(std::fopen("log/StackPrinter.log", "a")));
+    Logger::setLogger(new SysYust::FileLogger(getFile("log/FileTest.log"), "a"));
     StackPrinterRe(10);
 }
