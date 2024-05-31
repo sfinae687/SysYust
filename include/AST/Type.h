@@ -76,11 +76,37 @@ namespace SysYust::AST {
         virtual bool isParamType() = 0;
         virtual bool isReturnedType() = 0;
         virtual bool isVarType() = 0;
+
+        // 比较处理
+        [[nodiscard]] virtual bool match(const Type &) const = 0;
+
+        [[nodiscard]] virtual bool match(const Int &) const {
+            return false;
+        }
+        [[nodiscard]] virtual bool match(const Float &) const {
+            return false;
+        }
+        [[nodiscard]] virtual bool match(const Array &) const {
+            return false;
+        }
+        [[nodiscard]] virtual bool match(const Pointer &) const {
+            return false;
+        }
+        [[nodiscard]] virtual bool match(const Void &) const {
+            return false;
+        }
+        [[nodiscard]] virtual bool match(const Function &) const {
+            return false;
+        }
+
+        friend bool operator== (const Type &lhs, const Type &rhs) {
+            return lhs.match(rhs);
+        }
     };
 
     /**
      * @brief Type的CRTP基类，为归类和类型获取提供默认实现
-     * @tparam D
+     * @tparam D 使用TypeBase的派生类
      */
     template<typename D>
     class TypeBase : Type{
@@ -108,6 +134,10 @@ namespace SysYust::AST {
         };
         bool isVarType() final {
             return TypeTrait<D>::isVarType;
+        }
+
+        [[nodiscard]] bool match(const SysYust::AST::Type &rhs) const final {
+            return rhs.match(static_cast<const D&>(*this));
         }
     };
 
