@@ -1,4 +1,4 @@
-/// @file 声明语法树类型标识的基类和 CRTR 基类，并创建相关的变量模板
+/// @file 声明语法树类型标识的基类和 CRTP 基类，并创建相关的变量模板
 
 #ifndef SYSYUST_AST_TYPE_H
 #define SYSYUST_AST_TYPE_H
@@ -79,7 +79,7 @@ namespace SysYust::AST {
     };
 
     /**
-     * @brief Type的CRTR基类，为归类和类型获取提供默认实现
+     * @brief Type的CRTP基类，为归类和类型获取提供默认实现
      * @tparam D
      */
     template<typename D>
