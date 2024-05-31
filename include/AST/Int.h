@@ -7,7 +7,7 @@
 
 namespace SysYust::AST {
 
-    class Int: TypeBase<Int> {
+    class Int: public TypeBase<Int> {
 
     };
 

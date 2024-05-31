@@ -7,7 +7,7 @@
 
     namespace SysYust::AST {
 
-        class Void: TypeBase<Void> {
+        class Void: public TypeBase<Void> {
 
         };
 

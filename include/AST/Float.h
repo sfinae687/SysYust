@@ -7,7 +7,7 @@
 
 namespace SysYust::AST {
 
-    class Float: TypeBase<Float> {
+    class Float: public TypeBase<Float> {
 
     };
 
