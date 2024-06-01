@@ -35,17 +35,13 @@ namespace SysYust::AST {
     }
 
     bool Array::match(const Array &rhs) const {
-        return _baseType == rhs._baseType && _dimensions == rhs._dimensions;
+        return _baseType.match(rhs._baseType) && _dimensions == rhs._dimensions;
     }
 
     bool Array::match(const Pointer &rhs) const {
-        return *this == rhs;
-    }
-
-    bool operator==(const Array &lhs, const Pointer &rhs) {
         auto &pointed = rhs.getBase();
         if (pointed.type() != TypeId::Array) {
-            return pointed == lhs.getType();
+            return pointed.match(getType());
         } else { // 指针指向一个数组类型的情况
             assert(pointed.type() == TypeId::Array);
 
@@ -53,8 +49,8 @@ namespace SysYust::AST {
             auto &pointedArray = static_cast<const Array&>(pointed);
 
             // 执行比较
-            if (pointedArray.getType() == lhs.getType()) {
-                auto &dl = lhs.getDimension();
+            if (pointedArray.getType().match(getType())) {
+                auto &dl = getDimension();
                 auto &dr = pointedArray.getDimension();
                 return std::equal(dr.begin(), dr.end(), dl.begin());
             } else {
@@ -62,4 +58,5 @@ namespace SysYust::AST {
             }
         }
     }
+
 } // AST

@@ -47,6 +47,8 @@ namespace SysYust::AST {
          */
          [[nodiscard]] std::vector<const Type*> getParam() const;
 
+         [[nodiscard]] bool match(const SysYust::AST::Function &) const override;
+
     private:
         const Type &_returnedType; ///< 返回类型
         const std::vector<const Type*> _paramType; ///< 参数列表类型

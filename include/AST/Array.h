@@ -13,17 +13,9 @@
 namespace SysYust::AST {
 
     /**
-     * @brief 用于数组于指针之间判断相容性的比较运算符。
-     * @details 额外定义一个运算符用于处理 Pointer 与 Array 比较的参数顺序问题。Array 和 Pointer 的 对另一个类型的 match 操作将委托到该
-     * 函数上。
-     */
-    bool operator== (const Array&, const Pointer&);
-
-    /**
      * @brief 类型标识 Array
      */
     class Array: public TypeBase<Array> {
-        friend bool operator== (const Array&, const Pointer&);
     public:
         /**
          * @brief 使用一个基类型和维度初始化列表构造 Array
@@ -48,7 +40,7 @@ namespace SysYust::AST {
          */
         [[nodiscard]] const Type& getType() const;
         /**
-         * @brief 获取当前数组对象的维度
+         * @brief 获取当前数组对象的维度信息
          */
         [[nodiscard]] const std::vector<std::size_t>& getDimension() const;
 

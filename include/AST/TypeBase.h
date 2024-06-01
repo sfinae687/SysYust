@@ -81,7 +81,7 @@ namespace SysYust::AST {
         [[nodiscard]] virtual bool isReturnedType() const = 0;
         [[nodiscard]] virtual bool isVarType() const = 0;
 
-        // 比较处理
+        // 通过访问器模式进行相等性比较。
         [[nodiscard]] virtual bool match(const Type &) const = 0;
 
         [[nodiscard]] virtual bool match(const Int &) const {
@@ -103,8 +103,18 @@ namespace SysYust::AST {
             return false;
         }
 
+        /**
+         * @brief 比较两个类型标识对象，通过比较地址的方式
+         */
         friend bool operator== (const Type &lhs, const Type &rhs) {
-            return lhs.match(rhs);
+            return &lhs == &rhs;
+        }
+
+        /**
+         * @brief 比较两个类型标识对象，通过比较地址的方式
+         */
+        friend bool operator< (const Type &lhs, const Type &rhs) {
+            return std::less<const Type*>{}(&lhs, &rhs);
         }
     };
 
@@ -159,7 +169,6 @@ namespace SysYust::AST {
             , std::string>
     getType(Args&&... args) {
         static_assert(false, "Undefined type identifier type");
-        return T(std::forward<Args>(args)...);
     }
 
 } // AST

@@ -9,7 +9,6 @@
 namespace SysYust::AST {
 
     class Pointer: public TypeBase<Pointer> {
-        friend bool operator== (const Array&, const Pointer&);
     public:
         template<typename T, std::enable_if_t<TypeTrait<T>::isPointedType, bool> = true >
         explicit Pointer(const T &baseType)
