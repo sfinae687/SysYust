@@ -4,6 +4,7 @@ set(AST_SOURCE
         Float.cpp
         Void.cpp
         Array.cpp
+        Pointer.cpp
 )
 
 add_library(AST ${AST_SOURCE})

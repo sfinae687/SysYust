@@ -14,6 +14,8 @@ namespace SysYust::AST {
 
     /**
      * @brief 用于数组于指针之间判断相容性的比较运算符。
+     * @details 额外定义一个运算符用于处理 Pointer 与 Array 比较的参数顺序问题。Array 和 Pointer 的 对另一个类型的 match 操作将委托到该
+     * 函数上。
      */
     bool operator== (const Array&, const Pointer&);
 
@@ -27,7 +29,7 @@ namespace SysYust::AST {
          * @brief 使用一个基类型和维度初始化列表构造 Array
          * @tparam T 基类型必须为 Int 或 Float 中的一个
          */
-        template<typename T, std::enable_if_t<getTypeIdOf<T> == TypeId::Int || getTypeIdOf<T> == TypeId::Float> >
+        template<typename T, std::enable_if_t<TypeTrait<T>::isBasicType, bool> = true >
         Array(const T &baseType, std::initializer_list<std::size_t > dimensions)
                 : _baseType(baseType)
                 , _dimensions(dimensions) {
@@ -44,18 +46,21 @@ namespace SysYust::AST {
         /**
          * @brief 获取当前数组对象的基类型
          */
-        const Type& getType();
+        [[nodiscard]] const Type& getType() const;
         /**
          * @brief 获取当前数组对象的维度
          */
-        const std::vector<std::size_t>& getDimension();
+        [[nodiscard]] const std::vector<std::size_t>& getDimension() const;
 
         [[nodiscard]] bool match(const SysYust::AST::Array &) const override;
+        [[nodiscard]] bool match(const SysYust::AST::Pointer &) const override;
 
     private:
         const Type &_baseType; ///< 数组的元素类型
         const std::vector<std::size_t> _dimensions; ///< 数组的维度,内层维度在低位。
     };
+
+    /// @todo 添加 Array 的 makeType 特化，使得同一种 Array 指向同一个实例。
 
 } // AST
 

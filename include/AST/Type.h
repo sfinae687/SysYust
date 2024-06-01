@@ -70,15 +70,15 @@ namespace SysYust::AST {
         virtual ~Type() = default;
 
         // 获取 类型的ID
-        virtual TypeId  type() = 0;
+        [[nodiscard]] virtual TypeId  type() const = 0;
 
         // 类型归类
-        virtual bool isBasicType() = 0;
-        virtual bool isArrayedType() = 0;
-        virtual bool isPointedType() = 0;
-        virtual bool isParamType() = 0;
-        virtual bool isReturnedType() = 0;
-        virtual bool isVarType() = 0;
+        [[nodiscard]] virtual bool isBasicType() const = 0;
+        [[nodiscard]] virtual bool isArrayedType() const = 0;
+        [[nodiscard]] virtual bool isPointedType() const = 0;
+        [[nodiscard]] virtual bool isParamType() const = 0;
+        [[nodiscard]] virtual bool isReturnedType() const = 0;
+        [[nodiscard]] virtual bool isVarType() const = 0;
 
         // 比较处理
         [[nodiscard]] virtual bool match(const Type &) const = 0;
@@ -116,31 +116,34 @@ namespace SysYust::AST {
     public:
         ~TypeBase() override = default;
 
-        TypeId type() final {
+        [[nodiscard]] TypeId type() const final {
             return getTypeIdOf<D>;
         }
 
-        bool isBasicType() final {
+        [[nodiscard]] bool isBasicType() const final {
             return TypeTrait<D>::isBasicType;
         }
-        bool isArrayedType() final {
+        [[nodiscard]] bool isArrayedType() const final {
             return TypeTrait<D>::isArrayedType;
         }
-        bool isPointedType() final {
+        [[nodiscard]] bool isPointedType() const final {
             return TypeTrait<D>::isArrayedType;
         }
-        bool isParamType() final {
+        [[nodiscard]] bool isParamType() const final {
             return TypeTrait<D>::isParamType;
         }
-        bool isReturnedType() final {
+        [[nodiscard]] bool isReturnedType() const final {
             return TypeTrait<D>::isParamType;
         };
-        bool isVarType() final {
+        [[nodiscard]] bool isVarType() const final {
             return TypeTrait<D>::isVarType;
         }
 
         [[nodiscard]] bool match(const SysYust::AST::Type &rhs) const final {
             return rhs.match(static_cast<const D&>(*this));
+        }
+        [[nodiscard]] bool match(const D &) const override {
+            return true;
         }
     };
 
@@ -149,7 +152,8 @@ namespace SysYust::AST {
      * @todo 添加错误处理
      */
     template<typename T, typename... Args>
-    [[maybe_unused]] expected<std::enable_if_t< getTypeIdOf<T> != TypeId::Invalid && std::is_constructible_v<T, Args...>, T>, std::string>
+    [[maybe_unused]]
+    expected<std::enable_if_t< getTypeIdOf<T> != TypeId::Invalid && std::is_constructible_v<T, Args...>, T>, std::string>
     makeType(Args&&... args) {
         return T(std::forward<Args>(args)...);
     }

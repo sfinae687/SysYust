@@ -1,6 +1,9 @@
 /// @file 类型标识 Array 类的定义。
 
+#include <cassert>
+
 #include "AST/Array.h"
+#include "AST/Pointer.h"
 
 namespace SysYust::AST {
     namespace {
@@ -23,11 +26,11 @@ namespace SysYust::AST {
 
     }
 
-    const Type &Array::getType() {
+    const Type &Array::getType() const {
         return _baseType;
     }
 
-    const std::vector<std::size_t> &Array::getDimension() {
+    const std::vector<std::size_t> &Array::getDimension() const {
         return _dimensions;
     }
 
@@ -35,8 +38,28 @@ namespace SysYust::AST {
         return _baseType == rhs._baseType && _dimensions == rhs._dimensions;
     }
 
-    bool operator==(const Array &, const Pointer &) {
-        /// @todo Pointer 和 Array 的相等性看比较函数
-        return false;
+    bool Array::match(const Pointer &rhs) const {
+        return *this == rhs;
+    }
+
+    bool operator==(const Array &lhs, const Pointer &rhs) {
+        auto &pointed = rhs.getBase();
+        if (pointed.type() != TypeId::Array) {
+            return pointed == lhs.getType();
+        } else { // 指针指向一个数组类型的情况
+            assert(pointed.type() == TypeId::Array);
+
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) 经过验证的,所以使用静态转换
+            auto &pointedArray = static_cast<const Array&>(pointed);
+
+            // 执行比较
+            if (pointedArray.getType() == lhs.getType()) {
+                auto &dl = lhs.getDimension();
+                auto &dr = pointedArray.getDimension();
+                return std::equal(dr.begin(), dr.end(), dl.begin());
+            } else {
+                return false; // 基类型不同，直接返回 false。
+            }
+        }
     }
 } // AST
