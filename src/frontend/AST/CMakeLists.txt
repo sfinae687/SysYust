@@ -1,10 +1,11 @@
 set(AST_SOURCE
-        Type.cpp
+        TypeBase.cpp
         Int.cpp
         Float.cpp
         Void.cpp
         Array.cpp
         Pointer.cpp
+        Function.cpp
 )
 
 add_library(AST ${AST_SOURCE})

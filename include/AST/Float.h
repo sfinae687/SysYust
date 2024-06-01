@@ -3,7 +3,7 @@
 #ifndef SYSYUST_AST_FLOAT_H
 #define SYSYUST_AST_FLOAT_H
 
-#include "Type.h"
+#include "TypeBase.h"
 
 namespace SysYust::AST {
 
@@ -12,6 +12,11 @@ namespace SysYust::AST {
     };
 
     static const Float Float_v;
+
+    template<>
+    expected<const Float*, std::string> getType<Float>() {
+        return &Float_v;
+    }
 
 } // AST
 

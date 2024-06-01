@@ -3,7 +3,7 @@
 #ifndef SYSYUST_AST_VOID_H
 #define SYSYUST_AST_VOID_H
 
-#include "Type.h"
+#include "TypeBase.h"
 
     namespace SysYust::AST {
 
@@ -12,6 +12,11 @@
         };
 
         static const Void Void_v;
+
+        template<>
+        expected<const Void*, std::string> getType<Void>() {
+            return &Void_v;
+        }
 
     } // AST
 

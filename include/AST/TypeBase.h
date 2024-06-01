@@ -1,4 +1,5 @@
 /// @file 声明语法树类型标识的基类和 CRTP 基类，并创建相关的变量模板
+/// 所有类型标识通过 const T& 或 const T*的形式引用。
 
 #ifndef SYSYUST_AST_TYPE_H
 #define SYSYUST_AST_TYPE_H
@@ -150,11 +151,14 @@ namespace SysYust::AST {
     /**
      * @brief 构造 Type 的子对象
      * @todo 添加错误处理
+     * @todo 为 Array 和 Function 添加一个带有池的特化。使得相同的类型指向同一个对象。
      */
     template<typename T, typename... Args>
     [[maybe_unused]]
-    expected<std::enable_if_t< getTypeIdOf<T> != TypeId::Invalid && std::is_constructible_v<T, Args...>, T>, std::string>
-    makeType(Args&&... args) {
+    expected<std::enable_if_t< getTypeIdOf<T> != TypeId::Invalid && std::is_constructible_v<T, Args...>, const T*>
+            , std::string>
+    getType(Args&&... args) {
+        static_assert(false, "Undefined type identifier type");
         return T(std::forward<Args>(args)...);
     }
 

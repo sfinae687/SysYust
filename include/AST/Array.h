@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include <algorithm>
 
-#include "Type.h"
+#include "TypeBase.h"
 
 namespace SysYust::AST {
 
@@ -60,7 +60,6 @@ namespace SysYust::AST {
         const std::vector<std::size_t> _dimensions; ///< 数组的维度,内层维度在低位。
     };
 
-    /// @todo 添加 Array 的 makeType 特化，使得同一种 Array 指向同一个实例。
 
 } // AST
 

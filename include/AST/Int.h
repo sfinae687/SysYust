@@ -3,7 +3,7 @@
 #ifndef SYSYUST_AST_INT_H
 #define SYSYUST_AST_INT_H
 
-#include "Type.h"
+#include "TypeBase.h"
 
 namespace SysYust::AST {
 
@@ -12,6 +12,11 @@ namespace SysYust::AST {
     };
 
     static const Int Int_v;
+
+    template<>
+    expected<const Int*, std::string> getType<Int>() {
+        return &Int_v;
+    }
 
 } // AST
 

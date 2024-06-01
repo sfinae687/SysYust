@@ -3,7 +3,7 @@
 #ifndef SYSYUST_AST_POINTER_H
 #define SYSYUST_AST_POINTER_H
 
-#include "AST/Type.h"
+#include "AST/TypeBase.h"
 #include "AST/Array.h"
 
 namespace SysYust::AST {
