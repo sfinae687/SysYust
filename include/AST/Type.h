@@ -4,6 +4,9 @@
 #define SYSYUST_AST_TYPE_H
 
 #include <type_traits>
+#include <string>
+
+#include "utility/expected.h"
 
 namespace SysYust::AST {
 
@@ -109,7 +112,7 @@ namespace SysYust::AST {
      * @tparam D 使用TypeBase的派生类
      */
     template<typename D>
-    class TypeBase : Type{
+    class TypeBase : public Type {
     public:
         ~TypeBase() override = default;
 
@@ -140,6 +143,16 @@ namespace SysYust::AST {
             return rhs.match(static_cast<const D&>(*this));
         }
     };
+
+    /**
+     * @brief 构造 Type 的子对象
+     * @todo 添加错误处理
+     */
+    template<typename T, typename... Args>
+    [[maybe_unused]] expected<std::enable_if_t< getTypeIdOf<T> != TypeId::Invalid && std::is_constructible_v<T, Args...>, T>, std::string>
+    makeType(Args&&... args) {
+        return T(std::forward<Args>(args)...);
+    }
 
 } // AST
 
