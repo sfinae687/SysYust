@@ -1,8 +1,7 @@
-//
-// Created by LL06p on 24-5-31.
-//
+/// @file Void 类型标识的实现
 
 #include "AST/Void.h"
 
-    namespace SysYust::AST {
-    } // AST
+namespace SysYust::AST {
+    const Void Void_v;
+} // AST

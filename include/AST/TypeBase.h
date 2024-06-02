@@ -1,8 +1,8 @@
 /// @file 声明语法树类型标识的基类和 CRTP 基类，并创建相关的变量模板
 /// 所有类型标识通过 const T& 或 const T*的形式引用。
 
-#ifndef SYSYUST_AST_TYPE_H
-#define SYSYUST_AST_TYPE_H
+#ifndef SYSYUST_AST_TYPEBASE_H
+#define SYSYUST_AST_TYPEBASE_H
 
 #include <type_traits>
 #include <string>
@@ -159,6 +159,11 @@ namespace SysYust::AST {
     };
 
     /**
+     * @brief 通过类型标识的内容进行相等性判断
+     */
+    bool match(const Type &lhs, const Type &rhs);
+
+    /**
      * @brief 构造 Type 的子对象
      * @todo 添加错误处理
      * @todo 为 Array 和 Function 添加一个带有池的特化。使得相同的类型指向同一个对象。
@@ -173,4 +178,4 @@ namespace SysYust::AST {
 
 } // AST
 
-#endif //SYSYUST_AST_TYPE_H
+#endif //SYSYUST_AST_TYPEBASE_H

@@ -5,5 +5,5 @@
 #include "AST/Float.h"
 
 namespace SysYust::AST {
-
+    const Float Float_v;
 } // AST

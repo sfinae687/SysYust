@@ -4,6 +4,6 @@
 
 #include "AST/Int.h"
 namespace SysYust::AST {
-
+    const Int Int_v;
 } // AST
 // SysYust

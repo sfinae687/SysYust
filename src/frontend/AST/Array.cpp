@@ -20,6 +20,12 @@ namespace SysYust::AST {
         }
     }
 
+    Array::Array(const Type &baseType, std::initializer_list<std::size_t> dimension)
+    : _baseType(baseType)
+    , _dimensions(dimension) {
+        assert(baseType.type() == TypeId::Int || baseType.type() == TypeId::Float);
+    }
+
     Array::Array(const Array &baseType, std::initializer_list<std::size_t> dimensions)
     : _baseType(baseType._baseType)
     , _dimensions(concat(baseType._dimensions, dimensions)) {
@@ -58,5 +64,14 @@ namespace SysYust::AST {
             }
         }
     }
+
+    std::size_t Array::getRank() const {
+        return _dimensions.size();
+    }
+
+    std::size_t Array::getExtent(std::size_t i) const {
+        return _dimensions[i];
+    }
+
 
 } // AST

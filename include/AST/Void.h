@@ -11,10 +11,10 @@
 
         };
 
-        static const Void Void_v;
+        extern const Void Void_v;
 
         template<>
-        expected<const Void*, std::string> getType<Void>() {
+        inline expected<const Void*, std::string> getType<Void>() {
             return &Void_v;
         }
 

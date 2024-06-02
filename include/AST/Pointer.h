@@ -10,6 +10,15 @@ namespace SysYust::AST {
 
     class Pointer: public TypeBase<Pointer> {
     public:
+        /**
+         * @brief 通过编译时不可知的基类型设置
+         * @param baseType 基类型,为 Int, Float, Array 之一, 由主调检查.
+         */
+        explicit Pointer(const Type &baseType);
+
+        /**
+         * @brief 通过编译时可知的基类型设置 Pointer
+         */
         template<typename T, std::enable_if_t<TypeTrait<T>::isPointedType, bool> = true >
         explicit Pointer(const T &baseType)
         : _baseType(baseType) {

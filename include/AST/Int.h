@@ -11,10 +11,10 @@ namespace SysYust::AST {
 
     };
 
-    static const Int Int_v;
+    extern const Int Int_v;
 
     template<>
-    expected<const Int*, std::string> getType<Int>() {
+    inline expected<const Int*, std::string> getType<Int>() {
         return &Int_v;
     }
 
