@@ -13,11 +13,6 @@
 
         extern const Void Void_v;
 
-        template<>
-        inline expected<const Void*, std::string> getType<Void>() {
-            return &Void_v;
-        }
-
     } // AST
 
 #endif //SYSYUST_AST_VOID_H

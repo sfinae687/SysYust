@@ -23,7 +23,6 @@ namespace SysYust::AST {
 
         /**
          * @brief 通过编译时可知的返回值类型和参数类型列表构造 Function
-         * @bug 虽然提供了这个构造函数，但是根据C++的重载决议，这些编译时检查的版本应该竞争不过非模板的版本。
          */
         template<typename R, typename... Args,
             std::enable_if_t<

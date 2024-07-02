@@ -58,6 +58,7 @@ namespace SysYust::AST {
             if (pointedArray.getType().match(getType())) {
                 auto &dl = getDimension();
                 auto &dr = pointedArray.getDimension();
+                // 当数组的维度比指针多1，内层维度全部相等，则为真。
                 return std::equal(dr.begin(), dr.end(), dl.begin());
             } else {
                 return false; // 基类型不同，直接返回 false。

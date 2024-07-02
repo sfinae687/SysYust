@@ -13,11 +13,6 @@ namespace SysYust::AST {
 
     extern const Float Float_v;
 
-    template<>
-    inline expected<const Float*, std::string> getType<Float>() {
-        return &Float_v;
-    }
-
 } // AST
 
 #endif //SYSYUST_AST_FLOAT_H

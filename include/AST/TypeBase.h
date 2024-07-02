@@ -6,6 +6,7 @@
 
 #include <type_traits>
 #include <string>
+#include <unordered_set>
 
 #include "utility/expected.h"
 
@@ -32,6 +33,7 @@ namespace SysYust::AST {
     constexpr TypeId getTypeIdOf = TypeId::Invalid;
 
     // 类型标识的前置声明
+    class Type;
     class Int;
     class Float;
     class Array;
@@ -63,6 +65,17 @@ namespace SysYust::AST {
     };
 
     /**
+     * @brief 表示有效类型的标识的概念
+     */
+    template<typename T>
+    concept ValidType = getTypeIdOf<std::remove_cvref_t<T>> != TypeId::Invalid;
+
+    /**
+     * @brief 通过类型标识的内容进行相等性判断
+     */
+    bool match(const Type &lhs, const Type &rhs);
+
+    /**
      * @brief 类型标识的纯虚基类
      * @details 声明了所有类型归类的虚方法。
      */
@@ -81,9 +94,8 @@ namespace SysYust::AST {
         [[nodiscard]] virtual bool isReturnedType() const = 0;
         [[nodiscard]] virtual bool isVarType() const = 0;
 
-        // 通过访问器模式进行相等性比较。
+        // 以参数传递的标准进行匹配检测。
         [[nodiscard]] virtual bool match(const Type &) const = 0;
-
         [[nodiscard]] virtual bool match(const Int &) const {
             return false;
         }
@@ -104,23 +116,18 @@ namespace SysYust::AST {
         }
 
         /**
-         * @brief 比较两个类型标识对象，通过比较地址的方式
+         * @brief 相等运算，匹配方式与 match 相同
          */
-        friend bool operator== (const Type &lhs, const Type &rhs) {
-            return &lhs == &rhs;
+        friend bool operator== (const Type &lhs,const Type &rhs) {
+            return AST::match(lhs, rhs);
         }
 
-        /**
-         * @brief 比较两个类型标识对象，通过比较地址的方式
-         */
-        friend bool operator< (const Type &lhs, const Type &rhs) {
-            return std::less<const Type*>{}(&lhs, &rhs);
-        }
     };
 
     /**
      * @brief Type的CRTP基类，为归类和类型获取提供默认实现
      * @tparam D 使用TypeBase的派生类
+     * @todo 序列化和调试的字符串化
      */
     template<typename D>
     class TypeBase : public Type {
@@ -158,23 +165,6 @@ namespace SysYust::AST {
         }
     };
 
-    /**
-     * @brief 通过类型标识的内容进行相等性判断
-     */
-    bool match(const Type &lhs, const Type &rhs);
-
-    /**
-     * @brief 构造 Type 的子对象
-     * @todo 添加错误处理
-     * @todo 为 Array 和 Function 添加一个带有池的特化。使得相同的类型指向同一个对象。
-     */
-    template<typename T, typename... Args>
-    [[maybe_unused]]
-    expected<std::enable_if_t< getTypeIdOf<T> != TypeId::Invalid && std::is_constructible_v<T, Args...>, const T*>
-            , std::string>
-    getType(Args&&... args) {
-        static_assert(false, "Undefined type identifier type");
-    }
 
 } // AST
 

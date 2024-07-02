@@ -7,6 +7,7 @@
 #include <vector>
 #include <unordered_set>
 #include <algorithm>
+#include <numeric>
 
 #include "TypeBase.h"
 
@@ -70,7 +71,6 @@ namespace SysYust::AST {
         const Type &_baseType; ///< 数组的元素类型
         const std::vector<std::size_t> _dimensions; ///< 数组的维度,内层维度在低位。
     };
-
 
 } // AST
 

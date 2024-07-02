@@ -13,11 +13,6 @@ namespace SysYust::AST {
 
     extern const Int Int_v;
 
-    template<>
-    inline expected<const Int*, std::string> getType<Int>() {
-        return &Int_v;
-    }
-
 } // AST
 
 #endif //SYSYUST_AST_INT_H
