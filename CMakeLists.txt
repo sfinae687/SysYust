@@ -56,8 +56,10 @@ add_subdirectory(test)
 # 准备生成文档的目标
 
 if (${GeneratedDocument} AND DEFINED DOXYGEN_FOUND)
+    set(DocumentRoot ${CMAKE_BINARY_DIR}/doc CACHE STRING "The directory used to storage document")
+    configure_file(${DOXYGEN_CONFIG_FILE} Doxyfile)
     add_custom_target(Document
-        COMMAND Doxygen::doxygen ${DOXYGEN_CONFIG_FILE}
+        COMMAND Doxygen::doxygen ${CMAKE_BINARY_DIR}/Doxyfile
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
 endif ()
