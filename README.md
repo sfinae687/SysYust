@@ -1,4 +1,4 @@
-# SySYust
+# SysYust
 
 ## 关于三方库的使用说明
 
@@ -12,8 +12,6 @@
 ## 描述
 
 SySY2022编译器项目
-
-Branch:pre_impl 可行性实验主分支 -> utility 通用工具分支 -> f_logger 调试日志库分支
 
 ## 构建系统
 

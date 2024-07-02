@@ -34,3 +34,7 @@ target_include_directories(Antlr4_SysY
         ${CMAKE_SOURCE_DIR}/lib/antlr4-cpp-runtime/runtime/src
 )
 target_link_libraries(Antlr4_SysY PUBLIC antlr4_runtime-build_static)
+
+# AST 模块
+
+add_subdirectory(AST)
