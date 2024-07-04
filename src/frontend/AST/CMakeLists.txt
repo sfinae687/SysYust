@@ -1,13 +1,13 @@
 set(AST_SOURCE
-        TypeBase.cpp
-        Int.cpp
-        Float.cpp
-        Void.cpp
-        Array.cpp
-        Pointer.cpp
-        Function.cpp
+        Type/TypeBase.cpp
+        Type/Int.cpp
+        Type/Float.cpp
+        Type/Void.cpp
+        Type/Array.cpp
+        Type/Pointer.cpp
+        Type/Function.cpp
         VarInfo.cpp
-        FuncInfo.cpp
+        Type/FuncInfo.cpp
         Env.cpp
 )
 

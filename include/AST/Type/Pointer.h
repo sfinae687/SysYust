@@ -4,8 +4,8 @@
 #define SYSYUST_AST_POINTER_H
 
 #include <set>
-#include "AST/TypeBase.h"
-#include "AST/Array.h"
+#include "TypeBase.h"
+#include "Array.h"
 
 namespace SysYust::AST {
 

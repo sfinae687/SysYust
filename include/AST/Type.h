@@ -3,12 +3,12 @@
 #ifndef SYSYUST_AST_TYPE_H
 #define SYSYUST_AST_TYPE_H
 
-#include "AST/TypeBase.h"
-#include "AST/Int.h"
-#include "AST/Float.h"
-#include "AST/Void.h"
-#include "AST/Array.h"
-#include "AST/Pointer.h"
-#include "AST/Function.h"
+#include "AST/Type/TypeBase.h"
+#include "AST/Type/Int.h"
+#include "AST/Type/Float.h"
+#include "AST/Type/Void.h"
+#include "AST/Type/Array.h"
+#include "AST/Type/Pointer.h"
+#include "AST/Type/Function.h"
 
 #endif //SYSYUST_AST_TYPE_H

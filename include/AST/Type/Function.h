@@ -6,8 +6,8 @@
 #include <vector>
 #include <set>
 
-#include "AST/TypeBase.h"
-#include "AST/Int.h"
+#include "TypeBase.h"
+#include "Int.h"
 
 namespace SysYust::AST {
 

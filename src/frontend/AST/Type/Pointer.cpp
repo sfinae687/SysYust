@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-#include "AST/Pointer.h"
+#include "AST/Type/Pointer.h"
 
 namespace SysYust::AST {
     Pointer::Pointer(const Type &baseType)

@@ -3,8 +3,8 @@
 #include <cassert>
 #include <utility>
 
-#include "AST/Array.h"
-#include "AST/Pointer.h"
+#include "AST/Type/Array.h"
+#include "AST/Type/Pointer.h"
 
 namespace SysYust::AST {
     namespace {

@@ -2,8 +2,8 @@
 // Created by LL06p on 24-5-31.
 //
 
-#include "AST/Int.h"
+#include "AST/Type/Float.h"
+
 namespace SysYust::AST {
-    const Int Int_v;
+    const Float Float_v;
 } // AST
-// SysYust

@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include "AST/Function.h"
+#include "AST/Type/Function.h"
 
 namespace SysYust::AST {
     const Type &Function::getResult() const {
