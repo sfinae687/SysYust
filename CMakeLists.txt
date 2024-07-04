@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 option(SELF_CONTAINS "let all dependency store in lib/" OFF)
 option(GeneratedDocument "add a target to generate document by doxygen form code comments" ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
 
