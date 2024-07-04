@@ -6,6 +6,9 @@ set(AST_SOURCE
         Array.cpp
         Pointer.cpp
         Function.cpp
+        VarInfo.cpp
+        FuncInfo.cpp
+        Env.cpp
 )
 
 add_library(AST ${AST_SOURCE})
