@@ -3,6 +3,7 @@
 #ifndef SYSYUST_AST_POINTER_H
 #define SYSYUST_AST_POINTER_H
 
+#include <set>
 #include "AST/TypeBase.h"
 #include "AST/Array.h"
 
@@ -26,14 +27,36 @@ namespace SysYust::AST {
         }
 
         /**
+         * @brief 构建一个 Pointer，带有单例池
+         */
+        static const Pointer& create(const Type &baseType) {
+            Pointer target(baseType);
+            auto [rt, state] = _pool.insert(target);
+            return *rt;
+        }
+
+        /**
          * @brief 获取指向的类型
          */
         [[nodiscard]] const Type& getBase() const;
 
         [[nodiscard]] bool match(const SysYust::AST::Pointer &) const override;
         [[nodiscard]] bool match(const SysYust::AST::Array &) const override;
+
+        friend bool operator< (const Pointer &lhs, const Pointer &rhs) {
+            auto lt = lhs._baseType.type();
+            auto rt = rhs._baseType.type();
+            if (lt == TypeId::Array && lt == rt) {
+                auto lA = static_cast<const Array&>(lhs._baseType);
+                auto rA = static_cast<const Array&>(rhs._baseType);
+                return lA < rA;
+            } else {
+                return lhs._baseType.type() < rhs._baseType.type();
+            }
+        }
     private:
         const Type &_baseType; ///< 基类型，为Int，Float，Array之一
+        static std::set<Pointer> _pool;
     };
 
 } // AST

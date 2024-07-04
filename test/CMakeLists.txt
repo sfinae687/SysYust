@@ -7,6 +7,10 @@ target_link_libraries(LoggerTest gtest GTest::gtest_main utility)
 add_executable(TypeMatchTest TypeMatchTest.cpp)
 target_link_libraries(TypeMatchTest GTest::gtest_main AST)
 
+add_executable(TypeCreateTest TypeCreateTest.cpp)
+target_link_libraries(TypeCreateTest GTest::gtest_main AST)
+
 gtest_discover_tests(BuildSystemTest)
 gtest_discover_tests(LoggerTest)
 gtest_discover_tests(TypeMatchTest)
+gtest_discover_tests(TypeCreateTest)

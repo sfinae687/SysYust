@@ -1,6 +1,7 @@
 /// @file 类型标识 Array 类的定义。
 
 #include <cassert>
+#include <utility>
 
 #include "AST/Array.h"
 #include "AST/Pointer.h"
@@ -20,13 +21,13 @@ namespace SysYust::AST {
         }
     }
 
-    Array::Array(const Type &baseType, std::initializer_list<std::size_t> dimension)
+    Array::Array(const Type &baseType, std::vector<std::size_t> dimension)
     : _baseType(baseType)
-    , _dimensions(dimension) {
+    , _dimensions(std::move(dimension)) {
         assert(baseType.type() == TypeId::Int || baseType.type() == TypeId::Float);
     }
 
-    Array::Array(const Array &baseType, std::initializer_list<std::size_t> dimensions)
+    Array::Array(const Array &baseType, const std::vector<std::size_t>& dimensions)
     : _baseType(baseType._baseType)
     , _dimensions(concat(baseType._dimensions, dimensions)) {
 
@@ -74,5 +75,6 @@ namespace SysYust::AST {
         return _dimensions[i];
     }
 
+    std::set<Array> Array::_pool{};
 
 } // AST

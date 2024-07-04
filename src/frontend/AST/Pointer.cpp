@@ -22,4 +22,5 @@ namespace SysYust::AST {
         return _baseType;
     }
 
+    std::set<Pointer> Pointer::_pool{};
 } // AST

@@ -4,6 +4,7 @@
 #define SYSYUST_AST_FUNCTION_H
 
 #include <vector>
+#include <set>
 
 #include "AST/TypeBase.h"
 #include "AST/Int.h"
@@ -26,8 +27,10 @@ namespace SysYust::AST {
          */
         template<typename R, typename... Args,
             std::enable_if_t<
-                TypeTrait<R>::isReturnedType &&
-                (TypeTrait<Args>::isParamType && ...)
+                TypeTrait<R>::isReturnedType
+                && (TypeTrait<Args>::isParamType && ...)
+                || sizeof...(Args) == 1
+                && ((getTypeIdOf<Args> == TypeId::Void) && ...)
             , bool> = false
         >
         explicit Function(const R& returned, const Args&... args)
@@ -47,6 +50,21 @@ namespace SysYust::AST {
         }
 
         /**
+         * @brief 构造 Function 的静态方法
+         */
+        template<typename... Args>
+        requires std::constructible_from<Function, Args...>
+        static const Function& create(Args&&... args) {
+            Function target(std::forward<Args>(args)...);
+            auto [rt, state] = _pool.insert(target);
+            return *rt;
+        }
+
+        static const Function& create(const Type &r, const std::vector<const Type*>& param) {
+            return create<>(r, param);
+        }
+
+        /**
          * @brief 获取函数类型的返回类型
          */
         [[nodiscard]] const Type &getResult() const;
@@ -60,9 +78,17 @@ namespace SysYust::AST {
 
          [[nodiscard]] bool invokable(const std::vector<const Type*> &args) const;
 
+         friend bool operator< (const Function &lhs, const Function &rhs) {
+             if (lhs._returnedType.type() != rhs._returnedType.type()) {
+                 return lhs._returnedType.type() < rhs._returnedType.type();
+             } else {
+                 return lhs._paramType < rhs._paramType;
+             }
+         }
     private:
         const Type &_returnedType; ///< 返回类型
         const std::vector<const Type*> _paramType; ///< 参数列表类型
+        static std::set<Function> _pool;
     };
 } // AST
 

@@ -29,4 +29,6 @@ namespace SysYust::AST {
         return args.size() == _paramType.size() &&
             std::equal(args.begin(), args.end(), _paramType.begin());
     }
+
+    std::set<Function> Function::_pool{};
 } // AST

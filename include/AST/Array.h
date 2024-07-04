@@ -4,10 +4,12 @@
 #define SYSYUST_AST_ARRAY_H
 
 #include <string>
+#include <utility>
 #include <vector>
-#include <unordered_set>
+#include <set>
 #include <algorithm>
 #include <numeric>
+#include <memory>
 
 #include "TypeBase.h"
 
@@ -24,16 +26,16 @@ namespace SysYust::AST {
          * @brief 通过一个编译时不可知的类型标识构造 Array.
          * @param baseType 基类型,必须为 Int 或 Float ,要求在函数外检查.
          */
-        Array(const Type &baseType, std::initializer_list<std::size_t> dimension);
+        Array(const Type &baseType, std::vector<std::size_t> dimension);
 
         /**
          * @brief 使用一个基类型和维度初始化列表构造 Array
          * @tparam T 基类型必须为 Int 或 Float 中的一个
          */
         template<typename T, std::enable_if_t<TypeTrait<T>::isBasicType, bool> = true >
-        Array(const T &baseType, std::initializer_list<std::size_t > dimensions)
-                : _baseType(baseType)
-                , _dimensions(dimensions) {
+        Array(const T &baseType, std::vector<std::size_t> dimensions)
+        : _baseType(baseType)
+        , _dimensions(std::move(dimensions)) {
 
         }
 
@@ -42,7 +44,18 @@ namespace SysYust::AST {
          * @param baseType Array 类型的参数，它的基类型将成为当前对象的基类型
          * @param dimensions 表达维数的初始化列表，它将和 baseType 的维度串联表示当前对象的维度
          */
-        Array(const Array &baseType, std::initializer_list<std::size_t > dimensions);
+        Array(const Array &baseType, const std::vector<std::size_t>& dimensions);
+
+        /**
+         * @brief 构建 Array 指针的静态方法
+         */
+        template<typename BaseType>
+        requires std::constructible_from<Array, const BaseType&, std::vector<std::size_t>>
+        static const Array& create(const BaseType& baseType, std::vector<std::size_t> d) {
+            Array target(baseType, d);
+            auto [rt, state] = _pool.insert(target);
+            return *rt;
+        }
 
         /**
          * @brief 获取当前数组对象的基类型
@@ -67,9 +80,21 @@ namespace SysYust::AST {
         [[nodiscard]] bool match(const SysYust::AST::Array &) const override;
         [[nodiscard]] bool match(const SysYust::AST::Pointer &) const override;
 
+        /**
+         * @brief 定义了一种偏序，用于池
+         */
+        friend bool operator< (const Array& lhs, const Array &rhs) {
+            if (lhs._baseType.type() != rhs._baseType.type()) {
+                return lhs._baseType.type() < rhs._baseType.type();
+            } else {
+                return lhs._dimensions < rhs._dimensions;
+            }
+        }
+
     private:
         const Type &_baseType; ///< 数组的元素类型
         const std::vector<std::size_t> _dimensions; ///< 数组的维度,内层维度在低位。
+        static std::set<Array> _pool;
     };
 
 } // AST
