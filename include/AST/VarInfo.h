@@ -1,7 +1,7 @@
 /// @file 变量的符号信息条目
 
-#ifndef SYSYUST_VARINFO_H
-#define SYSYUST_VARINFO_H
+#ifndef SYSYUST_AST_VARINFO_H
+#define SYSYUST_AST_VARINFO_H
 
 #include <string>
 #include <memory>
@@ -19,8 +19,9 @@ namespace SysYust::AST {
         std::string name;
         const Type *type;
         bool isConstant;
+        bool isParam;
     };
 
 } // AST
 
-#endif //SYSYUST_VARINFO_H
+#endif //SYSYUST_AST_VARINFO_H

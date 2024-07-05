@@ -10,7 +10,7 @@
 
 namespace SysYust::AST {
 
-    class Decl;
+    class FuncDecl;
 
     /**
      * @brief 函数条目信息
@@ -18,7 +18,7 @@ namespace SysYust::AST {
     struct FuncInfo {
         std::string name;
         const Function *type;
-        std::weak_ptr<Decl> node;
+        std::size_t node; ///< 声明它的节点的索引编号
     };
 
 } // AST

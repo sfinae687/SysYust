@@ -6,7 +6,7 @@
 
 namespace SysYust::AST {
     Env::Env(std::shared_ptr<Env> parent)
-    : _parent(parent)
+    : _parent(std::move(parent))
     , var_table(&parent->var_table)
     , func_table(&parent->func_table)
     , _name_id(parent->_name_id) {
