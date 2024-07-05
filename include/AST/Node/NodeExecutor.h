@@ -31,8 +31,6 @@ namespace SysYust::AST {
         virtual void execute(const If&) = 0;
         virtual void execute(const Assign&) = 0;
         virtual void execute(const While&) = 0;
-        virtual void execute(const DoWhile&) = 0;
-        virtual void execute(const For&) = 0;
         virtual void execute(const Break&) = 0;
         virtual void execute(const Continue&) = 0;
         virtual void execute(const Return&) = 0;
@@ -62,8 +60,6 @@ namespace SysYust::AST {
         void execute(const If&) override {}
         void execute(const Assign&) override {}
         void execute(const While&) override {}
-        void execute(const DoWhile&) override {}
-        void execute(const For&) override {}
         void execute(const Break&) override {}
         void execute(const Continue&) override {}
         void execute(const Return&) override {}

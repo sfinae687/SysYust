@@ -8,7 +8,7 @@ set(AST_SOURCE
         Type/Function.cpp
         Env/VarInfo.cpp
         Env/FuncInfo.cpp
-        Node/Env.cpp
+        Env/Env.cpp
         Node/NodeBase.cpp
         Node/Decl.cpp
         Node/NodeExecutor.cpp
@@ -41,6 +41,7 @@ set(AST_SOURCE
         Node/Return.cpp
         Node/Empty.cpp
         Node/Block.cpp
+        SyntaxTree.cpp
 )
 
 add_library(AST ${AST_SOURCE})

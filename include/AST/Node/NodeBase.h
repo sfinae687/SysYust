@@ -1,7 +1,7 @@
 /// @file 节点相关设施
 
-#ifndef SYSYUST_AST_NODE_H
-#define SYSYUST_AST_NODE_H
+#ifndef SYSYUST_AST_NODEBASE_H
+#define SYSYUST_AST_NODEBASE_H
 
 namespace SysYust::AST {
 
@@ -59,4 +59,4 @@ namespace SysYust::AST {
 
 } // AST
 
-#endif //SYSYUST_AST_NODE_H
+#endif //SYSYUST_AST_NODEBASE_H
