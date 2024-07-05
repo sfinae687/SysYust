@@ -46,3 +46,15 @@ TEST(TypeMatchTest, Function) {
     EXPECT_TRUE(match(func0, func2));
     EXPECT_TRUE(match(func0.getResult(), Int_v)) << "Unable to get correct return-type";
 }
+
+TEST(TypeMatchTest, FunctionInvokableTest) {
+    auto &f1 = Function::create(Int_v, {&Int_v});
+    EXPECT_TRUE(f1.invokable({&Int_v}));
+
+    auto &p1 = Pointer::create(Int_v);
+    auto &f2 = Function::create(Int_v, {&p1});
+    auto &a1 = Array::create(Int_v, {1});
+    auto &a2 = Array::create(Int_v, {1, 2});
+    EXPECT_TRUE(f2.invokable({&a1}));
+    EXPECT_FALSE(f2.invokable({&a2}));
+}

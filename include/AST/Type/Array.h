@@ -60,7 +60,7 @@ namespace SysYust::AST {
         /**
          * @brief 获取当前数组对象的基类型
          */
-        [[nodiscard]] const Type& getType() const;
+        [[nodiscard]] const Type& baseType() const;
 
         /**
          * @brief 获取当前数组对象的维度列表

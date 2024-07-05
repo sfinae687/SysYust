@@ -33,7 +33,7 @@ namespace SysYust::AST {
 
     }
 
-    const Type &Array::getType() const {
+    const Type &Array::baseType() const {
         return _baseType;
     }
 
@@ -46,6 +46,29 @@ namespace SysYust::AST {
     }
 
     bool Array::match(const Pointer &rhs) const {
+        auto &pointedType = rhs.getBase();
+        if (pointedType.type() != TypeId::Array) { // 当指向非数组时
+            // 当为一阶数组时，如果基类型匹配，为真
+            if (getRank() == 1) {
+                return pointedType.match(baseType());
+            } else {
+                return false;
+            }
+        } else { // 当指向数组时
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) 经过验证的,所以使用静态转换
+            auto &pointedArray = static_cast<const Array&>(pointedType);
+            if (!pointedArray.baseType().match(baseType())) { // 基类型不匹配
+                return false;
+            } else {
+                if (getRank() - 1 == pointedArray.getRank() ) {
+                    auto &pointedDim = pointedArray.getDimension();
+                    return std::equal(pointedDim.begin(), pointedDim.end(), _dimensions.begin());
+                } else {
+                    return false;
+                }
+            }
+        }
+#if 0
         auto &pointed = rhs.getBase();
         if (pointed.type() != TypeId::Array) {
             return pointed.match(getType());
@@ -65,6 +88,7 @@ namespace SysYust::AST {
                 return false; // 基类型不同，直接返回 false。
             }
         }
+#endif
     }
 
     std::size_t Array::getRank() const {

@@ -27,7 +27,10 @@ namespace SysYust::AST {
 
     bool Function::invokable(const std::vector<const Type *> &args) const {
         return args.size() == _paramType.size() &&
-            std::equal(args.begin(), args.end(), _paramType.begin());
+            std::equal(args.begin(), args.end(), _paramType.begin(),
+                       [](const Type *lhs, const Type *rhs) {
+                            return *lhs == *rhs;
+                        });
     }
 
     std::set<Function> Function::_pool{};
