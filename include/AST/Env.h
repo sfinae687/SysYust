@@ -7,9 +7,9 @@
 #include <memory>
 
 #include "utility/IdAllocator.h"
-#include "SymbolTable.h"
-#include "VarInfo.h"
-#include "FuncInfo.h"
+#include "AST/Env/SymbolTable.h"
+#include "AST/Env/VarInfo.h"
+#include "AST/Env/FuncInfo.h"
 
 namespace SysYust::AST {
 
