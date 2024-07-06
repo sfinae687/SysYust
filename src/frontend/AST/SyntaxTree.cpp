@@ -62,6 +62,19 @@ namespace SysYust::AST {
         _env_map = {};
     }
 
+    bool SyntaxTree::checkComplete() {
+        bool rt = true;
+
+        auto len = _all_nodes.size();
+        for (int i=0; i<len; ++i) {
+            if (!_all_nodes[i]) {
+                LOG_WARN("Node missing at {}", i);
+                rt = false;
+            }
+        }
+        return rt;
+    }
+
     template<std::derived_from<Node> NT>
     NT* SyntaxTree::getNode(std::size_t no) {
         return static_cast<NT*>(_all_nodes[no]);

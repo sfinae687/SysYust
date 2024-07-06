@@ -7,7 +7,7 @@
 
 namespace SysYust {
     namespace AST {
-        BinaryOp::BinaryOp(Type *e_type, BinaryOp::OpType opt, std::size_t lhs, std::size_t rhs)
+        BinaryOp::BinaryOp(const Type *e_type, OpType opt, std::size_t lhs, std::size_t rhs)
         : Expr(e_type, false)
         , type(opt)
         , lhs(lhs)

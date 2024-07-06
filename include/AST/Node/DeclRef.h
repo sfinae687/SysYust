@@ -12,7 +12,7 @@ namespace SysYust::AST {
 
     class DeclRef : public LExpr {
     public:
-        explicit DeclRef(Type *e_type, NumId id);
+        explicit DeclRef(const Type *e_type, NumId id);
 
         void execute(NodeExecutor *e) override;
 

@@ -8,7 +8,7 @@
 #include "AST/Node/NodeExecutor.h"
 
 namespace SysYust::AST {
-    DeclRef::DeclRef(Type *e_type, NumId id)
+    DeclRef::DeclRef(const Type *e_type, NumId id)
     : LExpr(e_type, false)
     , var_id(id) {
         assert(type == &Int_v || type == &Float_v);

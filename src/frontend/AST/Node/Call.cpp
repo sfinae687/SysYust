@@ -6,7 +6,7 @@
 #include "AST/Node/NodeExecutor.h"
 
 namespace SysYust::AST {
-    Call::Call(Type *returnType, NumId id, std::vector<std::size_t> args)
+    Call::Call(const Type *returnType, NumId id, std::vector<std::size_t> args)
     : Expr(returnType)
     , func_info(id)
     , argumentExpr(std::move(args)) {

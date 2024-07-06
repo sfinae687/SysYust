@@ -10,7 +10,11 @@ target_link_libraries(TypeMatchTest GTest::gtest_main AST)
 add_executable(TypeCreateTest TypeCreateTest.cpp)
 target_link_libraries(TypeCreateTest GTest::gtest_main AST)
 
+add_executable(NodeTest NodeTest.cpp)
+target_link_libraries(NodeTest GTest::gtest_main AST)
+
 gtest_discover_tests(BuildSystemTest)
 gtest_discover_tests(LoggerTest)
 gtest_discover_tests(TypeMatchTest)
 gtest_discover_tests(TypeCreateTest)
+gtest_discover_tests(NodeTest)

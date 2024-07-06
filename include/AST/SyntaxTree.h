@@ -79,6 +79,13 @@ namespace SysYust::AST {
          * @brief 将该对象置为初始状态，但是不释放资源
          */
          void reset();
+
+         // 调试用函数
+
+         /**
+          * @brief 检查条目完整性,如果存在确实的节点会返回 false，并输出警报
+          */
+         [[nodiscard]] bool checkComplete();
     private:
         std::shared_ptr<Env> _root_env = std::make_shared<Env>();
         std::shared_ptr<Env> _current_top_env = _root_env;

@@ -13,7 +13,7 @@ namespace SysYust::AST {
     public:
         enum OpType {Add, Sub, Mul, Div, Mod, };
 
-        BinaryOp(Type *e_type, OpType opt, std::size_t lhs, std::size_t rhs);
+        BinaryOp(const Type *e_type, OpType opt, std::size_t lhs, std::size_t rhs);
 
         OpType type;
         std::size_t lhs;

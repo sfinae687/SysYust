@@ -77,8 +77,13 @@ namespace SysYust::AST {
         }
 
         entry_t& seek(NumId id) {
-            auto rt = const_cast<const SymbolTable*>(this)->seek(id);
-            return const_cast<entry_t&>(rt);
+            if (_local_entry.contains(id)) {
+                return _local_entry[id];
+            } else if (_parent && _parent->contains(id)) {
+                return _parent->seek(id);
+            } else {
+                return _local_entry[id];
+            }
         }
 
         SymbolTable *_parent = nullptr;

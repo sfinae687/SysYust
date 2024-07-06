@@ -6,7 +6,7 @@
 #include "AST/Node/NodeExecutor.h"
 
 namespace SysYust::AST {
-    ArrayRef::ArrayRef(Type *type, NumId id, std::vector<std::size_t> sub)
+    ArrayRef::ArrayRef(const Type *type, NumId id, std::vector<std::size_t> sub)
     : LExpr(type, false)
     , var_id(id)
     , subscripts(std::move(sub)) {
