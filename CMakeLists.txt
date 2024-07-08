@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.27)
 project(SysYust VERSION 0.0.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 option(SELF_CONTAINS "let all dependency store in lib/" OFF)
 option(GeneratedDocument "add a target to generate document by doxygen form code comments" ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
 
@@ -46,7 +47,6 @@ add_subdirectory(lib/antlr4-cpp-runtime)
 # 添加本项目的模块
 add_subdirectory(include)
 add_subdirectory(src)
-
 
 # 启用 ctest
 enable_testing()

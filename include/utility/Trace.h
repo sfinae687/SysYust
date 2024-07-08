@@ -68,7 +68,7 @@ namespace SysYust {
          * @brief 获取参数记录
          * @return 参数记录的视图
          */
-        std::string_view getArgRecords() const {
+        [[nodiscard]] std::string_view getArgRecords() const {
             return argRecords;
         }
 
@@ -79,7 +79,7 @@ namespace SysYust {
         std::string argRecords;
     };
 
-    inline  thread_local Trace* Trace::TopTrace = nullptr;
+    inline thread_local Trace* Trace::TopTrace = nullptr;
 
     inline auto format_as(const Trace& t) {
         if (t.depth > 1) {

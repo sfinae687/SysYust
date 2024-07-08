@@ -20,6 +20,7 @@ endforeach ()
 
 # 生成语法文件的cpp目标
 add_custom_command(OUTPUT ${SYSY_HEADER} ${SYSY_SOURCE}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/SysY.g4
     COMMAND antlr4 -o ${CMAKE_CURRENT_SOURCE_DIR}/generated -visitor ${CMAKE_CURRENT_SOURCE_DIR}/SysY.g4
     COMMAND cp ${SYSY_HEADER} ${SYSYUST_PUBLIC_HEADER_DIR}/antlr4_target
 )
@@ -33,4 +34,10 @@ target_include_directories(Antlr4_SysY
         PUBLIC ${SYSYUST_PUBLIC_HEADER_DIR}/antlr4_target
         ${CMAKE_SOURCE_DIR}/lib/antlr4-cpp-runtime/runtime/src
 )
-target_link_libraries(Antlr4_SysY PUBLIC antlr4_runtime-build_static)
+target_link_libraries(Antlr4_SysY PUBLIC antlr4_static)
+
+# AST 模块
+
+add_subdirectory(AST)
+
+target_link_libraries(AST PUBLIC Antlr4_SysY)

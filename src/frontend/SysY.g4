@@ -4,39 +4,70 @@ options { language=Cpp; }
 
 compUnit     : (decl | funcDef)*;
 
-decl         : constDecl | varDecl;
-constDecl    : 'const' type constDef (',' constDef)* ';';
-type         : 'void' | 'int' | 'float';
+decl         : 'const' type constDef (',' constDef)* ';' #constDecl
+             | type varDef (',' varDef)* ';' #varDecl
+             ;
 constDef     : Ident ('[' constExp ']')* '=' constInitVal;
-constInitVal : constExp | '{' (constInitVal (',' constInitVal)*)? '}';
-varDecl      : type varDef (',' varDef)* ';';
-varDef       : Ident ('[' constExp ']')* | Ident ('[' constExp ']')* '=' initVal;
-initVal      : exp | '{' (initVal (',' initVal)*)? '}';
+varDef       : Ident ('[' constExp ']')* #uninitVarDef
+             | Ident ('[' constExp ']')* '=' initVal #initVarDef
+             ;
+initVal      : exp #exprInit
+             | '{' (initVal (',' initVal)*)? '}' #listInit
+             ;
+constExp     : addExp;
+constInitVal : constExp #constInit
+             | '{' (constInitVal (',' constInitVal)*)? '}' #constListInit
+             ;
+
+type         : 'void' | 'int' | 'float';
 funcDef      : type Ident '(' (funcFParams)? ')' block;
 funcFParams  : funcFParam (',' funcFParam)*;
 funcFParam   : type Ident ('[' ']' ('[' exp ']')*)?;
 block        : '{' (blockItem)* '}';
 blockItem    : decl | stmt;
-stmt         : lVal '=' exp ';' | (exp)? ';' | block 
-             | 'if' '(' cond ')' stmt ('else' stmt)?
-             | 'while' '(' cond ')' stmt
-             | 'break' ';' | 'continue' ';'
-             | 'return' (exp)? ';';
+stmt         : lVal '=' exp ';' #Assign
+             | (exp)? ';' #Expr
+             | block #BlockStmt
+             | 'if' '(' cond ')' stmt ('else' stmt)? #If
+             | 'while' '(' cond ')' stmt #While
+             | 'break' ';' #Break
+             | 'continue' ';' #Continue
+             | 'return' (exp)? ';' #Return
+             ;
 exp          : addExp;
 cond         : lOrExp;
 lVal         : Ident ('[' exp ']')*;
-primaryExp   : '(' exp ')' | lVal | number;
-number       : IntConst | FloatConst;
-unaryExp     : primaryExp | Ident '(' funcRParams? ')' | unaryOP unaryExp;
+primaryExp   : '(' exp ')' #closedExpr
+             | lVal #lValValue
+             | number #literalValue
+             ;
+number       : IntConst #IntNumber
+             | FloatConst #FloatNumber
+             ;
+unaryExp     : primaryExp #fromPrimary
+             | Ident '(' funcRParams? ')' #call
+             | unaryOP unaryExp #opUnary
+             ;
 unaryOP      : '+' | '-' | '!';
 funcRParams  : exp (',' exp)*;
-mulExp       : unaryExp | mulExp ('*' | '/' | '%') unaryExp;
-addExp       : mulExp | addExp ('+' | '-') mulExp;
-relExp       : addExp | relExp ('<' | '>' | '<=' | '>=') addExp;
-eqExp        : relExp | eqExp ('==' | '!=') relExp;
-lAndExp      : eqExp | lAndExp '&&' eqExp;
-lOrExp       : lAndExp | lOrExp '||' lAndExp;
-constExp     : addExp;
+mulExp       : unaryExp #fromUnary
+             | mulExp ('*' | '/' | '%') unaryExp #mulOp
+             ;
+addExp       : mulExp #fromMul
+             | addExp ('+' | '-') mulExp #addOp
+             ;
+relExp       : addExp #fromAdd
+             | relExp ('<' | '>' | '<=' | '>=') addExp #relOp
+             ;
+eqExp        : relExp #fromRel
+             | eqExp ('==' | '!=') relExp #eqOp
+             ;
+lAndExp      : eqExp #fromEq
+             | lAndExp '&&' eqExp #lAndOp
+             ;
+lOrExp       : lAndExp #fromLAnd
+             | lOrExp '||' lAndExp #lOrOp
+             ;
 
 Ident        : Nondigit (Nondigit | Digit)*;
 fragment Nondigit     : [a-zA-Z_];

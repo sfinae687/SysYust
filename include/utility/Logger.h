@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 #include <cstdarg>
+#include <format>
 
 #include <fmt/core.h>
 

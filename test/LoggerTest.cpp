@@ -35,7 +35,7 @@ void Recurrence(int n, int i = 0) {
     TRACEPOINT(i, n);
     auto TopTrace = SysYust::Trace::TopTrace;
     ASSERT_EQ(i+1, TopTrace->depth);
-    LOG_TRACE(TopTrace->getArgRecords());
+    LOG_TRACE(fmt::runtime(TopTrace->getArgRecords()));
     ASSERT_EQ(TopTrace, SysYust::Trace::TopTrace);
     if (i < n) {
         return Recurrence(n, i+1);
