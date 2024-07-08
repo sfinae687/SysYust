@@ -5,7 +5,7 @@
 #include "AST/Node/UnaryOp.h"
 
 namespace SysYust::AST {
-    UnaryOp::UnaryOp(const Type *e_type, OpType t, std::size_t s)
+    UnaryOp::UnaryOp(const Type *e_type, OpType t, HNode s)
     : Expr(e_type, false)
     , type(t)
     , subexpr(s) {

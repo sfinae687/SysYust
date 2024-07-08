@@ -13,7 +13,7 @@ namespace SysYust::AST {
 
     class While : public Stmt {
     public:
-        While(std::size_t cond, std::size_t stmt);
+        While(HNode cond, HNode stmt);
 
         void execute(SysYust::AST::NodeExecutor *e) override;
 

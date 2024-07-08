@@ -7,17 +7,17 @@
 #include "AST/SyntaxTree.h"
 
 namespace SysYust::AST {
-    std::size_t SyntaxTree::pushNode() {
+    HNode SyntaxTree::pushNode() {
         return pushNode(nullptr);
     }
 
-    std::size_t SyntaxTree::pushNode(Node *node) {
+    HNode SyntaxTree::pushNode(Node *node) {
         auto rt = _all_nodes.size();
         _all_nodes.push_back(node);
         return rt;
     }
 
-    void SyntaxTree::setNode(std::size_t no, Node *node) {
+    void SyntaxTree::setNode(HNode no, Node *node) {
         if (!_all_nodes[no]) {
             _all_nodes[no] = node;
         } else {
@@ -76,7 +76,7 @@ namespace SysYust::AST {
     }
 
     template<std::derived_from<Node> NT>
-    NT* SyntaxTree::getNode(std::size_t no) {
+    NT* SyntaxTree::getNode(HNode no) {
         return static_cast<NT*>(_all_nodes[no]);
     }
 } // AST

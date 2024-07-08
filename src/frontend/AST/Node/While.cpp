@@ -6,7 +6,7 @@
 #include "AST/Node/While.h"
 
 namespace SysYust::AST {
-    While::While(std::size_t cond, std::size_t stmt)
+    While::While(HNode cond, HNode stmt)
     : Stmt()
     , cond(cond)
     , stmt(stmt) {

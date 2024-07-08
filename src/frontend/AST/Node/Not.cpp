@@ -7,7 +7,7 @@
 
 
 namespace SysYust::AST {
-    Not::Not(std::size_t e)
+    Not::Not(HNode e)
     : CondExpr()
     , subexpr(e) {
 

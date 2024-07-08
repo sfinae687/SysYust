@@ -13,7 +13,7 @@ namespace SysYust::AST {
     public:
         enum OpType {Positive, Negative};
 
-        UnaryOp(const Type *e_type, OpType t, std::size_t s);
+        UnaryOp(const Type *e_type, OpType t, HNode s);
         OpType type;
         std::size_t subexpr;
 

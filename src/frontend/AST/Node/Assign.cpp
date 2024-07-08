@@ -6,7 +6,7 @@
 #include "AST/Node/Assign.h"
 
 namespace SysYust::AST {
-    Assign::Assign(std::size_t l_val, std::size_t r_val)
+    Assign::Assign(HNode l_val, HNode r_val)
     : Stmt()
     , l_val(l_val)
     , r_val(r_val) {

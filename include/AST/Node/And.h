@@ -13,7 +13,7 @@ namespace SysYust::AST {
 
     class And : public CondExpr {
     public:
-        And(std::size_t lhs, std::size_t rhs);
+        And(HNode lhs, HNode rhs);
 
         void execute(NodeExecutor *e) override;
 

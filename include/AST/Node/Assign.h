@@ -13,7 +13,7 @@ namespace SysYust::AST {
 
     class Assign : public Stmt {
     public:
-        Assign(std::size_t l_val, std::size_t r_val);
+        Assign(HNode l_val, HNode r_val);
 
         void execute(SysYust::AST::NodeExecutor *e) override;
 

@@ -13,7 +13,7 @@ namespace SysYust::AST {
 
     class Or : public CondExpr {
     public:
-        Or(std::size_t lhs, std::size_t rhs);
+        Or(HNode lhs, HNode rhs);
 
         void execute(NodeExecutor *e) override;
 

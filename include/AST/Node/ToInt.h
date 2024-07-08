@@ -11,7 +11,7 @@ namespace SysYust::AST {
 
     class ToInt : public Expr {
     public:
-        explicit ToInt(std::size_t operant);
+        explicit ToInt(HNode operant);
 
         void execute(NodeExecutor *e) override;
 

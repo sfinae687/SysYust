@@ -10,7 +10,7 @@ namespace SysYust::AST {
         e->execute(*this);
     }
 
-    ToFloat::ToFloat(std::size_t operant)
+    ToFloat::ToFloat(HNode operant)
     : Expr(&Float_v, false)
     , operant(operant) {
 

@@ -13,7 +13,7 @@ namespace SysYust::AST {
 
     class Not : public CondExpr {
     public:
-        explicit Not(std::size_t e);
+        explicit Not(HNode e);
 
         void execute(NodeExecutor *e) override;
 

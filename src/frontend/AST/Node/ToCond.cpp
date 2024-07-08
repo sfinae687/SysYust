@@ -6,7 +6,7 @@
 #include "AST/Node/ToCond.h"
 
 namespace SysYust::AST {
-    ToCond::ToCond(std::size_t opr)
+    ToCond::ToCond(HNode opr)
     : CondExpr()
     , operant(opr) {
 

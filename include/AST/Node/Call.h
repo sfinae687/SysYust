@@ -16,7 +16,7 @@ namespace SysYust::AST {
 
     class Call : public Expr {
     public:
-        Call(const Type *returnType, NumId id, std::vector<std::size_t> args);
+        Call(const Type *returnType, NumId id, std::vector<HNode> args);
         NumId func_info;
         std::vector<std::size_t> argumentExpr;
 

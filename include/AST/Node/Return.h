@@ -13,7 +13,7 @@ namespace SysYust::AST {
 
     class Return : public Stmt {
     public:
-        explicit Return(std::size_t returned);
+        explicit Return(HNode returned);
 
         void execute(SysYust::AST::NodeExecutor *e) override;
 

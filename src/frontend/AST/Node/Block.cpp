@@ -6,7 +6,7 @@
 #include "AST/Node/Block.h"
 
 namespace SysYust::AST {
-    Block::Block(std::vector<std::size_t> stmts)
+    Block::Block(std::vector<HNode> stmts)
     : Stmt()
     , stmts(std::move(stmts)) {
 

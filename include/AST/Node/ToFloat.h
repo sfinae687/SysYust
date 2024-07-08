@@ -11,7 +11,7 @@ namespace SysYust::AST {
 
     class ToFloat : public Expr {
     public:
-        explicit ToFloat(std::size_t operant);
+        explicit ToFloat(HNode operant);
 
         void execute(NodeExecutor *e) override;
 

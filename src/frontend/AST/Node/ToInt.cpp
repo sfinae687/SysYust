@@ -6,7 +6,7 @@
 #include "AST/Node/NodeExecutor.h"
 
     namespace SysYust::AST {
-        ToInt::ToInt(std::size_t operant)
+        ToInt::ToInt(HNode operant)
         : Expr(&Int_v, false)
         , operant(operant) {
 

@@ -38,24 +38,24 @@ namespace SysYust::AST {
          * @brief 在节点列表末尾添加节点，暂时不指定节点
          * @return 返回该节点的 id
          */
-        std::size_t pushNode();
+        HNode pushNode();
         /**
          * @brief 在节点列表末尾添加节点
          * @param node 添加到末尾的节点
          * @return 返回该节点的 id
          */
-        std::size_t pushNode(Node *node);
+        HNode pushNode(Node *node);
 
         /**
          * @brief 设置指定位置的节点，仅当该位置的指针为 nullptr 有效
          */
-        void setNode(std::size_t no, Node *node);
+        void setNode(HNode no, Node *node);
 
         /**
          * @brief 获取指定索引的节点，无条件转换至 NT* 。
          */
         template<std::derived_from<Node> NT = Node>
-        NT* getNode(std::size_t no);
+        NT* getNode(HNode no);
 
         /**
          * @brief 添加一层 Env

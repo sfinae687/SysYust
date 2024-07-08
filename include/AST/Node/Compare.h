@@ -16,7 +16,7 @@ namespace SysYust::AST {
     public:
         enum CompareType {EQ, NE, GT, GE, LT, LE};
 
-        Compare(CompareType type, std::size_t lhs, std::size_t rhs);
+        Compare(CompareType type, HNode lhs, HNode rhs);
 
         void execute(NodeExecutor *e) override;
 

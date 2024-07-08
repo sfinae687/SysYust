@@ -6,7 +6,7 @@
 #include "AST/Node/NodeExecutor.h"
 
 namespace SysYust::AST {
-    Compare::Compare(Compare::CompareType type, std::size_t lhs, std::size_t rhs)
+    Compare::Compare(CompareType type, HNode lhs, HNode rhs)
     : type(type)
     , lhs(lhs)
     , rhs(rhs) {

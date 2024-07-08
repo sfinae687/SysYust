@@ -3,6 +3,8 @@
 #ifndef SYSYUST_AST_NODEBASE_H
 #define SYSYUST_AST_NODEBASE_H
 
+#include <utility>
+
 namespace SysYust::AST {
 
     // 节点（的引用）在树中保存在顺序容器中，按照索引相互引用。
@@ -43,6 +45,8 @@ namespace SysYust::AST {
 
 
     class NodeExecutor;
+
+    using HNode = std::size_t;
 
     /**
      * @brief 实现节点基类

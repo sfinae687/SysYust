@@ -78,7 +78,7 @@ namespace SysYust::AST {
             }
 
             node->info_id = nameId;
-            LOG_TRACE("constant {}:{} declared", name, )
+//            LOG_TRACE("constant {}:{} declared", name,
             global.tree->setNode(nodeId, node);
         }
 

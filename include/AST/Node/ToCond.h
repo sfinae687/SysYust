@@ -13,7 +13,7 @@ namespace SysYust::AST {
 
     class ToCond : public CondExpr {
     public:
-        explicit ToCond(std::size_t opr);
+        explicit ToCond(HNode opr);
 
         void execute(NodeExecutor *e) override;
 

@@ -12,7 +12,7 @@ namespace SysYust::AST {
 
     class ArrayRef : public LExpr{
     public:
-        ArrayRef(const Type *type, NumId id, std::vector<std::size_t> sub);
+        ArrayRef(const Type *type, NumId id, std::vector<HNode> sub);
 
         void execute(NodeExecutor *e) override;
 

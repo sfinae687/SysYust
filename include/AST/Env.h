@@ -14,7 +14,7 @@
 namespace SysYust::AST {
 
     /**
-     * @brief 保存局部上下文信息,只能堆上分配
+     * @brief 保存局部上下文(符号和符号ID的分配)信息,只能堆上分配
      */
     class Env {
     public:
@@ -25,6 +25,9 @@ namespace SysYust::AST {
 
         std::shared_ptr<Env> getParent() const ;
 
+        /**
+         * @brief 从符号获取Id
+         */
         NumId getId(const name_t& name);
 
         SymbolTable<VarInfo> var_table = {};

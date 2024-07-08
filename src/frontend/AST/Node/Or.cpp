@@ -6,7 +6,7 @@
 #include "AST/Node/Or.h"
 
 namespace SysYust::AST {
-    Or::Or(std::size_t lhs, std::size_t rhs)
+    Or::Or(HNode lhs, HNode rhs)
     : CondExpr()
     , lhs(lhs)
     , rhs(rhs) {

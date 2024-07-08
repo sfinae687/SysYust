@@ -6,7 +6,7 @@
 #include "AST/Node/Return.h"
 
 namespace SysYust::AST {
-    Return::Return(std::size_t returned)
+    Return::Return(HNode returned)
     : Stmt()
     , returned(returned) {
 

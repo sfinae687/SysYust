@@ -10,7 +10,7 @@ namespace SysYust::AST {
         e->execute(*this);
     }
 
-    And::And(std::size_t lhs, std::size_t rhs)
+    And::And(HNode lhs, HNode rhs)
     : CondExpr()
     , lhs(lhs)
     , rhs(rhs) {

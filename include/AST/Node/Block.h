@@ -13,7 +13,7 @@ namespace SysYust::AST {
 
     class Block : public Stmt {
     public:
-        explicit Block(std::vector<std::size_t> stmts);
+        explicit Block(std::vector<HNode> stmts);
 
         void execute(SysYust::AST::NodeExecutor *e) override;
 
