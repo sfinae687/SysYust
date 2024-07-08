@@ -18,12 +18,21 @@ namespace SysYust::AST {
 
     /**
      * @brief 语法树对象，包含了AST的节点结构和符号表等信息
-     * @details 使用默认的拷贝控制使得 SyntaxTree 具有引用语义，析构函数不会释放资源，资源由 release 函数释放.
+     * @details 使用 SyntaxTree 具有资源句柄的语义，仅可移动.
      *
      * 使用这想要完整的访问需要保存语法树对象的引用，当前访问的节点的局部符号表的引用。
      */
     class SyntaxTree {
     public:
+
+        SyntaxTree() = default;
+        SyntaxTree(const SyntaxTree&) = delete;
+        SyntaxTree(SyntaxTree&&) = default;
+        ~SyntaxTree() {
+            for (auto ptr : _all_nodes) {
+                delete ptr;
+            }
+        };
 
         /**
          * @brief 在节点列表末尾添加节点，暂时不指定节点

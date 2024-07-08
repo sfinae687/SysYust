@@ -42,6 +42,7 @@ set(AST_SOURCE
         Node/Empty.cpp
         Node/Block.cpp
         SyntaxTree.cpp
+        SyntaxTreeBuilder.cpp
 )
 
 add_library(AST ${AST_SOURCE})

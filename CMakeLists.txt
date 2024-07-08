@@ -48,7 +48,6 @@ add_subdirectory(lib/antlr4-cpp-runtime)
 add_subdirectory(include)
 add_subdirectory(src)
 
-
 # 启用 ctest
 enable_testing()
 include(GoogleTest)
