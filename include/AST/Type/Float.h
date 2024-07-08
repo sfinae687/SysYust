@@ -8,7 +8,8 @@
 namespace SysYust::AST {
 
     class Float: public TypeBase<Float> {
-
+    public:
+        std::string toString() const noexcept override;
     };
 
     extern const Float Float_v;

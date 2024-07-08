@@ -23,4 +23,8 @@ namespace SysYust::AST {
     }
 
     std::set<Pointer> Pointer::_pool{};
+
+    std::string Pointer::toString() const noexcept {
+        return getBase().toString() + "*";
+    }
 } // AST

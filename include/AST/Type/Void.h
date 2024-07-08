@@ -8,7 +8,8 @@
     namespace SysYust::AST {
 
         class Void: public TypeBase<Void> {
-
+        public:
+            [[nodiscard]] std::string toString() const noexcept override;
         };
 
         extern const Void Void_v;

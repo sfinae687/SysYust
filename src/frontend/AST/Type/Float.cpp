@@ -5,5 +5,10 @@
 #include "AST/Type/Float.h"
 
 namespace SysYust::AST {
+
+    std::string Float::toString() const noexcept {
+        return "float";
+    }
+
     const Float Float_v;
 } // AST

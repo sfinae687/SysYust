@@ -24,9 +24,9 @@ namespace SysYust::AST {
     public:
         /**
          * @brief 通过一个编译时不可知的类型标识构造 Array.
-         * @param baseType 基类型,必须为 Int 或 Float ,要求在函数外检查.
+         * @param baseTypeArg 基类型,必须为 Int 或 Float ,要求在函数外检查.
          */
-        Array(const Type &baseType, std::vector<std::size_t> dimension);
+        Array(const Type &baseTypeArg, std::vector<std::size_t> dimension);
 
         /**
          * @brief 使用一个基类型和维度初始化列表构造 Array
@@ -90,6 +90,8 @@ namespace SysYust::AST {
                 return lhs._dimensions < rhs._dimensions;
             }
         }
+
+        std::string toString() const noexcept override;
 
     private:
         const Type &_baseType; ///< 数组的元素类型

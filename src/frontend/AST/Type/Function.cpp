@@ -1,8 +1,13 @@
 /// @file Function 类型标识的实现
 
 #include <utility>
+#include <format>
+#include <ranges>
 
 #include "AST/Type/Function.h"
+
+namespace ranges = std::ranges;
+namespace views = std::views;
 
 namespace SysYust::AST {
     const Type &Function::getResult() const {
@@ -34,4 +39,16 @@ namespace SysYust::AST {
     }
 
     std::set<Function> Function::_pool{};
+
+    std::string Function::toString() const noexcept {
+        std::string rt = "function(";
+        auto resultType = getResult().toString();
+        rt += getParam().front()->toString();
+        for (auto &type : getParam() | views::drop(1)) {
+            rt += std::format(",{}", type->toString());
+        }
+        rt += ") -> ";
+        rt += resultType;
+        return rt;
+    }
 } // AST

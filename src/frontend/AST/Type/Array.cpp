@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <utility>
+#include <format>
 
 #include "AST/Type/Array.h"
 #include "AST/Type/Pointer.h"
@@ -21,10 +22,10 @@ namespace SysYust::AST {
         }
     }
 
-    Array::Array(const Type &baseType, std::vector<std::size_t> dimension)
-    : _baseType(baseType)
+    Array::Array(const Type &baseTypeArg, std::vector<std::size_t> dimension)
+    : _baseType(baseTypeArg)
     , _dimensions(std::move(dimension)) {
-        assert(baseType.type() == TypeId::Int || baseType.type() == TypeId::Float);
+        assert(baseTypeArg.type() == TypeId::Int || baseTypeArg.type() == TypeId::Float);
     }
 
     Array::Array(const Array &baseType, const std::vector<std::size_t>& dimensions)
@@ -100,5 +101,13 @@ namespace SysYust::AST {
     }
 
     std::set<Array> Array::_pool{};
+
+    std::string Array::toString() const noexcept {
+        auto rt = baseType().toString();
+        for (auto d : getDimension()) {
+            rt += std::format("[{}]", d);
+        }
+        return rt;
+    }
 
 } // AST

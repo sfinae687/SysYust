@@ -43,6 +43,9 @@ namespace SysYust::AST {
         [[nodiscard]] bool match(const SysYust::AST::Pointer &) const override;
         [[nodiscard]] bool match(const SysYust::AST::Array &) const override;
 
+        /**
+         * @brief 小于比较运算
+         */
         friend bool operator< (const Pointer &lhs, const Pointer &rhs) {
             auto lt = lhs._baseType.type();
             auto rt = rhs._baseType.type();
@@ -54,6 +57,9 @@ namespace SysYust::AST {
                 return lhs._baseType.type() < rhs._baseType.type();
             }
         }
+
+        [[nodiscard]] std::string toString() const noexcept override;
+
     private:
         const Type &_baseType; ///< 基类型，为Int，Float，Array之一
         static std::set<Pointer> _pool;

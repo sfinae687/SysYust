@@ -8,7 +8,8 @@
 namespace SysYust::AST {
 
     class Int: public TypeBase<Int> {
-
+    public:
+        [[nodiscard]] std::string toString() const noexcept override;
     };
 
     extern const Int Int_v;

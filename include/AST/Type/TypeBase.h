@@ -122,6 +122,11 @@ namespace SysYust::AST {
             return AST::match(lhs, rhs);
         }
 
+        /**
+         * @brief 获取一个人类可读的类型字符串
+         */
+        [[nodiscard]] virtual std::string toString() const noexcept = 0;
+
     };
 
     /**
@@ -163,6 +168,7 @@ namespace SysYust::AST {
         [[nodiscard]] bool match(const D &) const override {
             return true;
         }
+
     };
 
 

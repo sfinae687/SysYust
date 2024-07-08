@@ -1,3 +1,9 @@
+function(AddGTestFromFile testName)
+    add_executable(${testName} ${testName}.cpp)
+    target_link_libraries(${testName} PRIVATE GTest::gtest_main)
+    gtest_discover_tests(${testName})
+endfunction()
+
 add_executable(BuildSystemTest BuildSystemTest.cpp)
 target_link_libraries(BuildSystemTest gtest GTest::gtest_main fmt::fmt argparse)
 
@@ -12,6 +18,9 @@ target_link_libraries(TypeCreateTest GTest::gtest_main AST)
 
 add_executable(NodeTest NodeTest.cpp)
 target_link_libraries(NodeTest GTest::gtest_main AST)
+
+AddGTestFromFile(TypeToStringTest)
+target_link_libraries(TypeToStringTest PUBLIC AST)
 
 gtest_discover_tests(BuildSystemTest)
 gtest_discover_tests(LoggerTest)

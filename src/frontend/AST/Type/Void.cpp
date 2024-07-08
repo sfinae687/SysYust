@@ -4,4 +4,8 @@
 
 namespace SysYust::AST {
     const Void Void_v;
+
+    std::string Void::toString() const noexcept {
+        return "void";
+    }
 } // AST
