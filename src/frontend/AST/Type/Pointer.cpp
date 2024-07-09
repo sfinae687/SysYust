@@ -27,4 +27,34 @@ namespace SysYust::AST {
     std::string Pointer::toString() const noexcept {
         return getBase().toString() + "*";
     }
+
+    const Type &Pointer::index(std::size_t layer) const {
+        if (layer == 0) {
+            return *this;
+        } else if (layer == 1) {
+            return _baseType;
+        } else {
+            assert(getBase().type() == TypeId::Array);
+            auto &pointedArray = static_cast<const Array&>(getBase());
+            return pointedArray.index(layer-1);
+        }
+    }
+
+    std::size_t Pointer::offsetWith(const std::span<std::size_t> &ind) const {
+        assert(!ind.empty());
+        if (getBase().type() == TypeId::Array) {
+            auto &pointedArray = static_cast<const Array&>(getBase());
+            auto &dim = pointedArray.getDimension();
+            auto block = std::reduce(dim.begin(), dim.end(), 1ull, std::multiplies{});
+            if (ind.size() > 1) {
+                auto baseOffset = pointedArray.offsetWith({ind.begin()+1, ind.end()});
+                return block * ind.front() + baseOffset;
+            } else {
+                return block * ind.front();
+            }
+        } else {
+            assert(ind.size() == 1);
+            return ind.front();
+        }
+    }
 } // AST

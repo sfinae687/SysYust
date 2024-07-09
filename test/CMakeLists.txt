@@ -22,6 +22,9 @@ target_link_libraries(NodeTest GTest::gtest_main AST)
 AddGTestFromFile(TypeToStringTest)
 target_link_libraries(TypeToStringTest PUBLIC AST)
 
+AddGTestFromFile(ArrayIndexTest)
+target_link_libraries(ArrayIndexTest PUBLIC AST)
+
 gtest_discover_tests(BuildSystemTest)
 gtest_discover_tests(LoggerTest)
 gtest_discover_tests(TypeMatchTest)

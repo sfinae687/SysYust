@@ -3,9 +3,15 @@
 #include <cassert>
 #include <utility>
 #include <format>
+#include <ranges>
 
 #include "AST/Type/Array.h"
 #include "AST/Type/Pointer.h"
+#include "AST/Type/Void.h"
+#include "utility/Logger.h"
+
+namespace ranges = std::ranges;
+namespace views = std::views;
 
 namespace SysYust::AST {
     namespace {
@@ -108,6 +114,35 @@ namespace SysYust::AST {
             rt += std::format("[{}]", d);
         }
         return rt;
+    }
+
+    const Type &Array::index(std::size_t layer) const {
+        if (layer == 0) {
+            return *this;
+        } else if (layer == getRank()) {
+            return baseType();
+        } else if (layer < getRank()) {
+            return Array::create(baseType(), {_dimensions.begin(), _dimensions.end()-layer});
+        } else {
+            LOG_ERROR("The number of index is more than the rank of array");
+            return Void_v;
+        }
+    }
+
+    std::size_t Array::offsetWith(const std::span<std::size_t> &ind) const {
+        auto layer = ind.size();
+        auto toRef = _dimensions.end()-layer; // 最低层待解引用的数组
+
+        auto blockSize = std::reduce(_dimensions.begin(), toRef, 1ull, std::multiplies{});
+        auto indView = ind | views::reverse;
+        std::span dimView(toRef, _dimensions.end());
+        assert(dimView.size() == indView.size());
+        std::size_t index = 0;
+        for (int i=0; i<layer; ++i) {
+            index += blockSize * indView[i];
+            blockSize *= dimView[i];
+        }
+        return index;
     }
 
 } // AST
