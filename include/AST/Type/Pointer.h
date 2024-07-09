@@ -4,6 +4,8 @@
 #define SYSYUST_AST_POINTER_H
 
 #include <set>
+#include <span>
+
 #include "TypeBase.h"
 #include "Array.h"
 
@@ -37,8 +39,21 @@ namespace SysYust::AST {
 
         /**
          * @brief 获取指向的类型
+         * @todo 重构为 baseType
          */
         [[nodiscard]] const Type& getBase() const;
+
+        /**
+         * @brief 解引用 layer 层后的类型
+         */
+        [[nodiscard]] const Type& index(std::size_t layer) const;
+
+        /**
+         * @brief 使用给定索引后产生的偏移量,外层数组的索引位于前
+         */
+        [[nodiscard]] std::size_t offsetWith(const std::span<std::size_t>& ind) const;
+
+
 
         [[nodiscard]] bool match(const SysYust::AST::Pointer &) const override;
         [[nodiscard]] bool match(const SysYust::AST::Array &) const override;

@@ -6,6 +6,8 @@
 
 #include "AST/Type/Array.h"
 #include "AST/Type/Pointer.h"
+#include "AST/Type/Void.h"
+#include "utility/Logger.h"
 
 namespace SysYust::AST {
     namespace {
@@ -108,6 +110,36 @@ namespace SysYust::AST {
             rt += std::format("[{}]", d);
         }
         return rt;
+    }
+
+    const Type &Array::index(std::size_t layer) const {
+        if (layer == getRank()) {
+            return baseType();
+        } else if (layer < getRank()) {
+            return Array::create(baseType(), {_dimensions.begin(), _dimensions.begin()+layer});
+        } else {
+            LOG_ERROR("The number of index is more than the rank of array");
+            return Void_v;
+        }
+    }
+
+    std::size_t Array::offsetWith(const std::span<std::size_t> &ind) const {
+        auto layer = ind.size();
+        auto basicSize =
+                std::accumulate(_dimensions.begin(), std::prev(_dimensions.end(), layer), 1ull, std::multiplies{});
+        auto basicDim = ind.size() - layer - 1;
+
+        auto currentBlockSize = basicSize;
+        std::size_t currentOffset = 0;
+        for (int i=0; i<layer; ++i) {
+            auto currentInd = ind[layer-1-i];
+            auto currentD = _dimensions[basicDim+i];
+            assert(currentInd < currentD);
+
+            currentOffset += currentBlockSize * currentInd;
+            currentBlockSize *= currentD;
+        }
+        return currentOffset;
     }
 
 } // AST

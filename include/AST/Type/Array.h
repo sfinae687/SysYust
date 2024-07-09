@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <numeric>
 #include <memory>
+#include <span>
 
 #include "TypeBase.h"
 
@@ -77,6 +78,16 @@ namespace SysYust::AST {
          */
         [[nodiscard]] std::size_t getExtent(std::size_t) const;
 
+        /**
+         * @brief 解引用 layer 层后的类型
+         */
+        [[nodiscard]] const Type& index(std::size_t layer) const;
+
+        /**
+         * @brief 使用给定索引后产生的偏移量,外层数组的索引位于前
+         */
+        [[nodiscard]] std::size_t offsetWith(const std::span<std::size_t> &ind) const;
+
         [[nodiscard]] bool match(const SysYust::AST::Array &) const override;
         [[nodiscard]] bool match(const SysYust::AST::Pointer &) const override;
 
@@ -91,7 +102,7 @@ namespace SysYust::AST {
             }
         }
 
-        std::string toString() const noexcept override;
+        [[nodiscard]] std::string toString() const noexcept override;
 
     private:
         const Type &_baseType; ///< 数组的元素类型
