@@ -24,3 +24,6 @@ doc/generated
 # 忽略日志
 log/*
 *.log
+
+# 忽略备份文件
+*.backup

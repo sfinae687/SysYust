@@ -13,6 +13,9 @@ include(FetchContent)
 
 set(DOXYGEN_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
 set(SYSYUST_PUBLIC_HEADER_DIR ${CMAKE_SOURCE_DIR}/include)
+set(ScriptDir ${CMAKE_SOURCE_DIR}/script)
+
+find_package(Python COMPONENTS Interpreter)
 
 include_directories(include)
 
