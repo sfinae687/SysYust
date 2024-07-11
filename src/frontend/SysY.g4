@@ -51,16 +51,16 @@ unaryExp     : primaryExp #fromPrimary
 unaryOP      : '+' | '-' | '!';
 funcRParams  : exp (',' exp)*;
 mulExp       : unaryExp #fromUnary
-             | mulExp ('*' | '/' | '%') unaryExp #mulOp
+             | mulExp op=('*' | '/' | '%') unaryExp #mulOp
              ;
 addExp       : mulExp #fromMul
-             | addExp ('+' | '-') mulExp #addOp
+             | addExp op=('+' | '-') mulExp #addOp
              ;
 relExp       : addExp #fromAdd
-             | relExp ('<' | '>' | '<=' | '>=') addExp #relOp
+             | relExp op=('<' | '>' | '<=' | '>=') addExp #relOp
              ;
 eqExp        : relExp #fromRel
-             | eqExp ('==' | '!=') relExp #eqOp
+             | eqExp op=('==' | '!=') relExp #eqOp
              ;
 lAndExp      : eqExp #fromEq
              | lAndExp '&&' eqExp #lAndOp

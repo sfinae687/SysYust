@@ -719,6 +719,7 @@ public:
   public:
     MulOpContext(MulExpContext *ctx);
 
+    antlr4::Token *op = nullptr;
     MulExpContext *mulExp();
     UnaryExpContext *unaryExp();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -757,6 +758,7 @@ public:
   public:
     AddOpContext(AddExpContext *ctx);
 
+    antlr4::Token *op = nullptr;
     AddExpContext *addExp();
     MulExpContext *mulExp();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -806,6 +808,7 @@ public:
   public:
     RelOpContext(RelExpContext *ctx);
 
+    antlr4::Token *op = nullptr;
     RelExpContext *relExp();
     AddExpContext *addExp();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;
@@ -833,6 +836,7 @@ public:
   public:
     EqOpContext(EqExpContext *ctx);
 
+    antlr4::Token *op = nullptr;
     EqExpContext *eqExp();
     RelExpContext *relExp();
     virtual void enterRule(antlr4::tree::ParseTreeListener *listener) override;

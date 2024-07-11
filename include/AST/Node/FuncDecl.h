@@ -21,6 +21,7 @@ namespace SysYust::AST {
 
         std::size_t entry_node = -1; ///< 类型一定是 Block
         NumId info_id = -1;
+        std::vector<HNode> param{}; ///< ParamDecl s;
         /* std::shared_ptr<Env> local_env = nullptr; */ ///< @todo 待决
     };
 

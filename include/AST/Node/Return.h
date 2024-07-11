@@ -17,7 +17,7 @@ namespace SysYust::AST {
 
         void execute(SysYust::AST::NodeExecutor *e) override;
 
-        std::size_t returned;
+        std::size_t returned = -1;
     };
 
 } // AST

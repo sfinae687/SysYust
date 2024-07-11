@@ -16,4 +16,12 @@ namespace SysYust::AST {
     void If::execute(NodeExecutor *e) {
         e->execute(*this);
     }
+
+    If::If(std::size_t cond, HNode stmts, HNode else_stmts)
+    : Stmt()
+    , cond(cond)
+    , stmts(stmts)
+    , else_stmt(else_stmts) {
+
+    }
 } // AST
