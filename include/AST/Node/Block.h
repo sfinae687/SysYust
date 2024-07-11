@@ -17,7 +17,7 @@ namespace SysYust::AST {
 
         void execute(SysYust::AST::NodeExecutor *e) override;
 
-        std::vector<std::size_t> stmts;
+        std::vector<HNode> stmts;
     };
 
 } // AST

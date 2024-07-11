@@ -52,7 +52,9 @@ namespace SysYust::AST {
             return Int_v;
         } else if (type == "float") {
             return Float_v;
-        } else {
+        } else if (type == "void") {
+            return Void_v;
+        } else{
             /// @todo 添加一个匹配，使得允许某些类型确实
 
             LOG_ERROR("Unrecognised type {}", type);
@@ -248,6 +250,27 @@ namespace SysYust::AST {
 
 
     // 初始化
+    std::any SyntaxTreeBuilder::Visitor::visitConstListInit(SysYParser::ConstListInitContext *ctx) {
+        auto vaList = ctx->constInitVal()
+        | views::transform([&](auto i) {
+            return std::any_cast<HNode>(i->accept(this));
+        });
+        auto nodeId = global.tree->pushNode();
+        auto node = new List(std::vector(vaList.begin(), vaList.end()));
+        global.tree->setNode(nodeId, node);
+        return nodeId;
+    }
+
+    std::any SyntaxTreeBuilder::Visitor::visitListInit(SysYParser::ListInitContext *ctx) {
+        auto vaList = ctx->initVal()
+        | views::transform([&](auto i) {
+            return std::any_cast<HNode>(i->accept(this));
+        });
+        auto nodeId = global.tree->pushNode();
+        auto node = new List(std::vector(vaList.begin(), vaList.end()));
+        global.tree->setNode(nodeId, node);
+        return nodeId;
+    }
 
     // 表达式计算
 
@@ -544,6 +567,161 @@ namespace SysYust::AST {
         rhsId = convertToCond(rhsId);
 
         return global.tree->pushNode(new Or(lhsId, rhsId));
+    }
+
+    // 函数声明
+
+    std::any SyntaxTreeBuilder::Visitor::visitFuncDef(SysYParser::FuncDefContext *ctx) {
+        FuncInfo info;
+        auto funcDeclId = global.tree->pushNode();
+        auto funcDeclNode = new FuncDecl;
+
+        info.name = ctx->Ident()->getText();
+        info.node = funcDeclId;
+
+        auto nameId = global.currentEnv->getId(info.name);
+        funcDeclNode->info_id = nameId;
+
+        auto &resultType = toType(ctx->type()->getText());
+
+        // 处理形参并获取形参类型
+        global.currentEnv = global.tree->pushEnv();
+        auto params = ctx->funcFParams();
+        funcDeclNode->param = std::any_cast<std::vector<HNode>>(params->accept(this));
+        auto paramTypes = funcDeclNode->param
+        | views::transform([&](auto i) {
+            auto paramId = global.tree->getNode<ParamDecl>(i)->info_id;
+            return global.currentEnv->var_table.getInfo(paramId).type;
+        });
+
+        auto &fType = Function::create(resultType, {paramTypes.begin(), paramTypes.end()});
+        info.type = &fType;
+        // 添加符号表
+        global.currentEnv->getParent()->func_table.setInfo(nameId, info);
+
+
+        // 处理函数体
+        auto body = ctx->block();
+        funcDeclNode->entry_node = std::any_cast<HNode>(body->accept(this));
+
+        global.tree->setupEnv(funcDeclNode, global.currentEnv);
+        global.currentEnv = global.tree->popEnv();
+        // 添加节点
+        global.tree->setNode(funcDeclId, funcDeclNode);
+        return funcDeclId;
+    }
+
+    // 形参列表声明
+    std::any SyntaxTreeBuilder::Visitor::visitFuncFParams(SysYParser::FuncFParamsContext *ctx) {
+        auto funcParamNode = ctx->funcFParam()
+        | views::transform([&](auto i) {
+            return std::any_cast<HNode>(i->accept(this));
+        });
+        return std::vector{funcParamNode.begin(), funcParamNode.end()};
+    }
+
+    // 形参
+    std::any SyntaxTreeBuilder::Visitor::visitFuncFParam(SysYParser::FuncFParamContext *ctx) {
+        auto &baseType = toType(ctx->type()->getText());
+
+        // 构建类型
+        auto isPointer = ctx->subscript == nullptr;
+        const Type *type;
+        if (!isPointer) {
+            type = &baseType;
+        } else {
+            auto innerArrInd = ctx->exp();
+            if (innerArrInd.empty()) {
+                type = &Pointer::create(baseType);
+            } else {
+                auto innerArrNum = innerArrInd
+                | views::transform([&](auto i) {
+                    return std::any_cast<HNode>(i->accept(this));
+                })
+                | views::reverse
+                | views::transform([&](auto i) {
+                    return std::get<std::int32_t>(eval.compute(i));
+                });
+                auto &arr = Array::create(baseType, {innerArrNum.begin(), innerArrNum.end()});
+                type = &Pointer::create(arr);
+            }
+        };
+
+        VarInfo info;
+        info.name = ctx->Ident()->getText();
+        info.type = type;
+        info.isConstant = false;
+        info.isParam = true;
+        auto nodeId = global.tree->pushNode();
+        auto node = new ParamDecl;
+        node->info_id = global.currentEnv->getId(info.name);
+        info.decl = nodeId;
+        global.tree->setNode(nodeId, node);
+        return nodeId;
+    }
+
+    // 语句
+    std::any SyntaxTreeBuilder::Visitor::visitBlock(SysYParser::BlockContext *ctx) {
+        auto nodeId = global.tree->pushNode();
+        global.currentEnv = global.tree->pushEnv();
+        auto item = ctx->blockItem()
+        | views::transform([&](auto i) {
+            return std::any_cast<HNode>(i->accept(this));
+        });
+        auto node = new Block({item.begin(), item.end()});
+        global.tree->setNode(nodeId, node);
+        global.tree->setupEnv(node, global.currentEnv);
+        global.currentEnv = global.tree->popEnv();
+        return nodeId;
+    }
+
+    std::any SyntaxTreeBuilder::Visitor::visitAssign(SysYParser::AssignContext *ctx) {
+        auto nodeId = global.tree->pushNode();
+        auto lhsCtx = ctx->lVal();
+        auto rhsCtx = ctx->exp();
+        auto lhsId = std::any_cast<HNode>(lhsCtx->accept(this));
+        auto rhsId = std::any_cast<HNode>(rhsCtx->accept(this));
+        auto node = new Assign(lhsId, rhsId);
+        global.tree->setNode(nodeId, node);
+        return nodeId;
+    }
+
+    std::any SyntaxTreeBuilder::Visitor::visitIf(SysYParser::IfContext *ctx) {
+        auto nodeId = global.tree->pushNode();
+        auto condId = std::any_cast<HNode>(ctx->cond()->accept(this));
+        auto stmt = std::any_cast<HNode>(ctx->stmt(0)->accept(this));
+        HNode else_stmt = -1;
+        if (ctx->stmt(1)) {
+            else_stmt = std::any_cast<HNode>(ctx->stmt(1)->accept(this));
+        }
+        auto node = new If(condId, stmt, else_stmt);
+        global.tree->setNode(nodeId, node);
+        return nodeId;
+    }
+
+    std::any SyntaxTreeBuilder::Visitor::visitWhile(SysYParser::WhileContext *ctx) {
+        auto nodeId = global.tree->pushNode();
+        auto condId = std::any_cast<HNode>(ctx->cond()->accept(this));
+        auto bodyId = std::any_cast<HNode>(ctx->cond()->accept(this));
+        auto node = new While(condId, bodyId);
+        global.tree->setNode(nodeId, node);
+        return nodeId;
+    }
+
+    std::any SyntaxTreeBuilder::Visitor::visitContinue(SysYParser::ContinueContext *ctx) {
+        return global.tree->pushNode(new Continue);
+    }
+
+    std::any SyntaxTreeBuilder::Visitor::visitBreak(SysYParser::BreakContext *ctx) {
+        return global.tree->pushNode(new Break);
+    }
+
+    std::any SyntaxTreeBuilder::Visitor::visitReturn(SysYParser::ReturnContext *ctx) {
+        auto nodeId = global.tree->pushNode();
+        auto expId = std::any_cast<HNode>(ctx->exp()->accept(this));
+        auto node = new Return(expId);
+        global.tree->setNode(nodeId, node);
+        return nodeId;
     }
 
 } // AST
