@@ -46,9 +46,7 @@ namespace SysYust::AST {
     // 工具函数
 
     const Type &SyntaxTreeBuilder::Visitor::toType(std::string_view type) {
-        if (type == "void") {
-            return Void_v;
-        } else if (type == "int") {
+        if (type == "int") {
             return Int_v;
         } else if (type == "float") {
             return Float_v;
@@ -230,7 +228,7 @@ namespace SysYust::AST {
             info.isConstant = false;
             info.isParam = false;
             auto varNode = new VarDecl();
-            if constexpr (std::same_as<decltype(ctx), SysYParser::InitVarDefContext>) {
+            if constexpr (std::same_as<std::remove_cvref_t<decltype(ctx)>, SysYParser::InitVarDefContext>) {
                 varNode->init_expr = std::any_cast<HNode>(def_ctx.initVal->accept(this));
             }
             varNode->info_id = infoId;
@@ -238,6 +236,7 @@ namespace SysYust::AST {
             global.currentEnv->var_table.setInfo(infoId, info);
             varNodes.push_back(info.decl);
         };
+        //NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
         for (auto def : ctx->varDef()) {
             if (typeid(def) == typeid(SysYParser::UninitVarDefContext)) {
                 impl(*static_cast<SysYParser::UninitVarDefContext*>(def));
@@ -245,6 +244,7 @@ namespace SysYust::AST {
                 impl(*static_cast<SysYParser::InitVarDefContext*>(def));
             }
         }
+        //NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
         return varNodes;
     }
 
@@ -403,10 +403,9 @@ namespace SysYust::AST {
         }
 
         // 准备节点
-        auto callId = global.tree->pushNode();
         auto callNode = new Call(&resultType, funcId, std::move(argumentExprNodeId));
-        global.tree->setNode(callId, callNode);
-        return callId;
+        global.tree->setNode(callNodeId, callNode);
+        return callNodeId;
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitOpUnary(SysYParser::OpUnaryContext *ctx) {
@@ -460,7 +459,9 @@ namespace SysYust::AST {
             ArrayRef *refNode;
 
             // 构造节点
+            // NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
             if (varType.type() == TypeId::Array) {
+                //
                 auto &arrType = static_cast<const Array&>(varType);
                 auto &targetType = arrType.index(indexExpr.size());
                 refNode = new ArrayRef(&targetType, varId, {subexpr.begin(), subexpr.end()});
@@ -472,6 +473,7 @@ namespace SysYust::AST {
                 LOG_ERROR("Unexpected type indexed: the type is {}", varType.toString());
                 std::exit(EXIT_FAILURE);
             }
+            // NOLINTEND(cppcoreguidelines-pro-type-static-cast-downcast)
 
             global.tree->setNode(refId, refNode);
             return refId;
