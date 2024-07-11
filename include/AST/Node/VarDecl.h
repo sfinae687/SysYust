@@ -7,6 +7,7 @@
 
 #include <variant>
 #include <vector>
+#include <optional>
 
 #include "utility/IdAllocator.h"
 #include "NodeBase.h"
@@ -19,7 +20,7 @@ namespace SysYust::AST {
         void execute(NodeExecutor *e) override;
 
         NumId info_id = -1;
-        std::variant<std::monostate, std::size_t, std::vector<std::size_t>> init_expr;
+        std::optional<HNode> init_expr; //为 expr 或 list
     };
 
 } // AST

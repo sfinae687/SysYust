@@ -17,7 +17,7 @@ namespace SysYust::AST {
         void execute(NodeExecutor *e) override;
 
         NumId var_id;
-        std::vector<std::size_t> subscripts;
+        std::vector<HNode> subscripts;
     };
 
 } // AST

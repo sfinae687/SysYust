@@ -37,5 +37,6 @@
 #include "Node/Empty.h"
 #include "Node/Block.h"
 #include "Node/NodeExecutor.h"
+#include "Node/List.h"
 
 #endif //SYSYUST_AST_NODE_H

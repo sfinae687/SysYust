@@ -10,7 +10,7 @@
 
 namespace SysYust::AST {
 
-    class Decl;
+    using HNode = std::size_t;
 
     /**
      * @brief 变量符号信息条目
@@ -18,6 +18,7 @@ namespace SysYust::AST {
     struct VarInfo {
         std::string name;
         const Type *type;
+        HNode decl;
         bool isConstant;
         bool isParam;
     };

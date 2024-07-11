@@ -36,6 +36,7 @@ namespace SysYust::AST {
         virtual void execute(const Return&) = 0;
         virtual void execute(const Block&) = 0;
         virtual void execute(const Empty&) = 0;
+        virtual void execute(const List&) = 0;
     };
 
     class NodeExecutorBase : public NodeExecutor {
@@ -65,6 +66,7 @@ namespace SysYust::AST {
         void execute(const Return&) override {}
         void execute(const Block&) override {}
         void execute(const Empty&) override {}
+        void execute(const SysYust::AST::List &) override {};
     };
 
 } // AST

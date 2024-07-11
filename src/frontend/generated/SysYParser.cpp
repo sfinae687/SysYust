@@ -2887,10 +2887,11 @@ SysYParser::MulExpContext* SysYParser::mulExp(int precedence) {
 
         if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
         setState(292);
+        antlrcpp::downCast<MulOpContext *>(_localctx)->op = _input->LT(1);
         _la = _input->LA(1);
         if (!((((_la & ~ 0x3fULL) == 0) &&
           ((1ULL << _la) & 58720256) != 0))) {
-        _errHandler->recoverInline(this);
+          antlrcpp::downCast<MulOpContext *>(_localctx)->op = _errHandler->recoverInline(this);
         }
         else {
           _errHandler->reportMatch(this);
@@ -3029,11 +3030,12 @@ SysYParser::AddExpContext* SysYParser::addExp(int precedence) {
 
         if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
         setState(303);
+        antlrcpp::downCast<AddOpContext *>(_localctx)->op = _input->LT(1);
         _la = _input->LA(1);
         if (!(_la == SysYParser::T__19
 
         || _la == SysYParser::T__20)) {
-        _errHandler->recoverInline(this);
+          antlrcpp::downCast<AddOpContext *>(_localctx)->op = _errHandler->recoverInline(this);
         }
         else {
           _errHandler->reportMatch(this);
@@ -3172,10 +3174,11 @@ SysYParser::RelExpContext* SysYParser::relExp(int precedence) {
 
         if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
         setState(314);
+        antlrcpp::downCast<RelOpContext *>(_localctx)->op = _input->LT(1);
         _la = _input->LA(1);
         if (!((((_la & ~ 0x3fULL) == 0) &&
           ((1ULL << _la) & 1006632960) != 0))) {
-        _errHandler->recoverInline(this);
+          antlrcpp::downCast<RelOpContext *>(_localctx)->op = _errHandler->recoverInline(this);
         }
         else {
           _errHandler->reportMatch(this);
@@ -3314,11 +3317,12 @@ SysYParser::EqExpContext* SysYParser::eqExp(int precedence) {
 
         if (!(precpred(_ctx, 1))) throw FailedPredicateException(this, "precpred(_ctx, 1)");
         setState(325);
+        antlrcpp::downCast<EqOpContext *>(_localctx)->op = _input->LT(1);
         _la = _input->LA(1);
         if (!(_la == SysYParser::T__29
 
         || _la == SysYParser::T__30)) {
-        _errHandler->recoverInline(this);
+          antlrcpp::downCast<EqOpContext *>(_localctx)->op = _errHandler->recoverInline(this);
         }
         else {
           _errHandler->reportMatch(this);

@@ -37,11 +37,11 @@ namespace SysYust::AST {
         return newEvn;
     }
 
-    std::shared_ptr<Env> SyntaxTree::topEnv() {
+    std::shared_ptr<Env> SyntaxTree::topEnv() const {
         return _current_top_env;
     }
 
-    std::shared_ptr<Env> SyntaxTree::seekEnv(Node *n) {
+    std::shared_ptr<Env> SyntaxTree::seekEnv(Node *n) const {
         return _env_map.at(n);
     }
 
@@ -62,7 +62,7 @@ namespace SysYust::AST {
         _env_map = {};
     }
 
-    bool SyntaxTree::checkComplete() {
+    bool SyntaxTree::checkComplete() const {
         bool rt = true;
 
         auto len = _all_nodes.size();
@@ -75,8 +75,37 @@ namespace SysYust::AST {
         return rt;
     }
 
+    std::variant<std::int32_t, float> SyntaxTree::getLit(HNode n) {
+        auto e = getNode<Expr>(n);
+        if (typeid(e) == typeid(FloatLiteral)) {
+            auto fe = static_cast<FloatLiteral*>(e);
+            return fe->value;
+        } else if (typeid(e) == typeid(IntLiteral)) {
+            auto ie = static_cast<IntLiteral*>(e);
+            return ie->value;
+        } else {
+            LOG_ERROR("Node isn't a literal");
+            return {};
+        }
+    }
+
+    std::int32_t SyntaxTree::getIntLit(HNode n) {
+        auto e = getNode<IntLiteral>(n);
+        return e->value;
+    }
+
+    float SyntaxTree::getFloatLit(HNode n) {
+        auto e = getNode<FloatLiteral>(n);
+        return e->value;
+    }
+
+    std::vector<HNode> SyntaxTree::getList(HNode n) {
+        auto e = getNode<List>(n);
+        return e->vals;
+    }
+
     template<std::derived_from<Node> NT>
-    NT* SyntaxTree::getNode(HNode no) {
+    NT* SyntaxTree::getNode(HNode no) const {
         return static_cast<NT*>(_all_nodes[no]);
     }
 } // AST

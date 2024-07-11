@@ -16,6 +16,8 @@ namespace SysYust::AST {
     class FuncDecl;
     class ParamDecl;
 
+    class List;
+
     class Stmt;
         class Expr;
             class IntLiteral;

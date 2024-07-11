@@ -5,10 +5,11 @@
 #ifndef SYSYUST_AST_SYNTAXTREEBUILDER_H
 #define SYSYUST_AST_SYNTAXTREEBUILDER_H
 
-#include <SysYBaseVisitor.h>
-#include <SysYParser.h>
+#include "SysYBaseVisitor.h"
+#include "SysYParser.h"
 
 #include "SyntaxTree.h"
+#include "ConstantEvaluator.h"
 
 namespace SysYust::AST {
 
@@ -38,15 +39,56 @@ namespace SysYust::AST {
 
             // 结构
 
+            // 整个翻译单元
             std::any visitCompUnit(SysYParser::CompUnitContext *ctx) override;
+            // 常量声明
             std::any visitConstDecl(SysYParser::ConstDeclContext *ctx) override;
+            // 变量声明
+            std::any visitVarDecl(SysYParser::VarDeclContext *ctx) override;
 
-            // 复制工具
+            // 初始化
+            std::any visitConstListInit(SysYParser::ConstListInitContext *ctx) override;
+            std::any visitListInit(SysYParser::ListInitContext *ctx) override;
 
+            // 表达式, 返回节点编号
+
+            // 直接委托给子节点的生成式
+            /// @todo 突然发现 BaseVisitor 的默认实现就是委托给子节点，这些似乎可以删除
+            /*Add*/ std::any visitFromMul(SysYParser::FromMulContext *ctx) override;
+            /*Mul*/ std::any visitFromUnary(SysYParser::FromUnaryContext *ctx) override;
+            /*Unary*/ std::any visitFromPrimary(SysYParser::FromPrimaryContext *ctx) override;
+            /*Primary*/ std::any visitClosedExpr(SysYParser::ClosedExprContext *ctx) override;
+            /*Primary*/ std::any visitLValValue(SysYParser::LValValueContext *ctx) override;
+            /*Primary*/ std::any visitLiteralValue(SysYParser::LiteralValueContext *ctx) override;
+
+            // 使用子节点的生成式
+            /*Add*/ std::any visitAddOp(SysYParser::AddOpContext *ctx) override;
+            /*Mul*/ std::any visitMulOp(SysYParser::MulOpContext *ctx) override;
+            /*unary*/ std::any visitCall(SysYParser::CallContext *ctx) override;
+            /*unary*/ std::any visitOpUnary(SysYParser::OpUnaryContext *ctx) override;
+
+            // 基本表达式
+            /*basic*/ std::any visitLVal(SysYParser::LValContext *ctx) override;
+            /*basic*/ std::any visitFloatNumber(SysYParser::FloatNumberContext *ctx) override;
+            /*basic*/ std::any visitIntNumber(SysYParser::IntNumberContext *ctx) override;
+
+            // 条件表达式
+            /*relExp*/ std::any visitRelOp(SysYParser::RelOpContext *ctx) override;
+            /*eqExp*/ std::any visitEqOp(SysYParser::EqOpContext *ctx) override;
+            /*lAndExp*/ std::any visitLAndOp(SysYParser::LAndOpContext *ctx) override;
+            /*lOrExp*/ std::any visitLOrOp(SysYParser::LOrOpContext *ctx) override;
+
+            // 辅助工具
             static const Type& toType(std::string_view type);
-
+            /**
+             * @brief 表达式的隐式类型转换
+             */
+            std::pair<HNode, HNode> numberTypeCast(HNode lhs, HNode rhs);
+            HNode convertTo(const Type &t, HNode n);
+            HNode convertToCond(HNode n);
         private:
             SyntaxTreeBuilder &global;
+            ConstantEvaluator eval;
         };
 
         Visitor v;

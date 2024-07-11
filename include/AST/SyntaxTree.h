@@ -34,6 +34,13 @@ namespace SysYust::AST {
             }
         };
 
+        // 辅助函数
+
+        std::variant<std::int32_t, float> getLit(HNode n);
+        std::int32_t getIntLit(HNode n);
+        float getFloatLit(HNode n);
+        std::vector<HNode> getList(HNode n);
+
         /**
          * @brief 在节点列表末尾添加节点，暂时不指定节点
          * @return 返回该节点的 id
@@ -55,7 +62,7 @@ namespace SysYust::AST {
          * @brief 获取指定索引的节点，无条件转换至 NT* 。
          */
         template<std::derived_from<Node> NT = Node>
-        NT* getNode(HNode no);
+        NT* getNode(HNode no) const;
 
         /**
          * @brief 添加一层 Env
@@ -70,11 +77,11 @@ namespace SysYust::AST {
         /**
          * @brief 获取当前的顶层 Env
          */
-        std::shared_ptr<Env> topEnv();
+        std::shared_ptr<Env> topEnv() const;
         /**
          * @brief 根据 FuncDecl 或 Block 获取对应的 Env
          */
-        std::shared_ptr<Env> seekEnv(Node *n);
+        std::shared_ptr<Env> seekEnv(Node *n) const;
         /**
          * @brief 为指定节点设置对应的环境
          */
@@ -94,7 +101,7 @@ namespace SysYust::AST {
          /**
           * @brief 检查条目完整性,如果存在确实的节点会返回 false，并输出警报
           */
-         [[nodiscard]] bool checkComplete();
+         [[nodiscard]] bool checkComplete() const;
     private:
         std::shared_ptr<Env> _root_env = std::make_shared<Env>();
         std::shared_ptr<Env> _current_top_env = _root_env;
