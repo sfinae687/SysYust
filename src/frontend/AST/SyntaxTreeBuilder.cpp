@@ -492,7 +492,7 @@ namespace SysYust::AST {
 
     std::any SyntaxTreeBuilder::Visitor::visitIntNumber(SysYParser::IntNumberContext *ctx) {
         auto lit = ctx->IntConst()->getText();
-        auto num = std::stoi(lit);
+        auto num = std::stoi(lit, nullptr, 0);
         auto litId = global.tree->pushNode();
         auto litNode = new IntLiteral(num);
         global.tree->setNode(litId, litNode);
