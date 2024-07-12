@@ -20,8 +20,8 @@
 
 int main(int argc, char *argv[]) {
 
-//    auto thePath = R"(E:\Source\SysYust\compiler2023\TestCase\functional\11_add2.sy)";
-    auto thePath = argv[1];
+    auto thePath = R"(E:\Source\SysYust\compiler2023\TestCase\functional\21_if_test2.sy)";
+//    auto thePath = argv[1];
     std::filesystem::path programPath{thePath};
     std::ifstream program(programPath);
     std::string outFilePath = programPath.filename().string() + std::string(".out");
