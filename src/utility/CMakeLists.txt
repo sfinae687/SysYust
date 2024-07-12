@@ -3,6 +3,7 @@ set(SYSYUST_UTILITY_SOURCE
         Logger.cpp
         FileLogger.cpp
         StringLogger.cpp
+        StreamLogger.cpp
 )
 add_library(utility
         ${SYSYUST_UTILITY_PUBLIC_HEADER}
