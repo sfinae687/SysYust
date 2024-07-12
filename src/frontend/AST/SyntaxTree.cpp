@@ -89,23 +89,18 @@ namespace SysYust::AST {
         }
     }
 
-    std::int32_t SyntaxTree::getIntLit(HNode n) {
+    std::int32_t SyntaxTree::getIntLit(HNode n) const {
         auto e = getNode<IntLiteral>(n);
         return e->value;
     }
 
-    float SyntaxTree::getFloatLit(HNode n) {
+    float SyntaxTree::getFloatLit(HNode n) const {
         auto e = getNode<FloatLiteral>(n);
         return e->value;
     }
 
-    std::vector<HNode> SyntaxTree::getList(HNode n) {
+    std::vector<HNode> SyntaxTree::getList(HNode n) const {
         auto e = getNode<List>(n);
         return e->vals;
-    }
-
-    template<std::derived_from<Node> NT>
-    NT* SyntaxTree::getNode(HNode no) const {
-        return static_cast<NT*>(_all_nodes[no]);
     }
 } // AST

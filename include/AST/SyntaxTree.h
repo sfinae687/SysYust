@@ -37,9 +37,9 @@ namespace SysYust::AST {
         // 辅助函数
 
         std::variant<std::int32_t, float> getLit(HNode n);
-        std::int32_t getIntLit(HNode n);
-        float getFloatLit(HNode n);
-        std::vector<HNode> getList(HNode n);
+        std::int32_t getIntLit(HNode n) const;
+        float getFloatLit(HNode n) const;
+        std::vector<HNode> getList(HNode n) const;
 
         /**
          * @brief 在节点列表末尾添加节点，暂时不指定节点
@@ -62,7 +62,9 @@ namespace SysYust::AST {
          * @brief 获取指定索引的节点，无条件转换至 NT* 。
          */
         template<std::derived_from<Node> NT = Node>
-        NT* getNode(HNode no) const;
+        NT* getNode(HNode no) const {
+            return static_cast<NT*>(_all_nodes[no]);
+        }
 
         /**
          * @brief 添加一层 Env

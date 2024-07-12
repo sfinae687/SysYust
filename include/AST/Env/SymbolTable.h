@@ -77,13 +77,7 @@ namespace SysYust::AST {
         }
 
         entry_t& seek(NumId id) {
-            if (_local_entry.contains(id)) {
-                return _local_entry[id];
-            } else if (_parent && _parent->contains(id)) {
-                return _parent->seek(id);
-            } else {
-                return _local_entry[id];
-            }
+            return _local_entry[id]; // 写入仅考虑当前作用域
         }
 
         SymbolTable *_parent = nullptr;
