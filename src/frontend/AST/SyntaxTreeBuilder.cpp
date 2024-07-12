@@ -4,6 +4,7 @@
 
 #include <concepts>
 #include <ranges>
+#include <limits>
 
 #include "utility/Logger.h"
 #include "AST/SyntaxTreeBuilder.h"
@@ -13,13 +14,78 @@ namespace SysYust::AST {
     namespace ranges = std::ranges;
     namespace views = std::views;
 
-
+    FuncInfo lib_funcs[] = {
+            {
+                "getint",
+                &Function::create(Int_v, {&Void_v}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                "getch",
+                &Function::create(Int_v, {&Void_v}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                "getarray",
+                &Function::create(Int_v, {&Pointer::create(Int_v)}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                "getfloat",
+                &Function::create(Float_v, {&Void_v}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                "putint",
+                &Function::create(Void_v, {&Int_v}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                "putch",
+                &Function::create(Void_v, {&Int_v}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                "putarray",
+                &Function::create(Void_v, {&Int_v, &Pointer::create(Int_v)}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                "putfloat",
+                        &Function::create(Void_v, {&Float_v}),
+                        std::numeric_limits<HNode>::max(),
+            },
+        {
+                "putfarray",
+                &Function::create(Void_v, {&Int_v, &Pointer::create(Float_v)}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                    "putf",
+                    nullptr,
+                    std::numeric_limits<HNode>::max(),
+            },
+            {
+                "_sysy_starttime",
+                &Function::create(Void_v, {&Int_v}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                    "_sysy_stoptime",
+                    &Function::create(Void_v, {&Int_v}),
+                    std::numeric_limits<HNode>::max(),
+            },
+    };
     // 拷贝控制
 
     SyntaxTreeBuilder::SyntaxTreeBuilder(SysYParser::CompUnitContext *tree)
     : rawTree(tree)
     , v(*this) {
-
+        auto &funcTable = currentEnv->func_table;
+        for (auto &i : lib_funcs) {
+            auto id = currentEnv->getId(i.name);
+            funcTable.setInfo(id, i);
+        }
     }
 
     std::unique_ptr<SyntaxTree> SyntaxTreeBuilder::getTree() {
@@ -309,6 +375,10 @@ namespace SysYust::AST {
         return subExpr->accept(this);
     }
 
+    std::any SyntaxTreeBuilder::Visitor::visitExpr(SysYParser::ExprContext *ctx) {
+        return ctx->exp()->accept(this);
+    }
+
     // 带有子表达式的
 
     std::any SyntaxTreeBuilder::Visitor::visitAddOp(SysYParser::AddOpContext *ctx) {
@@ -389,21 +459,27 @@ namespace SysYust::AST {
 
         // 准备实参
         auto callNodeId = global.tree->pushNode();
-        auto arguments = ctx->funcRParams()->exp();
-        auto params = funcType.getParam();
+
+        auto argumentList = ctx->funcRParams();
         std::vector<HNode> argumentExprNodeId;
-        if (params.size() == arguments.size()) {
-            auto len = params.size();
-            for (int i=0; i<len; ++i) {
-                auto &currentParma = *params[i];
-                auto &currentArgument = arguments[i];
-                auto argId = std::any_cast<HNode>(currentArgument->accept(this));
-                argId = convertTo(currentParma, argId);
-                argumentExprNodeId.push_back(argId);
+
+        if (argumentList) {
+            auto arguments = argumentList->exp();
+
+            auto params = funcType.getParam();
+            if (params.size() == arguments.size()) {
+                auto len = params.size();
+                for (int i=0; i<len; ++i) {
+                    auto &currentParma = *params[i];
+                    auto &currentArgument = arguments[i];
+                    auto argId = std::any_cast<HNode>(currentArgument->accept(this));
+                    argId = convertTo(currentParma, argId);
+                    argumentExprNodeId.push_back(argId);
+                }
+            } else {
+                LOG_ERROR("Unmatched function call for {}", funcName);
+                std::exit(EXIT_FAILURE);
             }
-        } else {
-            LOG_ERROR("Unmatched function call for {}", funcName);
-            std::exit(EXIT_FAILURE);
         }
 
         // 准备节点

@@ -5,6 +5,7 @@
 #ifndef SYSYUST_AST_SYMBOLTABLE_H
 #define SYSYUST_AST_SYMBOLTABLE_H
 
+#include <iostream>
 #include <unordered_map>
 #include <memory>
 #include <cassert>

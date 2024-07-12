@@ -60,6 +60,7 @@ namespace SysYust::AST {
             /*Primary*/ std::any visitClosedExpr(SysYParser::ClosedExprContext *ctx) override;
             /*Primary*/ std::any visitLValValue(SysYParser::LValValueContext *ctx) override;
             /*Primary*/ std::any visitLiteralValue(SysYParser::LiteralValueContext *ctx) override;
+            /*Stmt*/ std::any visitExpr(SysYParser::ExprContext *ctx) override;
 
             // 使用子节点的生成式
             /*Add*/ std::any visitAddOp(SysYParser::AddOpContext *ctx) override;
