@@ -26,6 +26,7 @@ class Interpreter : public NodeExecutorBase {
     /// enum ControlFlowData = Break | Continue | Return Option<Value>;
     using ControlFlowData = std::variant<Break, Continue, std::optional<Value>>;
     using Context = SymbolTable<Value>;
+    using ReturnType = std::variant<Void, ControlFlowData, Value>;
 
     void execute(const VarDecl &) override;
     void execute(const FuncDecl &) override;
@@ -57,20 +58,20 @@ class Interpreter : public NodeExecutorBase {
     void execute(const Block &) override;
     void execute(const Empty &) override;
 
-    Value &evalExpr(Node &node) {
+    [[nodiscard]] Value evalExpr(Node &node) {
         // assert node in {IntLiteral, FloatLiteral, Call, UnaryOp, BinaryOp,
         // DeclRef, ArrayRef, ToInt, ToFloat}
         node.execute(this);
         assert(!_isNone());
         assert(!_isCFD());
-        std::cout << "Ret_ind" << _return_value.index() << std::endl;
-        return get<Value>(_return_value);
+        auto val = get<Value>(_return_value);
+        _return_value = Void_v;
+        return val;
     }
 
     int enter(SyntaxTree *ast);
 
    private:
-    using ReturnType = std::variant<Void, ControlFlowData, Value>;
     ReturnType _return_value = Void_v;
     std::stack<Context> _context_stack;
     SyntaxTree *_ast;
@@ -79,12 +80,18 @@ class Interpreter : public NodeExecutorBase {
         return _context_stack.top();
     }
 
-    ControlFlowData _executeCF(const Node &node) {
+    [[nodiscard]] std::optional<ControlFlowData> _executeCF(const Node &node) {
         // assert node in {If, While, Break, Continue, Return, Block}
         // const_cast<Node&>(node).execute(this);
         assert(!_isNone());
         assert(!_isValue());
-        return get<ControlFlowData>(_return_value);
+        if (_isNone()) {
+            return std::nullopt;
+        } else {
+            auto cfd = get<ControlFlowData>(_return_value);
+            _return_value = Void_v;
+            return cfd;
+        }
     }
 
     bool _isNone() const {
@@ -99,9 +106,9 @@ class Interpreter : public NodeExecutorBase {
         return _return_value.index() == 2;
     }
 
-    // bool passDown(ControlFlowData cfd) {
-
-    // }
+    void passDown(ControlFlowData cfd) {
+        _return_value = cfd;
+    }
 
     void _return(ReturnType ret) {
         _return_value = ret;
@@ -141,6 +148,8 @@ class Interpreter : public NodeExecutorBase {
 
         return ret;
     }
+
+    bool bulitinFunc(FuncInfo &func_info, std::vector<Value> &arg_vals);
 };
 
 template <class T>
@@ -158,9 +167,8 @@ Value Interpreter::Unary<T>::calc(UnaryOp::OpType op_type, Value val) {
         default:
             assert(false && "Bug");
     }
-    auto constexpr type = eq_v<T, Int>
-                              ? static_cast<const Type *>(&Int_v)
-                              : static_cast<const Type *>(&Float_v);
+    auto constexpr type = eq_v<T, Int> ? static_cast<const Type *>(&Int_v)
+                                       : static_cast<const Type *>(&Float_v);
     return Value(type, ret);
 }
 
@@ -193,9 +201,8 @@ Value Interpreter::Binary<T>::calc(BinaryOp::OpType op_type, Value lv,
         default:
             assert(false && "Bug");
     }
-    auto constexpr type = eq_v<T, Int>
-                              ? static_cast<const Type *>(&Int_v)
-                              : static_cast<const Type *>(&Float_v);
+    auto constexpr type = eq_v<T, Int> ? static_cast<const Type *>(&Int_v)
+                                       : static_cast<const Type *>(&Float_v);
     return Value(type, ret);
 }
 

@@ -3,26 +3,9 @@
 
 #include <sys/time.h>
 
-namespace SysYust::AST::Interpreter::SyLib {
-
-#define DECL_LIB_FUNC(name)
-
-DECL_LIB_FUNC(getint);
-DECL_LIB_FUNC(getch);
-DECL_LIB_FUNC(getarray);
-DECL_LIB_FUNC(getfloat);
-DECL_LIB_FUNC(getfarray);
-DECL_LIB_FUNC(putint);
-DECL_LIB_FUNC(putch);
-DECL_LIB_FUNC(putarray);
-DECL_LIB_FUNC(putfloat);
-DECL_LIB_FUNC(putf);
-DECL_LIB_FUNC(starttime);
-DECL_LIB_FUNC(stoptime);
-DECL_LIB_FUNC(before_main);  // main
-DECL_LIB_FUNC(after_maim);
-
-}  // namespace SysYust::AST::Interpreter::SyLib
+#include <any>
+#include <string>
+#include <map>
 
 namespace SysYust::AST::Interpreter::SyLib {
 
@@ -53,6 +36,29 @@ void starttime(int lineno);
 void stoptime(int lineno);
 
 // } // extern "C"
+
+}  // namespace SysYust::AST::Interpreter::SyLib
+
+namespace SysYust::AST::Interpreter::SyLib {
+
+// #define DECL_LIB_FUNC(name) {#name, name},
+
+// std::map<std::string, std::any> func_table = {
+// DECL_LIB_FUNC(getint)
+// DECL_LIB_FUNC(getch)
+// DECL_LIB_FUNC(getarray)
+// DECL_LIB_FUNC(getfloat)
+// DECL_LIB_FUNC(getfarray)
+// DECL_LIB_FUNC(putint)
+// DECL_LIB_FUNC(putch)
+// DECL_LIB_FUNC(putarray)
+// DECL_LIB_FUNC(putfloat)
+// DECL_LIB_FUNC(putf)
+// DECL_LIB_FUNC(starttime)
+// DECL_LIB_FUNC(stoptime)
+// DECL_LIB_FUNC(before_main)  // main
+// DECL_LIB_FUNC(after_main)
+// };
 
 }  // namespace SysYust::AST::Interpreter::SyLib
 

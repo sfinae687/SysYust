@@ -30,6 +30,7 @@ Value Value::toLValue() {
 
 Value Value::toRValue() {
     assert(isUndef() && "You can't use an undef value!");
+    if (!is_lvalue) return *this;
     assert(is_lvalue);
     ValueType ret;
     switch (type->type()) {
