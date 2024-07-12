@@ -64,13 +64,26 @@ namespace SysYust::AST {
             seek(id) = std::move(e);
         }
 
+        /**
+         * @brief 遍历当前作用域
+         */
+         auto begin() {
+             return _local_entry.begin();
+         }
+         /**
+          * @brief 结束迭代器
+          */
+         auto end() {
+             return _local_entry.end();
+         }
+
     private:
 
         const entry_t& seek(NumId id) const {
             if (_local_entry.contains(id)) {
                 return _local_entry.at(id);
             } else if (_parent) {
-                return _parent->seek(id);
+                return _parent->getInfo(id);
             } else {
                 assert(false); // 不检查带查找条目是否存在
             }

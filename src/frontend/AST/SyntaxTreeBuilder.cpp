@@ -24,6 +24,7 @@ namespace SysYust::AST {
 
     std::unique_ptr<SyntaxTree> SyntaxTreeBuilder::getTree() {
         if (rawTree) {
+            rawTree->accept(&v);
             rawTree = nullptr;
             currentEnv = nullptr;
             return std::move(tree);
@@ -135,6 +136,7 @@ namespace SysYust::AST {
 
     std::any SyntaxTreeBuilder::Visitor::visitCompUnit(SysYParser::CompUnitContext *ctx) {
         for (auto decl : ctx->children) {
+            LOG_INFO("Going to process the {} node", typeid(*decl).name());
             decl->accept(this);
         }
         return nullptr;
@@ -176,6 +178,7 @@ namespace SysYust::AST {
             auto varName = def->Ident()->getText();
             auto varId = global.currentEnv->getId(varName);
             VarInfo info;
+            info.name = varName;
             info.type = type;
             info.decl = global.tree->pushNode();
             // 构建节点
@@ -235,10 +238,11 @@ namespace SysYust::AST {
             global.tree->setNode(info.decl, varNode);
             global.currentEnv->var_table.setInfo(infoId, info);
             varNodes.push_back(info.decl);
+            LOG_TRACE(" VarDecl for {}:{} Finished", info.name, info.type->toString());
         };
         //NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
         for (auto def : ctx->varDef()) {
-            if (typeid(def) == typeid(SysYParser::UninitVarDefContext)) {
+            if (typeid(*def) == typeid(SysYParser::UninitVarDefContext)) {
                 impl(*static_cast<SysYParser::UninitVarDefContext*>(def));
             } else {
                 impl(*static_cast<SysYParser::InitVarDefContext*>(def));
@@ -589,15 +593,21 @@ namespace SysYust::AST {
         // 处理形参并获取形参类型
         global.currentEnv = global.tree->pushEnv();
         auto params = ctx->funcFParams();
-        funcDeclNode->param = std::any_cast<std::vector<HNode>>(params->accept(this));
-        auto paramTypes = funcDeclNode->param
-        | views::transform([&](auto i) {
-            auto paramId = global.tree->getNode<ParamDecl>(i)->info_id;
-            return global.currentEnv->var_table.getInfo(paramId).type;
-        });
+        const Function *type;
+        if (params) { // 计算并设置形参声明的节点
+            funcDeclNode->param = std::any_cast<std::vector<HNode>>(params->accept(this));
+            // 计算参数类型
+            auto paramTypes = funcDeclNode->param
+                              | views::transform([&](auto i) {
+                auto paramId = global.tree->getNode<ParamDecl>(i)->info_id;
+                return global.currentEnv->var_table.getInfo(paramId).type;
+            });
 
-        auto &fType = Function::create(resultType, {paramTypes.begin(), paramTypes.end()});
-        info.type = &fType;
+            type = &Function::create(resultType, {paramTypes.begin(), paramTypes.end()});
+        } else {
+            type = &Function::create(resultType, {&Void_v});
+        }
+        info.type = type;
         // 添加符号表
         global.currentEnv->getParent()->func_table.setInfo(nameId, info);
 
@@ -619,7 +629,7 @@ namespace SysYust::AST {
         | views::transform([&](auto i) {
             return std::any_cast<HNode>(i->accept(this));
         });
-        return std::vector{funcParamNode.begin(), funcParamNode.end()};
+        return std::vector<HNode>{funcParamNode.begin(), funcParamNode.end()};
     }
 
     // 形参
@@ -666,11 +676,18 @@ namespace SysYust::AST {
     std::any SyntaxTreeBuilder::Visitor::visitBlock(SysYParser::BlockContext *ctx) {
         auto nodeId = global.tree->pushNode();
         global.currentEnv = global.tree->pushEnv();
-        auto item = ctx->blockItem()
-        | views::transform([&](auto i) {
-            return std::any_cast<HNode>(i->accept(this));
-        });
-        auto node = new Block({item.begin(), item.end()});
+        std::vector<HNode> subNodes{};
+        for (auto i : ctx->blockItem()) {
+            auto result = i->accept(this);
+            if (result.type() == typeid(HNode)) {
+                subNodes.push_back(std::any_cast<HNode>(result));
+            } else {
+                for (auto d : std::any_cast<std::vector<HNode>>(result)) {
+                    subNodes.push_back(d);
+                }
+            }
+        }
+        auto node = new Block(subNodes);
         global.tree->setNode(nodeId, node);
         global.tree->setupEnv(node, global.currentEnv);
         global.currentEnv = global.tree->popEnv();
@@ -704,7 +721,7 @@ namespace SysYust::AST {
     std::any SyntaxTreeBuilder::Visitor::visitWhile(SysYParser::WhileContext *ctx) {
         auto nodeId = global.tree->pushNode();
         auto condId = std::any_cast<HNode>(ctx->cond()->accept(this));
-        auto bodyId = std::any_cast<HNode>(ctx->cond()->accept(this));
+        auto bodyId = std::any_cast<HNode>(ctx->stmt()->accept(this));
         auto node = new While(condId, bodyId);
         global.tree->setNode(nodeId, node);
         return nodeId;

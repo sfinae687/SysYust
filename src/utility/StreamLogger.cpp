@@ -13,6 +13,6 @@ namespace SysYust {
     }
 
     void StreamLogger::write(std::string_view record) {
-        _stream << record << std::endl;
+        _stream << record << std::flush;
     }
 }
