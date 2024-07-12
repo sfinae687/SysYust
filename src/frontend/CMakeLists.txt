@@ -41,3 +41,9 @@ target_link_libraries(Antlr4_SysY PUBLIC antlr4_static)
 add_subdirectory(AST)
 
 target_link_libraries(AST PUBLIC Antlr4_SysY)
+
+# Interpreter
+
+add_subdirectory(Interpreter)
+
+target_link_libraries(Interpreter PUBLIC AST)

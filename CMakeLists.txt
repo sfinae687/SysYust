@@ -8,6 +8,12 @@ option(SELF_CONTAINS "let all dependency store in lib/" OFF)
 option(GeneratedDocument "add a target to generate document by doxygen form code comments" ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(
+  CMAKE_CXX_FLAGS
+  "${CMAKE_CXX_FLAGS} -O0 -fsanitize=undefined -g"
+)
+
+
 include(FetchContent)
 
 # 配置变量
@@ -15,7 +21,7 @@ include(FetchContent)
 set(DOXYGEN_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
 set(SYSYUST_PUBLIC_HEADER_DIR ${CMAKE_SOURCE_DIR}/include)
 
-include_directories(include)
+include_directories(include src/frontend/generated)
 
 # 包含 Doxygen
 
