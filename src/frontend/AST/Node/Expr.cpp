@@ -6,7 +6,8 @@
 
 namespace SysYust::AST {
     Expr::Expr(const Type *type, bool isConst)
-    : type(type) {
+    : type(type)
+    , isConsteval(isConst) {
 
     }
 } // AST

@@ -22,7 +22,7 @@ constInitVal : constExp #constInit
 type         : 'void' | 'int' | 'float';
 funcDef      : type Ident '(' (funcFParams)? ')' block;
 funcFParams  : funcFParam (',' funcFParam)*;
-funcFParam   : type Ident (subscript='[' ']' ('[' exp ']')*)?;
+funcFParam   : type Ident ('[' ']' ('[' exp ']')*)?;
 block        : '{' (blockItem)* '}';
 blockItem    : decl | stmt;
 stmt         : lVal '=' exp ';' #Assign

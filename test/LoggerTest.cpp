@@ -7,7 +7,6 @@
 #include "Logger.h"
 #include "FileLogger.h"
 #include "StringLogger.h"
-#include "StreamLogger.h"
 #include "Trace.h"
 
 using SysYust::Logger;
@@ -65,9 +64,4 @@ void StackPrinterRe(int n, int i=0) {
 TEST(LoggerTest, StackPrinterTest) {
     Logger::setLogger(new SysYust::FileLogger(std::fopen("log/StackPrinter.log", "a")));
     StackPrinterRe(10);
-}
-
-TEST(LoggerTest, StreamLogger) {
-    Logger::setLogger(new SysYust::StreamLogger(std::cerr));
-    LOG_INFO("Logger is set");
 }

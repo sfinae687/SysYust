@@ -11,7 +11,7 @@ namespace SysYust::AST {
     DeclRef::DeclRef(const Type *e_type, NumId id)
     : LExpr(e_type, false)
     , var_id(id) {
-
+        assert(type == &Int_v || type == &Float_v);
     }
 
     void DeclRef::execute(NodeExecutor *e) {

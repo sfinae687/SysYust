@@ -337,7 +337,6 @@ public:
 
   class  FuncFParamContext : public antlr4::ParserRuleContext {
   public:
-    antlr4::Token *subscript = nullptr;
     FuncFParamContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     TypeContext *type();
