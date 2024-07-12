@@ -1409,7 +1409,7 @@ SysYParser::FuncFParamContext* SysYParser::funcFParam() {
     _la = _input->LA(1);
     if (_la == SysYParser::T__3) {
       setState(178);
-      match(SysYParser::T__3);
+      antlrcpp::downCast<FuncFParamContext *>(_localctx)->subscript = match(SysYParser::T__3);
       setState(179);
       match(SysYParser::T__4);
       setState(186);
