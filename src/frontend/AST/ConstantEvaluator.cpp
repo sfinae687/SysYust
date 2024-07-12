@@ -86,11 +86,11 @@ namespace SysYust::AST {
     }
 
     void ConstantEvaluator::execute(const DeclRef &e) {
-        if (e.isConsteval) {
-            auto vId = e.var_id;
-            auto info = tree.topEnv()->var_table.getInfo(vId);
-            auto declNodeId = info.decl;
-            auto initNodeId = tree.getNode<VarDecl>(declNodeId)->init_expr.value();
+        auto vId = e.var_id;
+        auto info = tree.topEnv()->var_table.getInfo(vId);
+        auto declNodeId = info.decl;
+        auto initNodeId = tree.getNode<VarDecl>(declNodeId)->init_expr.value();
+        if (info.isConstant) {
             auto value = compute(initNodeId);
             valueStack.push(value);
         } else {

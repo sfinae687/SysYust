@@ -46,7 +46,7 @@ namespace SysYust::AST {
             // 变量声明
             std::any visitVarDecl(SysYParser::VarDeclContext *ctx) override;
 
-            // 初始化
+            // 列表，返回列表节点的编号
             std::any visitConstListInit(SysYParser::ConstListInitContext *ctx) override;
             std::any visitListInit(SysYParser::ListInitContext *ctx) override;
 
@@ -77,6 +77,20 @@ namespace SysYust::AST {
             /*eqExp*/ std::any visitEqOp(SysYParser::EqOpContext *ctx) override;
             /*lAndExp*/ std::any visitLAndOp(SysYParser::LAndOpContext *ctx) override;
             /*lOrExp*/ std::any visitLOrOp(SysYParser::LOrOpContext *ctx) override;
+
+            // 函数声明
+            std::any visitFuncDef(SysYParser::FuncDefContext *ctx) override;
+            std::any visitFuncFParams(SysYParser::FuncFParamsContext *ctx) override;
+            std::any visitFuncFParam(SysYParser::FuncFParamContext *ctx) override;
+
+            // 语句
+            std::any visitBlock(SysYParser::BlockContext *ctx) override;
+            std::any visitAssign(SysYParser::AssignContext *ctx) override;
+            std::any visitIf(SysYParser::IfContext *ctx) override;
+            std::any visitWhile(SysYParser::WhileContext *ctx) override;
+            std::any visitContinue(SysYParser::ContinueContext *ctx) override;
+            std::any visitBreak(SysYParser::BreakContext *ctx) override;
+            std::any visitReturn(SysYParser::ReturnContext *ctx) override;
 
             // 辅助工具
             static const Type& toType(std::string_view type);

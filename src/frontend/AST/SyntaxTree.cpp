@@ -41,11 +41,11 @@ namespace SysYust::AST {
         return _current_top_env;
     }
 
-    std::shared_ptr<Env> SyntaxTree::seekEnv(Node *n) const {
+    std::shared_ptr<Env> SyntaxTree::seekEnv(const Node *n) const {
         return _env_map.at(n);
     }
 
-    void SyntaxTree::setupEnv(Node *n, std::shared_ptr<Env> env) {
+    void SyntaxTree::setupEnv(const Node *n, std::shared_ptr<Env> env) {
         _env_map[n] = std::move(env);
     }
 
