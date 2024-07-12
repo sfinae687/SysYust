@@ -415,7 +415,7 @@ namespace SysYust::AST {
     std::any SyntaxTreeBuilder::Visitor::visitOpUnary(SysYParser::OpUnaryContext *ctx) {
 
         // 计算子节点
-        auto subexpr = std::any_cast<HNode>(ctx->unaryOP()->accept(this));
+        auto subexpr = std::any_cast<HNode>(ctx->unaryExp()->accept(this));
 
         auto op = ctx->unaryOP()->getText().front();
         if (op == '!') {
@@ -637,7 +637,7 @@ namespace SysYust::AST {
         auto &baseType = toType(ctx->type()->getText());
 
         // 构建类型
-        auto isPointer = ctx->subscript == nullptr;
+        auto isPointer = ctx->subscript != nullptr;
         const Type *type;
         if (!isPointer) {
             type = &baseType;
@@ -668,6 +668,7 @@ namespace SysYust::AST {
         auto node = new ParamDecl;
         node->info_id = global.currentEnv->getId(info.name);
         info.decl = nodeId;
+        global.currentEnv->var_table.setInfo(node->info_id, info);
         global.tree->setNode(nodeId, node);
         return nodeId;
     }

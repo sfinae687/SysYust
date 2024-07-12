@@ -24,3 +24,6 @@ doc/generated
 # 忽略日志
 log/*
 *.log
+
+# 需要外部下载的目录
+/compiler2023

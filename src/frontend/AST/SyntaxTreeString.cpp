@@ -180,7 +180,7 @@ namespace SysYust {
             auto l_val_pos = strings.size();
             tree.getNode(assign.l_val)->execute(this);
             tree.getNode(assign.r_val)->execute(this);
-            strings[l_val_pos] += std::format("({} = {})", strings[l_val_pos], strings[l_val_pos+1]);
+            strings[l_val_pos] = std::format("({} = {})", strings[l_val_pos], strings[l_val_pos+1]);
             strings.pop_back();
         }
 
@@ -272,13 +272,14 @@ namespace SysYust {
                     strings.emplace_back(std::move(buff));
                     auto decl = tree.getNode<FuncDecl>(info.node);
 
+                    currentEnv = tree.seekEnv(tree.getNode(info.node));
+
                     // 形参
                     for (auto i : decl->param) {
                         tree.getNode(i)->execute(this);
                     }
 
                     // 函数体
-                    currentEnv = tree.seekEnv(tree.getNode(info.node));
                     tree.getNode(decl->entry_node)->execute(this);
                     currentEnv = currentEnv->getParent();
                 }
@@ -308,7 +309,7 @@ namespace SysYust {
 
             if (decl.init_expr) {
                 tree.getNode(decl.init_expr.value())->execute(this);
-                buffer += strings.back();
+                buffer += " = " + strings.back();
                 strings.pop_back();
             }
 
