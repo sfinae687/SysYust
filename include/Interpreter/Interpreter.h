@@ -37,7 +37,7 @@ static sp_t sp;
 std::ostream &operator<<(std::ostream &os, sp_t &sp);
 
 #define println(fmt_str, ...)                                           \
-    (std::cout << sp << std::format(fmt_str __VA_OPT__(, ) __VA_ARGS__) \
+    (std::cout << sp << fmt::format(fmt_str __VA_OPT__(, ) __VA_ARGS__) \
                << std::endl)
 
 // End Debug
@@ -112,7 +112,7 @@ class Interpreter : public NodeExecutorBase {
         //  std::string toString() {
         //     std::string ret = typeid(E).name();
         //     for (auto &ent : _local_entry) {
-        //         ret += std::format("● {} = {}\n", ent.first, ent.second.toString());
+        //         ret += fmt::format("● {} = {}\n", ent.first, ent.second.toString());
         //     }
         //     return ret;
         //  }

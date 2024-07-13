@@ -56,7 +56,7 @@ std::string toString(SysYust::AST::Interpreter::Interpreter::ReturnType ret) {
                 case CFDReturn: {
                     auto ret_val = std::get<2>(cfd);
                     if (ret_val.has_value()) {
-                        return std::format("Return {}",
+                        return fmt::format("Return {}",
                                            ret_val.value().toString());
                     } else {
                         return "Return";
