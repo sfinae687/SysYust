@@ -37,6 +37,8 @@ jobs:
     steps:
     - name: Setup Java JDK
       uses: actions/setup-java@v4.2.1
+      with:
+        distribution: oracle
 
     - name: Setup Antlr4
       uses: StoneMoe/setup-antlr4@v4.13.1
