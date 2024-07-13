@@ -8,7 +8,7 @@
 namespace SysYust::AST::Interpreter {
 
 Value Value::toLValue() {
-    assert(isUndef() && "You can't use an undef value!");
+    assert(!isUndef() && "You can't use an undef value!");
     assert(!is_lvalue);
     ValueType ret;
     switch (type->type()) {
@@ -22,14 +22,14 @@ Value Value::toLValue() {
         case TypeId::Pointer:
             ret = _value;
         default:
-            assert(false && "blabla");
+            assert(false && "RValTypeErr");
             break;
     }
     return {type, ret, false};
 }
 
 Value Value::toRValue() {
-    assert(isUndef() && "You can't use an undef value!");
+    assert(!isUndef() && "You can't use an undef value!");
     if (!is_lvalue) return *this;
     assert(is_lvalue);
     ValueType ret;

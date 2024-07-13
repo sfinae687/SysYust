@@ -14,7 +14,16 @@ namespace SysYust::AST {
     namespace ranges = std::ranges;
     namespace views = std::views;
 
-    const std::set<FuncInfo> SyntaxTreeBuilder::lib_funcs = {
+    std::set<FuncInfo> SyntaxTreeBuilder::lib_funcs;
+
+    std::set<NumId> SyntaxTreeBuilder::lib_funcs_id{};
+
+    // 拷贝控制
+
+    SyntaxTreeBuilder::SyntaxTreeBuilder(SysYParser::CompUnitContext *tree)
+    : rawTree(tree)
+    , v(*this) {
+        lib_funcs = {
             {
                 "getint",
                 &Function::create(Int_v, {&Void_v}),
@@ -76,14 +85,6 @@ namespace SysYust::AST {
                     std::numeric_limits<HNode>::max(),
             },
     };
-
-    std::set<NumId> SyntaxTreeBuilder::lib_funcs_id{};
-
-    // 拷贝控制
-
-    SyntaxTreeBuilder::SyntaxTreeBuilder(SysYParser::CompUnitContext *tree)
-    : rawTree(tree)
-    , v(*this) {
         auto &funcTable = currentEnv->func_table;
         for (auto &i : lib_funcs) {
             auto id = currentEnv->getId(i.name);

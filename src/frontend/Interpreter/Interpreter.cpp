@@ -9,10 +9,12 @@
 #include <cstdlib>
 #include <optional>
 #include <ostream>
+#include <span>
 #include <variant>
 #include <vector>
 
 #include "AST/Env/FuncInfo.h"
+#include "AST/Env/SymbolTable.h"
 #include "AST/Node/BinaryOp.h"
 #include "AST/Node/Compare.h"
 #include "AST/Node/Continue.h"
@@ -30,17 +32,6 @@
 #include "Logger.h"
 #include "fmt/core.h"
 
-class sp_t {
-   public:
-    int counter = 0;
-    void push() {
-        counter++;
-    }
-    void pop() {
-        counter--;
-    }
-
-} sp;
 std::ostream &operator<<(std::ostream &os, sp_t &sp) {
     for (int i = 1; i <= sp.counter; ++i) {
         os << "  ";
@@ -77,12 +68,11 @@ std::string toString(SysYust::AST::Interpreter::Interpreter::ReturnType ret) {
         }
         case 2:  // Value
             return std::get<2>(ret).toString();
+        default:
+            assert(0 && "Wrong index");
     }
 }
 
-#define println(fmt_str, ...)                                           \
-    (std::cout << sp << std::format(fmt_str __VA_OPT__(, ) __VA_ARGS__) \
-               << std::endl)
 #define enterln(fmt_str, ...) println(fmt_str, __VA_ARGS__), sp.push();
 #define exitln(fmt_str, ...)              \
     sp.pop(), println(fmt_str " (-> {})", \
@@ -124,6 +114,8 @@ std::string toString(SysYust::AST::Compare::CompareType op) {
     return tab[op];
 }
 
+
+
 namespace SysYust::AST::Interpreter {
 
 /* -------------- Enter -------------- */
@@ -132,9 +124,10 @@ int Interpreter::enter(SyntaxTree *ast) {
     enterln("Enter main");
     _ast = ast;
     auto &top_env = *_ast->topEnv();
-    auto &main_func_decl = *_ast->getNode(top_env.getId("main"));
-    auto &main_func =
-        *_ast->getNode(dynamic_cast<FuncDecl *>(&main_func_decl)->entry_node);
+    _env_stack.push(top_env);
+    auto &main_func_decl = *dynamic_cast<FuncDecl *>(
+        _ast->getNode(top_env.func_table.getInfo(top_env.getId("main")).node));
+    auto &main_func = *_ast->getNode(main_func_decl.entry_node);
 
     assert(_context_stack.empty());
     _context_stack.push(Context());
@@ -150,7 +143,7 @@ int Interpreter::enter(SyntaxTree *ast) {
 
     assert(_context_stack.size() == 1);
     _context_stack.pop();
-
+    _env_stack.pop();
     exitln("Exit main -> {}", ret);
     return ret;
 }
@@ -158,9 +151,14 @@ int Interpreter::enter(SyntaxTree *ast) {
 /* -------------- Decl -------------- */
 
 void Interpreter::execute(const VarDecl &node) {
+    enterln("! VarDecl pre seek");
+
     assert(!_context_stack.empty());
     auto &top_ctx = _context_stack.top();
-    auto &env = *_ast->seekEnv(const_cast<VarDecl *>(&node));
+    auto &env = curEnv();
+
+    // print symtab
+
     auto var_id = node.info_id;
     auto var_decl = env.var_table.getInfo(var_id);
 
@@ -179,7 +177,7 @@ void Interpreter::execute(const VarDecl &node) {
             auto expr_cast = dynamic_cast<Expr *>(&init_node);
             if (expr_cast) {
                 Value val = evalExpr(init_node);
-                assert(val.type.isBasicType());
+                assert(val.type->isBasicType());
                 assert(val.type == var_decl.type);
                 ctx.setInfo(var_id, val.toRValue());
             } else {
@@ -218,7 +216,7 @@ void Interpreter::execute(const ParamDecl &node) {
     } else if (val.is_lvalue && (val.type->type() == TypeId::Array ||
                                  val.type->type() == TypeId::Pointer)) {
         assert(var_type->type() == TypeId::Pointer);
-        assert(*var_type == *val_type);
+        assert(*var_type == *val.type);
         ctx.setInfo(var_id, val.toRValue());
     } else {
         assert(false && "Param decl err");
@@ -396,7 +394,7 @@ void Interpreter::execute(const Call &node) {
         }
         _return(Void_v);
     } else {
-        assert(func_info->getResult().isBasicType());
+        assert(func_info.type->getResult().isBasicType());
         assert(opt_cfd.has_value());
         auto cfd = opt_cfd.value();
         assert(cfd.index() == CFDType::CFDReturn);
@@ -413,8 +411,8 @@ void Interpreter::execute(const Call &node) {
 }
 
 void Interpreter::execute(const DeclRef &node) {
-    auto sym_tab = _ast->seekEnv(&const_cast<DeclRef &>(node));
-    VarInfo var_info = sym_tab->var_table.getInfo(node.var_id);
+    auto &sym_tab = curEnv();
+    VarInfo var_info = sym_tab.var_table.getInfo(node.var_id);
     const auto &var_type = *var_info.type;
     auto val = getContext().getInfo(node.var_id);
     _return(val.toLValue());
@@ -422,8 +420,8 @@ void Interpreter::execute(const DeclRef &node) {
 }
 
 void Interpreter::execute(const ArrayRef &node) {
-    auto sym_tab = _ast->seekEnv(&const_cast<ArrayRef &>(node));
-    VarInfo var_info = sym_tab->var_table.getInfo(node.var_id);
+    auto &sym_tab = curEnv();
+    VarInfo var_info = sym_tab.var_table.getInfo(node.var_id);
     const auto &var_type = *var_info.type;
     auto val = getContext().getInfo(node.var_id);
 
@@ -623,6 +621,9 @@ void Interpreter::execute(const Block &node) {
     // New Context
     assert(!_context_stack.empty());
     _context_stack.push(Context(_context_stack.top()));
+    assert(!_env_stack.empty());
+    auto &cur_env = *_ast->seekEnv(&node);
+    _env_stack.push(cur_env);
 
     for (auto stmt : node.stmts) {
         auto &stmt_node = *_ast->getNode(stmt);
@@ -642,6 +643,7 @@ void Interpreter::execute(const Block &node) {
     }
 
     _context_stack.pop();
+    _env_stack.pop();
     exitln("~Block");
 }
 

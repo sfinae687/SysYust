@@ -64,7 +64,7 @@ class Value {
     val_t<T> &get();
 
     bool isUndef() const {
-        return type == &Void_v;
+        return type->type() == TypeId::Void;
     }
 
     Value assign(Value rv);
