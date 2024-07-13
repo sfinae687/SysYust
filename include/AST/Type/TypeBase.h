@@ -8,8 +8,6 @@
 #include <string>
 #include <unordered_set>
 
-#include "utility/expected.h"
-
 namespace SysYust::AST {
 
     /**
