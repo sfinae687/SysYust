@@ -20,8 +20,10 @@ include(FetchContent)
 
 set(DOXYGEN_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
 set(SYSYUST_PUBLIC_HEADER_DIR ${CMAKE_SOURCE_DIR}/include)
+
 set(sy_source_root ${CMAKE_SOURCE_DIR}/compiler2023/TestCase/functional)
 file(GLOB_RECURSE sy_source_list RELATIVE ${sy_source_root} ${sy_source_root}/*.sy)
+
 set(ScriptDir ${CMAKE_SOURCE_DIR}/script)
 
 find_package(Python COMPONENTS Interpreter)
