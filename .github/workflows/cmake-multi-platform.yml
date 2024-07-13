@@ -45,6 +45,8 @@ jobs:
       uses: StoneMoe/setup-antlr4@v4.13.1
       
     - uses: actions/checkout@v4
+      with:
+        submodules: true
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
