@@ -69,6 +69,7 @@ namespace SysYust::AST {
             /*Mul*/ std::any visitMulOp(SysYParser::MulOpContext *ctx) override;
             /*unary*/ std::any visitCall(SysYParser::CallContext *ctx) override;
             /*unary*/ std::any visitOpUnary(SysYParser::OpUnaryContext *ctx) override;
+            /*Call*/ HNode processTimeLib(SysYParser::CallContext *ctx);
 
             // 基本表达式
             /*basic*/ std::any visitLVal(SysYParser::LValContext *ctx) override;

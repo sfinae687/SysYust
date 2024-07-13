@@ -464,6 +464,12 @@ namespace SysYust::AST {
         LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         // 查询信息
         auto funcName = ctx->Ident()->getText();
+
+        // 检查是否是时间库
+        if (funcName == "starttime" || funcName == "stoptime") {
+            return processTimeLib(ctx);
+        }
+
         auto funcId = global.currentEnv->getId(funcName);
         auto &funcInfo = global.currentEnv->func_table.getInfo(funcId);
         auto &funcType = *funcInfo.type;
@@ -498,6 +504,19 @@ namespace SysYust::AST {
         auto callNode = new Call(&resultType, funcId, std::move(argumentExprNodeId));
         global.tree->setNode(callNodeId, callNode);
         return callNodeId;
+    }
+
+    HNode SyntaxTreeBuilder::Visitor::processTimeLib(SysYParser::CallContext *ctx) {
+        auto lineno = ctx->getStart()->getLine();
+        auto funcName = ctx->Ident()->getText();
+        auto fullName = "_sysy_" + funcName;
+        auto funcId = global.currentEnv->getId(funcName);
+
+        auto callId = global.tree->pushNode();
+        auto argument = global.tree->pushNode(new IntLiteral(lineno));
+        auto callNode = new Call(&Void_v, funcId, {argument});
+        global.tree->setNode(callId, callNode);
+        return callId;
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitOpUnary(SysYParser::OpUnaryContext *ctx) {

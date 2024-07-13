@@ -45,6 +45,7 @@ namespace SysYust {
             for (auto i=sPos; i<len; ++i) {
                 buffer += std::format("{}, ", strings[i]);
             }
+            strings.resize(sPos);
             buffer.pop_back();
             buffer.back() = ')';
             strings.emplace_back(std::move(buffer));
