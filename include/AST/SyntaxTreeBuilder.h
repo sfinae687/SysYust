@@ -25,6 +25,8 @@ namespace SysYust::AST {
 
         static std::unique_ptr<SyntaxTree> getTree(SysYParser::CompUnitContext* tree);
 
+        static const std::set<FuncInfo> lib_funcs;
+        static std::set<NumId> lib_funcs_id;
     private:
         explicit SyntaxTreeBuilder(SysYParser::CompUnitContext* tree);
 
@@ -60,12 +62,14 @@ namespace SysYust::AST {
             /*Primary*/ std::any visitClosedExpr(SysYParser::ClosedExprContext *ctx) override;
             /*Primary*/ std::any visitLValValue(SysYParser::LValValueContext *ctx) override;
             /*Primary*/ std::any visitLiteralValue(SysYParser::LiteralValueContext *ctx) override;
+            /*Stmt*/ std::any visitExpr(SysYParser::ExprContext *ctx) override;
 
             // 使用子节点的生成式
             /*Add*/ std::any visitAddOp(SysYParser::AddOpContext *ctx) override;
             /*Mul*/ std::any visitMulOp(SysYParser::MulOpContext *ctx) override;
             /*unary*/ std::any visitCall(SysYParser::CallContext *ctx) override;
             /*unary*/ std::any visitOpUnary(SysYParser::OpUnaryContext *ctx) override;
+            /*Call*/ HNode processTimeLib(SysYParser::CallContext *ctx);
 
             // 基本表达式
             /*basic*/ std::any visitLVal(SysYParser::LValContext *ctx) override;
@@ -100,6 +104,8 @@ namespace SysYust::AST {
             std::pair<HNode, HNode> numberTypeCast(HNode lhs, HNode rhs);
             HNode convertTo(const Type &t, HNode n);
             HNode convertToCond(HNode n);
+
+            /// @brief 库函数表
         private:
             SyntaxTreeBuilder &global;
             ConstantEvaluator eval;

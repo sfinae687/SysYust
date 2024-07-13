@@ -20,15 +20,17 @@
 
 int main(int argc, char *argv[]) {
 
-//    auto thePath = R"(E:\Source\SysYust\compiler2023\TestCase\functional\11_add2.sy)";
+//    auto thePath = R"(E:\Source\SysYust\compiler2023\TestCase\functional\61_sort_test7.sy)";
     auto thePath = argv[1];
     std::filesystem::path programPath{thePath};
     std::ifstream program(programPath);
-    std::string outFilePath = programPath.filename().string() + std::string(".out");
+    auto outFilePath = programPath.filename().string() + std::string(".out");
+    auto logFilePath = programPath.filename().string() + std::string(".log");
 
     std::ofstream out_file(outFilePath);
+//    std::ofstream log_file(logFilePath);
 
-    SysYust::Logger::setLogger(new SysYust::StreamLogger(std::cerr));
+    SysYust::Logger::setLogger(new SysYust::StreamLogger(std::clog));
 
     antlr4::ANTLRInputStream input(program);
     SysYLexer lexer(&input);

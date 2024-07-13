@@ -42,7 +42,12 @@ namespace SysYust::AST {
     }
 
     std::shared_ptr<Env> SyntaxTree::seekEnv(const Node *n) const {
-        return _env_map.at(n);
+        try {
+            return _env_map.at(n);
+        } catch (std::out_of_range &e) {
+            LOG_ERROR("Seek unsetted Env for {} Node", typeid(*n).name());
+            std::exit(EXIT_FAILURE);
+        }
     }
 
     void SyntaxTree::setupEnv(const Node *n, std::shared_ptr<Env> env) {

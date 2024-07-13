@@ -6,6 +6,7 @@
 #include <ranges>
 
 #include "AST/SyntaxTreeString.h"
+#include "AST/SyntaxTreeBuilder.h"
 
 namespace ranges = std::ranges;
 namespace views = std::views;
@@ -44,6 +45,7 @@ namespace SysYust {
             for (auto i=sPos; i<len; ++i) {
                 buffer += std::format("{}, ", strings[i]);
             }
+            strings.resize(sPos);
             buffer.pop_back();
             buffer.back() = ')';
             strings.emplace_back(std::move(buffer));
@@ -265,9 +267,12 @@ namespace SysYust {
                     strings.emplace_back(std::move(buff));
                 }
 
-                // 变量顶层函数
+                // 遍历顶层函数
                 for (auto [funcId, info] : rootFunc) {
                     std::string buff;
+                    if (SyntaxTreeBuilder::lib_funcs_id.contains(funcId)) {
+                        continue; // 跳过库函数
+                    }
                     buff += std::format("Func {}({}) : {}", info.name, funcId, info.type->toString());
                     strings.emplace_back(std::move(buff));
                     auto decl = tree.getNode<FuncDecl>(info.node);

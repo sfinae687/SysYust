@@ -5,10 +5,13 @@
 
 #include <string>
 #include <memory>
+#include <compare>
 
 #include "AST/Type.h"
 
 namespace SysYust::AST {
+
+    using HNode = std::size_t;
 
     class FuncDecl;
 
@@ -18,7 +21,9 @@ namespace SysYust::AST {
     struct FuncInfo {
         std::string name;
         const Function *type;
-        std::size_t node; ///< 声明它的节点的索引编号
+        HNode node; ///< 声明它的节点的索引编号
+
+        std::strong_ordering operator<=> (const FuncInfo &oth) const;
     };
 
 } // AST
