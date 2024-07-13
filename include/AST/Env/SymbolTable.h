@@ -6,6 +6,7 @@
 #define SYSYUST_AST_SYMBOLTABLE_H
 
 #include <iostream>
+#include <type_traits>
 #include <unordered_map>
 #include <memory>
 #include <cassert>
@@ -78,7 +79,7 @@ namespace SysYust::AST {
          auto end() {
              return _local_entry.end();
          }
-
+         
     private:
 
         const entry_t& seek(NumId id) const {

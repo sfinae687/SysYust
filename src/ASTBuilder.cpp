@@ -16,7 +16,7 @@
 #include "utility/Logger.h"
 #include "utility/StreamLogger.h"
 
-
+#include "Interpreter/Interpreter.h"
 
 int main(int argc, char *argv[]) {
 
@@ -45,6 +45,12 @@ int main(int argc, char *argv[]) {
     SysYust::AST::SyntaxTreeString str(*astTree);
 
     out_file << (std::string)str << std::endl;
+
+    SysYust::AST::Interpreter::Interpreter interp;
+    // assert(0);
+    int ret = interp.enter(&*astTree);
+
+    out_file << "Ans: " << ret << std::endl;
 
     return 0;
 }

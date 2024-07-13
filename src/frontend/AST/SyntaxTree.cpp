@@ -46,7 +46,8 @@ namespace SysYust::AST {
             return _env_map.at(n);
         } catch (std::out_of_range &e) {
             LOG_ERROR("Seek unsetted Env for {} Node", typeid(*n).name());
-            std::exit(EXIT_FAILURE);
+            assert(0);
+            throw ;
         }
     }
 

@@ -25,7 +25,7 @@ namespace SysYust::AST {
 
         static std::unique_ptr<SyntaxTree> getTree(SysYParser::CompUnitContext* tree);
 
-        static const std::set<FuncInfo> lib_funcs;
+        static std::set<FuncInfo> lib_funcs;
         static std::set<NumId> lib_funcs_id;
     private:
         explicit SyntaxTreeBuilder(SysYParser::CompUnitContext* tree);

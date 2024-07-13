@@ -18,6 +18,30 @@
 #include "AST/Type/Void.h"
 #include "Interpreter/Value.h"
 
+// For Debug
+
+class sp_t {
+   public:
+    int counter = 0;
+    void push() {
+        counter++;
+    }
+    void pop() {
+        counter--;
+    }
+
+};
+
+static sp_t sp;
+
+std::ostream &operator<<(std::ostream &os, sp_t &sp);
+
+#define println(fmt_str, ...)                                           \
+    (std::cout << sp << std::format(fmt_str __VA_OPT__(, ) __VA_ARGS__) \
+               << std::endl)
+
+// End Debug
+
 namespace SysYust::AST::Interpreter {
 
 class Interpreter : public NodeExecutorBase {
@@ -74,10 +98,32 @@ class Interpreter : public NodeExecutorBase {
    private:
     ReturnType _return_value = Void_v;
     std::stack<Context> _context_stack;
+    std::stack<Env> _env_stack;
     SyntaxTree *_ast;
 
     Context &getContext() {
+        // Debug
+
+
+        //  /**
+        //   * @brief 打印局部符号表
+        //   * 
+        //   */
+        //  std::string toString() {
+        //     std::string ret = typeid(E).name();
+        //     for (auto &ent : _local_entry) {
+        //         ret += std::format("● {} = {}\n", ent.first, ent.second.toString());
+        //     }
+        //     return ret;
+        //  }
+
+        // println("current Context");
+        // println("{}", _context_stack.top().toString());
         return _context_stack.top();
+    }
+
+    Env &curEnv() {
+        return _env_stack.top();
     }
 
     [[nodiscard]] std::optional<ControlFlowData> _executeCF(const Node &node) {
@@ -143,13 +189,13 @@ class Interpreter : public NodeExecutorBase {
                       (ret = F<Ts>::calc(args...), true)) ||
                      ...);
         assert(exec && "Exist Type Not Match");
-        assert(!ret._isNone() && "Value is none");
-        assert(!ret._isCFD() && "Value is cfd");
-
+        assert(ret.isUndef());
         return ret;
     }
 
     bool bulitinFunc(FuncInfo &func_info, std::vector<Value> &arg_vals);
+
+    Env &curEnv() const;
 };
 
 template <class T>
@@ -248,5 +294,6 @@ Value Interpreter::ArrPtr<OuterT, InnerT>::calc(const ArrayRef &node,
 }
 
 }  // namespace SysYust::AST::Interpreter
+
 
 #endif  // SYSYUST_INTERPRETER_H

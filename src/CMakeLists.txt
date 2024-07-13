@@ -4,7 +4,7 @@ add_subdirectory(utility)
 
 # 对所有的测试样例进行语法树构建测试
 add_executable(AST_Builder ASTBuilder.cpp)
-target_link_libraries(AST_Builder utility AST)
+target_link_libraries(AST_Builder utility AST Interpreter)
 
 
 foreach (sy_source_path ${sy_source_list})
