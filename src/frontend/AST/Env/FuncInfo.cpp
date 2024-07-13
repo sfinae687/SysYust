@@ -3,4 +3,7 @@
 #include "AST/Env/FuncInfo.h"
 
 namespace SysYust::AST {
+    std::strong_ordering FuncInfo::operator<=>(const FuncInfo &oth) const {
+        return name <=> oth.name;
+    }
 } // AST

@@ -11,6 +11,7 @@
 #include <cassert>
 
 #include "utility/IdAllocator.h"
+#include "utility/Logger.h"
 
 namespace SysYust::AST {
 
@@ -81,8 +82,14 @@ namespace SysYust::AST {
     private:
 
         const entry_t& seek(NumId id) const {
+            LOG_TRACE("Seek {} symbol info with id {}", typeid(E).name(), id);
             if (_local_entry.contains(id)) {
-                return _local_entry.at(id);
+                try {
+                    return _local_entry.at(id);
+                } catch (std::out_of_range &e) {
+                    LOG_ERROR("Exception:{}", e.what());
+                    __builtin_unreachable();
+                }
             } else if (_parent) {
                 return _parent->getInfo(id);
             } else {
@@ -91,6 +98,7 @@ namespace SysYust::AST {
         }
 
         entry_t& seek(NumId id) {
+            LOG_TRACE("Seek local {} symbol info with id {}", typeid(E).name(), id);
             return _local_entry[id]; // 写入仅考虑当前作用域
         }
 

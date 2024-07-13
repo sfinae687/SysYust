@@ -3,6 +3,7 @@
 //
 
 #include "AST/Env.h"
+#include "utility/Logger.h"
 
 namespace SysYust::AST {
     Env::Env(std::shared_ptr<Env> parent)
@@ -14,7 +15,9 @@ namespace SysYust::AST {
     }
 
     NumId Env::getId(const Env::name_t& name) {
-        return _name_id->idFor(name);
+        auto id = _name_id->idFor(name);
+        LOG_INFO("Id {} is name {}", id, name);
+        return id;
     }
 
     std::shared_ptr<Env> Env::getParent() const {

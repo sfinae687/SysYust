@@ -4,10 +4,13 @@
 
 #include <gtest/gtest.h>
 
+#include "utility/StreamLogger.h"
 #include "AST/SyntaxTree.h"
 
 TEST(NodeTest, CreateTest1) {
     using namespace SysYust::AST;
+
+    SysYust::Logger::setLogger(new SysYust::StreamLogger(std::clog));
 
     SyntaxTree tree;
     auto currentEnv = tree.topEnv();
