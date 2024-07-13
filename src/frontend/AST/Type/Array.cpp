@@ -2,8 +2,9 @@
 
 #include <cassert>
 #include <utility>
-#include <format>
 #include <ranges>
+
+#include <fmt/core.h>
 
 #include "AST/Type/Array.h"
 #include "AST/Type/Pointer.h"
@@ -111,7 +112,7 @@ namespace SysYust::AST {
     std::string Array::toString() const noexcept {
         auto rt = baseType().toString();
         for (auto d : getDimension()) {
-            rt += std::format("[{}]", d);
+            rt += fmt::format("[{}]", d);
         }
         return rt;
     }

@@ -1,9 +1,9 @@
 /// @file Function 类型标识的实现
 
 #include <utility>
-#include <format>
 #include <ranges>
 
+#include "fmt/core.h"
 #include "AST/Type/Function.h"
 
 namespace ranges = std::ranges;
@@ -45,7 +45,7 @@ namespace SysYust::AST {
         auto resultType = getResult().toString();
         rt += getParam().front()->toString();
         for (auto &type : getParam() | views::drop(1)) {
-            rt += std::format(",{}", type->toString());
+            rt += fmt::format(",{}", type->toString());
         }
         rt += ") -> ";
         rt += resultType;
