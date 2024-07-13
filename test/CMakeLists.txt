@@ -30,3 +30,8 @@ gtest_discover_tests(LoggerTest)
 gtest_discover_tests(TypeMatchTest)
 gtest_discover_tests(TypeCreateTest)
 gtest_discover_tests(NodeTest)
+
+# InterpreterTest
+add_executable(InterpreterTest InterpreterTest/ValueTest.cpp InterpreterTest/InterpreterFunctionalTest.cpp)
+target_link_libraries(InterpreterTest gtest GTest::gtest_main Interpreter)
+gtest_discover_tests(InterpreterTest)
