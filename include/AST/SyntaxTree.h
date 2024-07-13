@@ -83,11 +83,11 @@ namespace SysYust::AST {
         /**
          * @brief 根据 FuncDecl 或 Block 获取对应的 Env
          */
-        std::shared_ptr<Env> seekEnv(Node *n) const;
+        std::shared_ptr<Env> seekEnv(const Node *n) const;
         /**
          * @brief 为指定节点设置对应的环境
          */
-        void setupEnv(Node *n, std::shared_ptr<Env> env);
+        void setupEnv(const Node *n, std::shared_ptr<Env> env);
 
         /**
          * @brief 释放所有节点, 置该对象为初始状态
@@ -108,7 +108,7 @@ namespace SysYust::AST {
         std::shared_ptr<Env> _root_env = std::make_shared<Env>();
         std::shared_ptr<Env> _current_top_env = _root_env;
         std::vector<Node*> _all_nodes = {};
-        std::unordered_map<Node*, std::shared_ptr<Env>> _env_map = {};
+        std::unordered_map<const Node*, std::shared_ptr<Env>> _env_map = {};
     };
 
 } // AST

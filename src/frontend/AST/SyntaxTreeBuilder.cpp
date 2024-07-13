@@ -4,6 +4,7 @@
 
 #include <concepts>
 #include <ranges>
+#include <limits>
 
 #include "utility/Logger.h"
 #include "AST/SyntaxTreeBuilder.h"
@@ -13,17 +14,87 @@ namespace SysYust::AST {
     namespace ranges = std::ranges;
     namespace views = std::views;
 
+    const std::set<FuncInfo> SyntaxTreeBuilder::lib_funcs = {
+            {
+                "getint",
+                &Function::create(Int_v, {&Void_v}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                "getch",
+                &Function::create(Int_v, {&Void_v}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                "getarray",
+                &Function::create(Int_v, {&Pointer::create(Int_v)}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                "getfloat",
+                &Function::create(Float_v, {&Void_v}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                "putint",
+                &Function::create(Void_v, {&Int_v}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                "putch",
+                &Function::create(Void_v, {&Int_v}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                "putarray",
+                &Function::create(Void_v, {&Int_v, &Pointer::create(Int_v)}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                "putfloat",
+                        &Function::create(Void_v, {&Float_v}),
+                        std::numeric_limits<HNode>::max(),
+            },
+            {
+                "putfarray",
+                &Function::create(Void_v, {&Int_v, &Pointer::create(Float_v)}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                    "putf",
+                    nullptr,
+                    std::numeric_limits<HNode>::max(),
+            },
+            {
+                "_sysy_starttime",
+                &Function::create(Void_v, {&Int_v}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                    "_sysy_stoptime",
+                    &Function::create(Void_v, {&Int_v}),
+                    std::numeric_limits<HNode>::max(),
+            },
+    };
+
+    std::set<NumId> SyntaxTreeBuilder::lib_funcs_id{};
 
     // 拷贝控制
 
     SyntaxTreeBuilder::SyntaxTreeBuilder(SysYParser::CompUnitContext *tree)
     : rawTree(tree)
     , v(*this) {
-
+        auto &funcTable = currentEnv->func_table;
+        for (auto &i : lib_funcs) {
+            auto id = currentEnv->getId(i.name);
+            lib_funcs_id.insert(id);
+            funcTable.setInfo(id, i);
+        }
     }
 
     std::unique_ptr<SyntaxTree> SyntaxTreeBuilder::getTree() {
         if (rawTree) {
+            rawTree->accept(&v);
             rawTree = nullptr;
             currentEnv = nullptr;
             return std::move(tree);
@@ -103,13 +174,12 @@ namespace SysYust::AST {
                     global.tree->setNode(toId, toNode);
                     return toId;
                 } else {
-                    LOG_TRACE("TRACE info t:{} , node type: {}", t.toString(), nodeType.toString());
                     LOG_ERROR("Reach to unreachable pointed");
                     std::exit(EXIT_FAILURE);
                 }
             }
         } else { // 指针与数组的转换
-            assert(nodeType.type() == TypeId::Array);
+            assert(nodeType.type() == TypeId::Array || nodeType.type() == TypeId::Pointer);
             assert(t.type() == TypeId::Pointer);
             if (match(t, nodeType)) {
                 return n; /// @todo 待决，是否应该添加一个将数组转换为指针的类型转换
@@ -135,6 +205,7 @@ namespace SysYust::AST {
 
     std::any SyntaxTreeBuilder::Visitor::visitCompUnit(SysYParser::CompUnitContext *ctx) {
         for (auto decl : ctx->children) {
+            LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
             decl->accept(this);
         }
         return nullptr;
@@ -142,6 +213,7 @@ namespace SysYust::AST {
 
     // 常量声明
     std::any SyntaxTreeBuilder::Visitor::visitConstDecl(SysYParser::ConstDeclContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         // 查询基础类型
         auto &baseType = toType(ctx->type()->getText());
 
@@ -176,6 +248,7 @@ namespace SysYust::AST {
             auto varName = def->Ident()->getText();
             auto varId = global.currentEnv->getId(varName);
             VarInfo info;
+            info.name = varName;
             info.type = type;
             info.decl = global.tree->pushNode();
             // 构建节点
@@ -199,6 +272,7 @@ namespace SysYust::AST {
     concept VarDefContext = std::same_as<T, SysYParser::UninitVarDefContext> ||
     std::same_as<T, SysYParser::InitVarDefContext>;
     std::any SyntaxTreeBuilder::Visitor::visitVarDecl(SysYParser::VarDeclContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         auto &baseType = toType(ctx->type()->getText());
         std::vector<HNode> varNodes;
         // 通过这个Lambda表达式复用一些代码
@@ -238,7 +312,7 @@ namespace SysYust::AST {
         };
         //NOLINTBEGIN(cppcoreguidelines-pro-type-static-cast-downcast)
         for (auto def : ctx->varDef()) {
-            if (typeid(def) == typeid(SysYParser::UninitVarDefContext)) {
+            if (typeid(*def) == typeid(SysYParser::UninitVarDefContext)) {
                 impl(*static_cast<SysYParser::UninitVarDefContext*>(def));
             } else {
                 impl(*static_cast<SysYParser::InitVarDefContext*>(def));
@@ -305,13 +379,23 @@ namespace SysYust::AST {
         return subExpr->accept(this);
     }
 
+    std::any SyntaxTreeBuilder::Visitor::visitExpr(SysYParser::ExprContext *ctx) {
+        auto expCtx = ctx->exp();
+        if (expCtx) {
+            return ctx->exp()->accept(this);
+        } else {
+            return global.tree->pushNode(new Empty());
+        }
+    }
+
     // 带有子表达式的
 
     std::any SyntaxTreeBuilder::Visitor::visitAddOp(SysYParser::AddOpContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
 
         // 计算左右运算元
         auto lhs = std::any_cast<HNode>(ctx->addExp()->accept(this));
-        auto rhs = std::any_cast<HNode>(ctx->addExp()->accept(this));
+        auto rhs = std::any_cast<HNode>(ctx->mulExp()->accept(this));
 
         // 隐式类型转换
         std::tie(lhs, rhs) = numberTypeCast(lhs, rhs);
@@ -339,6 +423,7 @@ namespace SysYust::AST {
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitMulOp(SysYParser::MulOpContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         // 左右操作元
         auto lhs = std::any_cast<HNode>(ctx->mulExp()->accept(this));
         auto rhs = std::any_cast<HNode>(ctx->unaryExp()->accept(this));
@@ -376,8 +461,15 @@ namespace SysYust::AST {
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitCall(SysYParser::CallContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         // 查询信息
         auto funcName = ctx->Ident()->getText();
+
+        // 检查是否是时间库
+        if (funcName == "starttime" || funcName == "stoptime") {
+            return processTimeLib(ctx);
+        }
+
         auto funcId = global.currentEnv->getId(funcName);
         auto &funcInfo = global.currentEnv->func_table.getInfo(funcId);
         auto &funcType = *funcInfo.type;
@@ -385,21 +477,27 @@ namespace SysYust::AST {
 
         // 准备实参
         auto callNodeId = global.tree->pushNode();
-        auto arguments = ctx->funcRParams()->exp();
-        auto params = funcType.getParam();
+
+        auto argumentList = ctx->funcRParams();
         std::vector<HNode> argumentExprNodeId;
-        if (params.size() == arguments.size()) {
-            auto len = params.size();
-            for (int i=0; i<len; ++i) {
-                auto &currentParma = *params[i];
-                auto &currentArgument = arguments[i];
-                auto argId = std::any_cast<HNode>(currentArgument->accept(this));
-                argId = convertTo(currentParma, argId);
-                argumentExprNodeId.push_back(argId);
+
+        if (argumentList) {
+            auto arguments = argumentList->exp();
+
+            auto params = funcType.getParam();
+            if (params.size() == arguments.size()) {
+                auto len = params.size();
+                for (int i=0; i<len; ++i) {
+                    auto &currentParma = *params[i];
+                    auto &currentArgument = arguments[i];
+                    auto argId = std::any_cast<HNode>(currentArgument->accept(this));
+                    argId = convertTo(currentParma, argId);
+                    argumentExprNodeId.push_back(argId);
+                }
+            } else {
+                LOG_ERROR("Unmatched function call for {}", funcName);
+                std::exit(EXIT_FAILURE);
             }
-        } else {
-            LOG_ERROR("Unmatched function call for {}", funcName);
-            std::exit(EXIT_FAILURE);
         }
 
         // 准备节点
@@ -408,10 +506,24 @@ namespace SysYust::AST {
         return callNodeId;
     }
 
+    HNode SyntaxTreeBuilder::Visitor::processTimeLib(SysYParser::CallContext *ctx) {
+        auto lineno = ctx->getStart()->getLine();
+        auto funcName = ctx->Ident()->getText();
+        auto fullName = "_sysy_" + funcName;
+        auto funcId = global.currentEnv->getId(funcName);
+
+        auto callId = global.tree->pushNode();
+        auto argument = global.tree->pushNode(new IntLiteral(lineno));
+        auto callNode = new Call(&Void_v, funcId, {argument});
+        global.tree->setNode(callId, callNode);
+        return callId;
+    }
+
     std::any SyntaxTreeBuilder::Visitor::visitOpUnary(SysYParser::OpUnaryContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
 
         // 计算子节点
-        auto subexpr = std::any_cast<HNode>(ctx->unaryOP()->accept(this));
+        auto subexpr = std::any_cast<HNode>(ctx->unaryExp()->accept(this));
 
         auto op = ctx->unaryOP()->getText().front();
         if (op == '!') {
@@ -434,6 +546,7 @@ namespace SysYust::AST {
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitLVal(SysYParser::LValContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         // 查询信息
         auto varName = ctx->Ident()->getText();
         auto varId = global.currentEnv->getId(varName);
@@ -482,6 +595,7 @@ namespace SysYust::AST {
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitFloatNumber(SysYParser::FloatNumberContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         auto lit = ctx->FloatConst()->getText();
         auto num  = std::stof(lit);
         auto litId = global.tree->pushNode();
@@ -491,8 +605,9 @@ namespace SysYust::AST {
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitIntNumber(SysYParser::IntNumberContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         auto lit = ctx->IntConst()->getText();
-        auto num = std::stoi(lit);
+        auto num = std::stoi(lit, nullptr, 0);
         auto litId = global.tree->pushNode();
         auto litNode = new IntLiteral(num);
         global.tree->setNode(litId, litNode);
@@ -500,6 +615,7 @@ namespace SysYust::AST {
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitRelOp(SysYParser::RelOpContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         auto lhsId = std::any_cast<HNode>(ctx->relExp()->accept(this));
         auto rhsId = std::any_cast<HNode>(ctx->addExp()->accept(this));
 
@@ -589,15 +705,21 @@ namespace SysYust::AST {
         // 处理形参并获取形参类型
         global.currentEnv = global.tree->pushEnv();
         auto params = ctx->funcFParams();
-        funcDeclNode->param = std::any_cast<std::vector<HNode>>(params->accept(this));
-        auto paramTypes = funcDeclNode->param
-        | views::transform([&](auto i) {
-            auto paramId = global.tree->getNode<ParamDecl>(i)->info_id;
-            return global.currentEnv->var_table.getInfo(paramId).type;
-        });
+        const Function *type;
+        if (params) { // 计算并设置形参声明的节点
+            funcDeclNode->param = std::any_cast<std::vector<HNode>>(params->accept(this));
+            // 计算参数类型
+            auto paramTypes = funcDeclNode->param
+                              | views::transform([&](auto i) {
+                auto paramId = global.tree->getNode<ParamDecl>(i)->info_id;
+                return global.currentEnv->var_table.getInfo(paramId).type;
+            });
 
-        auto &fType = Function::create(resultType, {paramTypes.begin(), paramTypes.end()});
-        info.type = &fType;
+            type = &Function::create(resultType, {paramTypes.begin(), paramTypes.end()});
+        } else {
+            type = &Function::create(resultType, {&Void_v});
+        }
+        info.type = type;
         // 添加符号表
         global.currentEnv->getParent()->func_table.setInfo(nameId, info);
 
@@ -619,7 +741,7 @@ namespace SysYust::AST {
         | views::transform([&](auto i) {
             return std::any_cast<HNode>(i->accept(this));
         });
-        return std::vector{funcParamNode.begin(), funcParamNode.end()};
+        return std::vector<HNode>{funcParamNode.begin(), funcParamNode.end()};
     }
 
     // 形参
@@ -627,7 +749,7 @@ namespace SysYust::AST {
         auto &baseType = toType(ctx->type()->getText());
 
         // 构建类型
-        auto isPointer = ctx->subscript == nullptr;
+        auto isPointer = ctx->subscript != nullptr;
         const Type *type;
         if (!isPointer) {
             type = &baseType;
@@ -658,19 +780,28 @@ namespace SysYust::AST {
         auto node = new ParamDecl;
         node->info_id = global.currentEnv->getId(info.name);
         info.decl = nodeId;
+        global.currentEnv->var_table.setInfo(node->info_id, info);
         global.tree->setNode(nodeId, node);
         return nodeId;
     }
 
     // 语句
     std::any SyntaxTreeBuilder::Visitor::visitBlock(SysYParser::BlockContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         auto nodeId = global.tree->pushNode();
         global.currentEnv = global.tree->pushEnv();
-        auto item = ctx->blockItem()
-        | views::transform([&](auto i) {
-            return std::any_cast<HNode>(i->accept(this));
-        });
-        auto node = new Block({item.begin(), item.end()});
+        std::vector<HNode> subNodes{};
+        for (auto i : ctx->blockItem()) {
+            auto result = i->accept(this);
+            if (result.type() == typeid(HNode)) {
+                subNodes.push_back(std::any_cast<HNode>(result));
+            } else {
+                for (auto d : std::any_cast<std::vector<HNode>>(result)) {
+                    subNodes.push_back(d);
+                }
+            }
+        }
+        auto node = new Block(subNodes);
         global.tree->setNode(nodeId, node);
         global.tree->setupEnv(node, global.currentEnv);
         global.currentEnv = global.tree->popEnv();
@@ -678,6 +809,7 @@ namespace SysYust::AST {
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitAssign(SysYParser::AssignContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         auto nodeId = global.tree->pushNode();
         auto lhsCtx = ctx->lVal();
         auto rhsCtx = ctx->exp();
@@ -689,6 +821,7 @@ namespace SysYust::AST {
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitIf(SysYParser::IfContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         auto nodeId = global.tree->pushNode();
         auto condId = std::any_cast<HNode>(ctx->cond()->accept(this));
         auto stmt = std::any_cast<HNode>(ctx->stmt(0)->accept(this));
@@ -702,28 +835,38 @@ namespace SysYust::AST {
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitWhile(SysYParser::WhileContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         auto nodeId = global.tree->pushNode();
         auto condId = std::any_cast<HNode>(ctx->cond()->accept(this));
-        auto bodyId = std::any_cast<HNode>(ctx->cond()->accept(this));
+        auto bodyId = std::any_cast<HNode>(ctx->stmt()->accept(this));
         auto node = new While(condId, bodyId);
         global.tree->setNode(nodeId, node);
         return nodeId;
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitContinue(SysYParser::ContinueContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         return global.tree->pushNode(new Continue);
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitBreak(SysYParser::BreakContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         return global.tree->pushNode(new Break);
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitReturn(SysYParser::ReturnContext *ctx) {
+        LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         auto nodeId = global.tree->pushNode();
-        auto expId = std::any_cast<HNode>(ctx->exp()->accept(this));
-        auto node = new Return(expId);
-        global.tree->setNode(nodeId, node);
-        return nodeId;
+        auto returnedCtx = ctx->exp();
+        if (returnedCtx) {
+            auto expId = std::any_cast<HNode>(ctx->exp()->accept(this));
+            auto node = new Return(expId);
+            global.tree->setNode(nodeId, node);
+            return nodeId;
+        } else {
+            auto returnedNode = global.tree->pushNode(new Empty);
+            return returnedNode;
+        }
     }
 
 } // AST

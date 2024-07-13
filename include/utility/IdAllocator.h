@@ -30,7 +30,7 @@ namespace SysYust {
     template<typename T>
     requires std::equality_comparable<T>
     NumId IdAllocator<T>::idFor(const T &t) {
-        if (_idTable.contains(t)) {
+        if (!_idTable.contains(t)) {
             return _idTable[t] = _lastUnused++;
         } else {
             return _idTable[t];

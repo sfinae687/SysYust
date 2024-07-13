@@ -4,6 +4,7 @@
 #define SYSYUST_AST_NODEBASE_H
 
 #include <utility>
+#include <string>
 
 namespace SysYust::AST {
 
