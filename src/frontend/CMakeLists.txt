@@ -21,8 +21,9 @@ endforeach ()
 # 生成语法文件的cpp目标
 add_custom_command(OUTPUT ${SYSY_HEADER} ${SYSY_SOURCE}
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/SysY.g4
-    COMMAND antlr4 -o ${CMAKE_CURRENT_SOURCE_DIR}/generated -visitor ${CMAKE_CURRENT_SOURCE_DIR}/SysY.g4
+    COMMAND java -jar ${ScriptDir}/antlr4.jar -o ${CMAKE_CURRENT_SOURCE_DIR}/generated -visitor ${CMAKE_CURRENT_SOURCE_DIR}/SysY.g4
     COMMAND Python::Interpreter ${ScriptDir}/SysYGenModify.py ${CMAKE_CURRENT_SOURCE_DIR}/generated
+    COMMAND [ -d ${SYSYUST_PUBLIC_HEADER_DIR}/antlr4_target ] || mkdir ${SYSYUST_PUBLIC_HEADER_DIR}/antlr4_target
     COMMAND cp ${SYSY_HEADER} ${SYSYUST_PUBLIC_HEADER_DIR}/antlr4_target
 )
 add_custom_target(Antlr4_SysY_Generate DEPENDS ${SYSY_HEADER} ${SYSY_SOURCE})

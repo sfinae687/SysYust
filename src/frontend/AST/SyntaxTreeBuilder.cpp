@@ -3,16 +3,18 @@
 //
 
 #include <concepts>
-#include <ranges>
 #include <limits>
 
 #include "utility/Logger.h"
 #include "AST/SyntaxTreeBuilder.h"
 
-namespace SysYust::AST {
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+#include <range/v3/action.hpp>
+namespace views = ranges::views;
 
-    namespace ranges = std::ranges;
-    namespace views = std::views;
+
+namespace SysYust::AST {
 
     std::set<FuncInfo> SyntaxTreeBuilder::lib_funcs;
 
@@ -303,8 +305,8 @@ namespace SysYust::AST {
             info.isConstant = false;
             info.isParam = false;
             auto varNode = new VarDecl();
-            if constexpr (std::same_as<std::remove_cvref_t<decltype(ctx)>, SysYParser::InitVarDefContext>) {
-                varNode->init_expr = std::any_cast<HNode>(def_ctx.initVal->accept(this));
+            if constexpr (std::same_as<std::remove_cvref_t<decltype(def_ctx)>, SysYParser::InitVarDefContext>) {
+                varNode->init_expr = std::any_cast<HNode>(def_ctx.initVal()->accept(this));
             }
             varNode->info_id = infoId;
             global.tree->setNode(info.decl, varNode);
@@ -326,7 +328,8 @@ namespace SysYust::AST {
 
     // 初始化
     std::any SyntaxTreeBuilder::Visitor::visitConstListInit(SysYParser::ConstListInitContext *ctx) {
-        auto vaList = ctx->constInitVal()
+        auto initVal = ctx->constInitVal();
+        auto vaList = initVal
         | views::transform([&](auto i) {
             return std::any_cast<HNode>(i->accept(this));
         });
@@ -337,7 +340,8 @@ namespace SysYust::AST {
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitListInit(SysYParser::ListInitContext *ctx) {
-        auto vaList = ctx->initVal()
+        auto initVal = ctx->initVal();
+        auto vaList = initVal
         | views::transform([&](auto i) {
             return std::any_cast<HNode>(i->accept(this));
         });
@@ -738,7 +742,8 @@ namespace SysYust::AST {
 
     // 形参列表声明
     std::any SyntaxTreeBuilder::Visitor::visitFuncFParams(SysYParser::FuncFParamsContext *ctx) {
-        auto funcParamNode = ctx->funcFParam()
+        auto param = ctx->funcFParam();
+        auto funcParamNode = param
         | views::transform([&](auto i) {
             return std::any_cast<HNode>(i->accept(this));
         });
