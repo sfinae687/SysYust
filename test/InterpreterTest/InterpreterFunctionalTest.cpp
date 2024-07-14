@@ -37,6 +37,7 @@ TEST(InterpreterTest, FunctinoalTest1) {
 
     // 创建函数内的语句 {return 0 + 1 - 1};
     auto blockNo = tree.pushNode();
+        tree.pushEnv();
         auto returnNo = tree.pushNode();
             auto subNo = tree.pushNode();
                 auto addNo = tree.pushNode();
@@ -56,6 +57,7 @@ TEST(InterpreterTest, FunctinoalTest1) {
             auto returnN = new Return(subNo);
         tree.setNode(returnNo, returnN);
         auto blockN = new Block({returnNo});
+        tree.popEnv();
     tree.setNode(blockNo, blockN);
 
     auto mainN = new FuncDecl();

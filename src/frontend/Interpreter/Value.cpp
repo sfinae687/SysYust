@@ -81,8 +81,11 @@ std::string Value::toString() noexcept {
         case TypeId::Pointer:
             ret = fmt::format("({} {})", type->toString(), "#pointer_val");
             break;
+        case TypeId::Void:
+            ret = fmt::format("(Void)");
+            break;
         default:
-            assert(0 && "Invalid Value");
+            assert(false && "Invalid Value.");
     }
     if (is_lvalue) ret = fmt::format("&{}", ret);
     return ret;
