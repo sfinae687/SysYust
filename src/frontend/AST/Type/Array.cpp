@@ -1,8 +1,9 @@
 /// @file 类型标识 Array 类的定义。
 
+#include <version>
+
 #include <cassert>
 #include <utility>
-#include <ranges>
 
 #include <fmt/core.h>
 
@@ -11,8 +12,16 @@
 #include "AST/Type/Void.h"
 #include "utility/Logger.h"
 
-namespace ranges = std::ranges;
-namespace views = std::views;
+#ifdef __cpp_lib_ranges
+#include <ranges>
+    namespace ranges = std::ranges;
+    namespace views = std::views;
+#else
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+#include <range/v3/action.hpp>
+    namespace views = ranges::views;
+#endif
 
 namespace SysYust::AST {
     namespace {
@@ -76,27 +85,6 @@ namespace SysYust::AST {
                 }
             }
         }
-#if 0
-        auto &pointed = rhs.getBase();
-        if (pointed.type() != TypeId::Array) {
-            return pointed.match(getType());
-        } else { // 指针指向一个数组类型的情况
-            assert(pointed.type() == TypeId::Array);
-
-            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) 经过验证的,所以使用静态转换
-            auto &pointedArray = static_cast<const Array&>(pointed);
-
-            // 执行比较
-            if (pointedArray.getType().match(getType())) {
-                auto &dl = getDimension();
-                auto &dr = pointedArray.getDimension();
-                // 当数组的维度比指针多1，内层维度全部相等，则为真。
-                return std::equal(dr.begin(), dr.end(), dl.begin());
-            } else {
-                return false; // 基类型不同，直接返回 false。
-            }
-        }
-#endif
     }
 
     std::size_t Array::getRank() const {

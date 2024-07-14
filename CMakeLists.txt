@@ -57,6 +57,9 @@ add_subdirectory(lib/argparse)
 # 添加 antlr4-cpp-runtime
 add_subdirectory(lib/antlr4-cpp-runtime)
 
+# 添加 range-v3
+add_subdirectory(lib/range-v3)
+
 # 启用 ctest
 enable_testing()
 include(GoogleTest)

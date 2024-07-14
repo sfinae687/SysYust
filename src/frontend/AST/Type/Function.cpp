@@ -1,13 +1,20 @@
 /// @file Function 类型标识的实现
 
 #include <utility>
-#include <ranges>
 
 #include "fmt/core.h"
 #include "AST/Type/Function.h"
 
+#ifdef __cpp_lib_ranges
+#include <ranges>
 namespace ranges = std::ranges;
 namespace views = std::views;
+#else
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+#include <range/v3/action.hpp>
+    namespace views = ranges::views;
+#endif
 
 namespace SysYust::AST {
     const Type &Function::getResult() const {
