@@ -7,19 +7,10 @@
 #include "AST/ConstantEvaluator.h"
 #include "utility/Logger.h"
 
-#ifdef __cpp_lib_ranges
-#include <ranges>
-namespace ranges = std::ranges;
-namespace views = std::views;
-#else
 #include <range/v3/range.hpp>
 #include <range/v3/view.hpp>
 #include <range/v3/action.hpp>
-    namespace views = ranges::views;
-#endif
-
-namespace ranges = std::ranges;
-namespace views = std::views;
+namespace views = ranges::views;
 
 namespace SysYust::AST {
     ConstantEvaluator::ConstantEvaluator(const SyntaxTree &tree)

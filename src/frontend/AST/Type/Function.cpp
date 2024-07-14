@@ -5,16 +5,10 @@
 #include "fmt/core.h"
 #include "AST/Type/Function.h"
 
-#ifdef __cpp_lib_ranges
-#include <ranges>
-namespace ranges = std::ranges;
-namespace views = std::views;
-#else
 #include <range/v3/range.hpp>
 #include <range/v3/view.hpp>
 #include <range/v3/action.hpp>
-    namespace views = ranges::views;
-#endif
+namespace views = ranges::views;
 
 namespace SysYust::AST {
     const Type &Function::getResult() const {
@@ -51,7 +45,8 @@ namespace SysYust::AST {
         std::string rt = "function(";
         auto resultType = getResult().toString();
         rt += getParam().front()->toString();
-        for (auto &type : getParam() | views::drop(1)) {
+        auto params = getParam();
+        for (auto &type : params | views::drop(1)) {
             rt += fmt::format(",{}", type->toString());
         }
         rt += ") -> ";
