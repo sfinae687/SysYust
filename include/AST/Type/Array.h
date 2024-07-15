@@ -86,6 +86,12 @@ namespace SysYust::AST {
          */
         [[nodiscard]] std::size_t offsetWith(const std::vector<std::size_t> &ind) const;
 
+        /**
+         * @brief 数组 sizeof
+         * @return std::size_t 
+         */
+        [[nodiscard]] std::size_t size() const;
+
         [[nodiscard]] bool match(const SysYust::AST::Array &) const override;
         [[nodiscard]] bool match(const SysYust::AST::Pointer &) const override;
 

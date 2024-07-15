@@ -50,7 +50,11 @@ int main(int argc, char *argv[]) {
     // assert(0);
     int ret = interp.enter(&*astTree);
 
+    out_file << interp.log_data.str() << std::endl;
+
     out_file << "Ans: " << ret << std::endl;
+
+    std::cout << ret << std::endl;
 
     return 0;
 }
