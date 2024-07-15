@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 option(SELF_CONTAINS "let all dependency store in lib/" OFF)
 option(GeneratedDocument "add a target to generate document by doxygen form code comments" ON)
+option(EnableASTBuildTest "enable the tests of AST Build" ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(
@@ -22,7 +23,7 @@ set(DOXYGEN_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
 set(SYSYUST_PUBLIC_HEADER_DIR ${CMAKE_SOURCE_DIR}/include)
 
 set(sy_source_root ${CMAKE_SOURCE_DIR}/compiler2023/TestCase/functional)
-file(GLOB_RECURSE sy_source_list RELATIVE ${sy_source_root} ${sy_source_root}/*.sy)
+file(GLOB_RECURSE sy_source_list  ${sy_source_root}/*.sy)
 
 set(ScriptDir ${CMAKE_SOURCE_DIR}/script)
 
@@ -55,6 +56,7 @@ add_subdirectory(lib/fmt)
 add_subdirectory(lib/argparse)
 
 # 添加 antlr4-cpp-runtime
+set(ANTLR_BUILD_CPP_TESTS OFF)
 add_subdirectory(lib/antlr4-cpp-runtime)
 
 # 添加 range-v3
@@ -66,6 +68,7 @@ include(GoogleTest)
 add_subdirectory(test)
 
 # 添加本项目的模块
+add_subdirectory(${ScriptDir})
 add_subdirectory(include)
 add_subdirectory(src)
 

@@ -34,3 +34,16 @@ target_link_libraries(ArrayIndexTest PUBLIC AST)
 add_executable(InterpreterTest InterpreterTest/ValueTest.cpp InterpreterTest/InterpreterFunctionalTest.cpp)
 target_link_libraries(InterpreterTest gtest GTest::gtest_main Interpreter)
 gtest_discover_tests(InterpreterTest)
+
+# 处理 sy 程序测试样例路径
+set(sy_test_name_list)
+foreach(sy_source ${sy_source_list})
+    file(RELATIVE_PATH sy_path ${sy_source_root} ${sy_source})
+    string(REPLACE "/" "_" sy_name ${sy_path})
+    string(REGEX REPLACE "(.*)\.sy" "\\1" sy_name ${sy_name})
+#    message("Find test case ${sy_name}")
+    list(APPEND sy_test_name_list ${sy_name})
+endforeach ()
+
+# 语法树构建测试
+add_subdirectory(AST-BuilderTest)
