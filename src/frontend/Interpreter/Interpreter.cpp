@@ -171,7 +171,7 @@ Interpreter::InitList Interpreter::parseInitList(const Type &init_type,
     }
 }
 
-void printInitList(Interpreter::InitList &inits, int ind = 0) {
+void Interpreter::printInitList(Interpreter::InitList &inits, int ind) {
     switch (inits.list.index()) {
         case 0: {  // Vec<List>
             auto list = std::get<0>(inits.list);

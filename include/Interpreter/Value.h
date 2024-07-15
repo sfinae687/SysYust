@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstdint>
 #include <memory>
+#include <sstream>
 #include <type_traits>
 #include <variant>
 #include <vector>
@@ -139,7 +140,8 @@ class Value {
      */
     Value(const Type *type_, ValueType _value_, bool is_lvalue_ = false)
         : type(type_), is_lvalue(is_lvalue_), _value(_value_) {
-            assert(is_lvalue == (_value.index() == 2));
+        assert(type->isBasicType() && (is_lvalue == (_value.index() == 2)) ||
+               !type->isBasicType() && _value.index() == 2);
     }
 
     Value toLValue();

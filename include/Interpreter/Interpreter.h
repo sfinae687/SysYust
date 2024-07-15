@@ -42,9 +42,15 @@ static sp_t sp;
 
 std::ostream &operator<<(std::ostream &os, sp_t &sp);
 
+#ifndef NODEBUG
 #define println(fmt_str, ...)                                           \
-    (std::cout << sp << fmt::format(fmt_str __VA_OPT__(, ) __VA_ARGS__) \
+    (std::cerr << sp << fmt::format(fmt_str __VA_OPT__(, ) __VA_ARGS__) \
                << std::endl)
+#else 
+#define println(fmt_str, ...)                                           \
+    (log_data << sp << fmt::format(fmt_str __VA_OPT__(, ) __VA_ARGS__) \
+               << std::endl)
+#endif
 
 // End Debug
 
@@ -52,6 +58,8 @@ namespace SysYust::AST::Interpreter {
 
 class Interpreter : public NodeExecutorBase {
    public:
+    std::stringstream log_data;
+
     enum CFDType { CFDBreak = 0, CFDContinue, CFDReturn };
     /// enum ControlFlowData = Break | Continue | Return Option<Value>;
     using ControlFlowData =
@@ -373,6 +381,7 @@ class Interpreter : public NodeExecutorBase {
     bool bulitinFunc(const FuncInfo &func_info, std::vector<Value> &arg_vals);
 
     InitList parseInitList(const Type &init_type, std::vector<HNode> &inits);
+    void printInitList(Interpreter::InitList &inits, int ind = 0);
 
     template <typename T>
     void FillInitListMemory(Type &type, MemorySlice mslice,
