@@ -5,7 +5,6 @@
 #ifndef SYSYUST_AST_VARDECL_H
 #define SYSYUST_AST_VARDECL_H
 
-#include <variant>
 #include <vector>
 #include <optional>
 

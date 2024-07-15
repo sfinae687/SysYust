@@ -112,7 +112,7 @@ namespace SysYust::AST {
         }
     }
 
-    std::size_t Array::offsetWith(const std::span<std::size_t> &ind) const {
+    std::size_t Array::offsetWith(const std::vector<std::size_t> &ind) const {
         auto layer = ind.size();
         auto toRef = _dimensions.end()-layer; // 最低层待解引用的数组
 
