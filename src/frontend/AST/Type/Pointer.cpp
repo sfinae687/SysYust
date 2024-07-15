@@ -40,7 +40,7 @@ namespace SysYust::AST {
         }
     }
 
-    std::size_t Pointer::offsetWith(const std::span<std::size_t> &ind) const {
+    std::size_t Pointer::offsetWith(const std::vector<std::size_t> &ind) const {
         assert(!ind.empty());
         if (getBase().type() == TypeId::Array) {
             auto &pointedArray = static_cast<const Array&>(getBase());

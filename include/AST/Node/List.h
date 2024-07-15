@@ -6,7 +6,6 @@
 #define SYSYUST_AST_LIST_H
 
 #include <vector>
-#include <span>
 
 #include "NodeBase.h"
 
@@ -14,7 +13,7 @@ namespace SysYust::AST {
 
     class List : public Node {
     public:
-        explicit List(std::span<const HNode> vals);
+        explicit List(const std::vector<HNode> &vals);
         std::vector<HNode> vals;
         void execute(SysYust::AST::NodeExecutor *e) override;
     };

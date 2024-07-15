@@ -9,7 +9,6 @@
 #include <cstdlib>
 #include <optional>
 #include <ostream>
-#include <span>
 #include <variant>
 #include <vector>
 

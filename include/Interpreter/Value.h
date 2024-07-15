@@ -72,6 +72,8 @@ class Value {
     std::string toString() noexcept;
 };
 
+static_assert(std::is_trivially_destructible_v<Value>);
+
 template <class T>
 Value::val_t<T> &Value::get() {
     assert(type != &Void_v && "You can't use an undef value!");

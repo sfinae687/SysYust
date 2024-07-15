@@ -8,7 +8,6 @@
 #include <cstring>
 
 #include "atn/SingletonPredictionContext.h"
-#include "atn/HashUtils.h"
 #include "misc/MurmurHash.h"
 #include "support/Casts.h"
 
@@ -17,6 +16,10 @@ using namespace antlr4::misc;
 using namespace antlrcpp;
 
 namespace {
+
+  bool cachedHashCodeEqual(size_t lhs, size_t rhs) {
+    return lhs == rhs || lhs == 0 || rhs == 0;
+  }
 
   bool predictionContextEqual(const Ref<const PredictionContext> &lhs, const Ref<const PredictionContext> &rhs) {
     // parent PredictionContext pointers can be null during full context mode and

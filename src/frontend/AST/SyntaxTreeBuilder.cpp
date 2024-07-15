@@ -2,8 +2,8 @@
 // Created by LL06p on 24-7-6.
 //
 
-#include <concepts>
 #include <limits>
+#include <type_traits>
 
 #include "utility/Logger.h"
 #include "AST/SyntaxTreeBuilder.h"
@@ -271,15 +271,12 @@ namespace SysYust::AST {
     // 常量初始化
 
     // 变量声明
-    template<typename T>
-    concept VarDefContext = std::same_as<T, SysYParser::UninitVarDefContext> ||
-    std::same_as<T, SysYParser::InitVarDefContext>;
     std::any SyntaxTreeBuilder::Visitor::visitVarDecl(SysYParser::VarDeclContext *ctx) {
         LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         auto &baseType = toType(ctx->type()->getText());
         std::vector<HNode> varNodes;
         // 通过这个Lambda表达式复用一些代码
-        auto impl = [&](VarDefContext auto &def_ctx) {
+        auto impl = [&](auto &def_ctx) {
             // 计算类型
             const Type *type;
             auto indexDef = def_ctx.constExp();
@@ -305,7 +302,7 @@ namespace SysYust::AST {
             info.isConstant = false;
             info.isParam = false;
             auto varNode = new VarDecl();
-            if constexpr (std::same_as<std::remove_cvref_t<decltype(def_ctx)>, SysYParser::InitVarDefContext>) {
+            if constexpr (std::is_same_v<std::remove_cvref_t<decltype(def_ctx)>, SysYParser::InitVarDefContext>) {
                 varNode->init_expr = std::any_cast<HNode>(def_ctx.initVal()->accept(this));
             }
             varNode->info_id = infoId;

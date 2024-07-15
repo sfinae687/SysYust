@@ -53,7 +53,6 @@ namespace SysYust::AST {
          * @brief 构造 Function 的静态方法
          */
         template<typename... Args>
-        requires std::constructible_from<Function, Args...>
         static const Function& create(Args&&... args) {
             Function target(std::forward<Args>(args)...);
             auto [rt, state] = _pool.insert(target);
@@ -86,7 +85,7 @@ namespace SysYust::AST {
              }
          }
 
-         std::string toString() const noexcept override;
+         [[nodiscard]] std::string toString() const noexcept override;
     private:
         const Type &_returnedType; ///< 返回类型
         const std::vector<const Type*> _paramType; ///< 参数列表类型

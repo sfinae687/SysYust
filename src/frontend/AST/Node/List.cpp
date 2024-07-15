@@ -7,7 +7,7 @@
 #include "AST/Node/List.h"
 
 namespace SysYust::AST {
-    List::List(std::span<const HNode> vals)
+    List::List(const std::vector<HNode> &vals)
     : vals(vals.begin(), vals.end()) {
 
     }

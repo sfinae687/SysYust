@@ -46,7 +46,6 @@ set(AST_SOURCE
         ConstantEvaluator.cpp
         Node/List.cpp
         SyntaxTreeString.cpp
-        ../../../include/AST/SyntaxTreeString.h
 )
 
 add_library(AST ${AST_SOURCE})
