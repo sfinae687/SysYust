@@ -20,8 +20,13 @@ include(FetchContent)
 
 set(DOXYGEN_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
 set(SYSYUST_PUBLIC_HEADER_DIR ${CMAKE_SOURCE_DIR}/include)
+
 set(sy_source_root ${CMAKE_SOURCE_DIR}/compiler2023/TestCase/functional)
 file(GLOB_RECURSE sy_source_list RELATIVE ${sy_source_root} ${sy_source_root}/*.sy)
+
+set(ScriptDir ${CMAKE_SOURCE_DIR}/script)
+
+find_package(Python COMPONENTS Interpreter)
 
 include_directories(include src/frontend/generated)
 
@@ -52,6 +57,9 @@ add_subdirectory(lib/argparse)
 # 添加 antlr4-cpp-runtime
 add_subdirectory(lib/antlr4-cpp-runtime)
 
+# 添加 range-v3
+add_subdirectory(lib/range-v3)
+
 # 启用 ctest
 enable_testing()
 include(GoogleTest)
@@ -64,8 +72,10 @@ add_subdirectory(src)
 # 准备生成文档的目标
 
 if (${GeneratedDocument} AND DEFINED DOXYGEN_FOUND)
+    set(DocumentRoot ${CMAKE_BINARY_DIR}/doc CACHE STRING "The directory used to storage document")
+    configure_file(${DOXYGEN_CONFIG_FILE} Doxyfile)
     add_custom_target(Document
-        COMMAND Doxygen::doxygen ${DOXYGEN_CONFIG_FILE}
+        COMMAND Doxygen::doxygen ${CMAKE_BINARY_DIR}/Doxyfile
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
 endif ()

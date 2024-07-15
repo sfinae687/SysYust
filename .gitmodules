@@ -4,6 +4,6 @@
 [submodule "lib/argparse"]
 	path = lib/argparse
 	url = https://github.com/p-ranav/argparse.git
-[submodule "lib/expected"]
-	path = lib/expected
-	url = https://github.com/zeus-cpp/expected.git
+[submodule "lib/range-v3"]
+	path = lib/range-v3
+	url = git@github.com:ericniebler/range-v3.git
