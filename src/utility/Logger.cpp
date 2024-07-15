@@ -21,7 +21,7 @@ namespace SysYust {
         if (filter(record)) {
             return ;
         }
-        write(fmt::format(_pattern,
+        write(fmt::format(fmt::runtime(_pattern),
                           fmt::arg("level", LoggerLevelIdStr[static_cast<std::size_t>(record.level)]),
                           fmt::arg("file", record.file),
                           fmt::arg("line", record.line),

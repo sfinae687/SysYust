@@ -1,0 +1,54 @@
+set(AST_SOURCE
+        Type/TypeBase.cpp
+        Type/Int.cpp
+        Type/Float.cpp
+        Type/Void.cpp
+        Type/Array.cpp
+        Type/Pointer.cpp
+        Type/Function.cpp
+        Env/VarInfo.cpp
+        Env/FuncInfo.cpp
+        Env/Env.cpp
+        Node/NodeBase.cpp
+        Node/Decl.cpp
+        Node/NodeExecutor.cpp
+        Node/VarDecl.cpp
+        Node/FuncDecl.cpp
+        Node/ParamDecl.cpp
+        Node/Stmt.cpp
+        Node/Expr.cpp
+        Node/IntLiteral.cpp
+        Node/FloatLiteral.cpp
+        Node/Call.cpp
+        Node/UnaryOp.cpp
+        Node/BinaryOp.cpp
+        Node/LExpr.cpp
+        Node/DeclRef.cpp
+        Node/ArrayRef.cpp
+        Node/ToInt.cpp
+        Node/ToFloat.cpp
+        Node/CondExpr.cpp
+        Node/Not.cpp
+        Node/And.cpp
+        Node/Or.cpp
+        Node/Compare.cpp
+        Node/ToCond.cpp
+        Node/If.cpp
+        Node/Assign.cpp
+        Node/While.cpp
+        Node/Break.cpp
+        Node/Continue.cpp
+        Node/Return.cpp
+        Node/Empty.cpp
+        Node/Block.cpp
+        SyntaxTree.cpp
+        SyntaxTreeBuilder.cpp
+        ConstantEvaluator.cpp
+        Node/List.cpp
+        SyntaxTreeString.cpp
+        ../../../include/AST/SyntaxTreeString.h
+)
+
+add_library(AST ${AST_SOURCE})
+target_link_libraries(AST PUBLIC utility)
+target_include_directories(AST PUBLIC ${SYSYUST_PUBLIC_INCLUDE_DIR}/AST)

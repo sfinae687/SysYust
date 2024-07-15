@@ -1,11 +1,18 @@
 cmake_minimum_required(VERSION 3.27)
 project(SysYust VERSION 0.0.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 option(SELF_CONTAINS "let all dependency store in lib/" OFF)
 option(GeneratedDocument "add a target to generate document by doxygen form code comments" ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+set(
+  CMAKE_CXX_FLAGS
+  "${CMAKE_CXX_FLAGS} -O0 -fsanitize=undefined -g"
+)
+
 
 include(FetchContent)
 
@@ -13,11 +20,15 @@ include(FetchContent)
 
 set(DOXYGEN_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
 set(SYSYUST_PUBLIC_HEADER_DIR ${CMAKE_SOURCE_DIR}/include)
+
+set(sy_source_root ${CMAKE_SOURCE_DIR}/compiler2023/TestCase/functional)
+file(GLOB_RECURSE sy_source_list RELATIVE ${sy_source_root} ${sy_source_root}/*.sy)
+
 set(ScriptDir ${CMAKE_SOURCE_DIR}/script)
 
 find_package(Python COMPONENTS Interpreter)
 
-include_directories(include)
+include_directories(include src/frontend/generated)
 
 # 包含 Doxygen
 
@@ -46,15 +57,17 @@ add_subdirectory(lib/argparse)
 # 添加 antlr4-cpp-runtime
 add_subdirectory(lib/antlr4-cpp-runtime)
 
-# 添加本项目的模块
-add_subdirectory(include)
-add_subdirectory(src)
-
+# 添加 range-v3
+add_subdirectory(lib/range-v3)
 
 # 启用 ctest
 enable_testing()
 include(GoogleTest)
 add_subdirectory(test)
+
+# 添加本项目的模块
+add_subdirectory(include)
+add_subdirectory(src)
 
 # 准备生成文档的目标
 

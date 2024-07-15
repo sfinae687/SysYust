@@ -9,6 +9,7 @@
 #include "Logger.h"
 #include "FileLogger.h"
 #include "StringLogger.h"
+#include "StreamLogger.h"
 #include "Trace.h"
 
 namespace fs = std::filesystem;
@@ -65,7 +66,7 @@ void Recurrence(int n, int i = 0) {
     TRACEPOINT(i, n);
     auto TopTrace = SysYust::Trace::TopTrace;
     ASSERT_EQ(i+1, TopTrace->depth);
-    LOG_TRACE(TopTrace->getArgRecords());
+    LOG_TRACE(fmt::runtime(TopTrace->getArgRecords()));
     ASSERT_EQ(TopTrace, SysYust::Trace::TopTrace);
     if (i < n) {
         return Recurrence(n, i+1);
@@ -94,4 +95,9 @@ void StackPrinterRe(int n, int i=0) {
 TEST(LoggerTest, StackPrinterTest) {
     Logger::setLogger(new SysYust::FileLogger(getFile("log/FileTest.log"), "a"));
     StackPrinterRe(10);
+}
+
+TEST(LoggerTest, StreamLogger) {
+    Logger::setLogger(new SysYust::StreamLogger(std::cerr));
+    LOG_INFO("Logger is set");
 }

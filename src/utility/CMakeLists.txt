@@ -3,6 +3,7 @@ set(SYSYUST_UTILITY_SOURCE
         Logger.cpp
         FileLogger.cpp
         StringLogger.cpp
+        StreamLogger.cpp
 )
 add_library(utility
         ${SYSYUST_UTILITY_PUBLIC_HEADER}
@@ -13,4 +14,7 @@ target_include_directories(utility
         ${CMAKE_SOURCE_DIR}/lib/expected/include
 )
 
-target_link_libraries(utility fmt::fmt)
+target_link_libraries(utility
+        PUBLIC fmt::fmt
+        PUBLIC range-v3::range-v3
+)
