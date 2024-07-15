@@ -303,8 +303,8 @@ namespace SysYust::AST {
             info.isConstant = false;
             info.isParam = false;
             auto varNode = new VarDecl();
-            if constexpr (std::same_as<std::remove_cvref_t<decltype(ctx)>, SysYParser::InitVarDefContext>) {
-                varNode->init_expr = std::any_cast<HNode>(def_ctx.initVal->accept(this));
+            if constexpr (std::same_as<std::remove_cvref_t<decltype(def_ctx)>, SysYParser::InitVarDefContext>) {
+                varNode->init_expr = std::any_cast<HNode>(def_ctx.initVal()->accept(this));
             }
             varNode->info_id = infoId;
             global.tree->setNode(info.decl, varNode);

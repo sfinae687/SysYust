@@ -145,4 +145,8 @@ namespace SysYust::AST {
         return index;
     }
 
+    std::size_t Array::size() const {
+        return reduce(_dimensions.begin(), _dimensions.end(), 1ull, std::multiplies{});
+    }
+
 } // AST
