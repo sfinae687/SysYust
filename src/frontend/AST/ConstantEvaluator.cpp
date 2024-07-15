@@ -3,13 +3,14 @@
 //
 
 #include <functional>
-#include <ranges>
 
 #include "AST/ConstantEvaluator.h"
 #include "utility/Logger.h"
 
-namespace ranges = std::ranges;
-namespace views = std::views;
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+#include <range/v3/action.hpp>
+namespace views = ranges::views;
 
 namespace SysYust::AST {
     ConstantEvaluator::ConstantEvaluator(const SyntaxTree &tree)

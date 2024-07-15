@@ -27,5 +27,8 @@ doc/generated
 log/*
 *.log
 
+# 忽略备份文件
+*.backup
+
 # 需要外部下载的目录
 /compiler2023

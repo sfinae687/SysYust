@@ -2,14 +2,15 @@
 // Created by LL06p on 24-7-12.
 //
 
-#include <format>
-#include <ranges>
+#include <fmt/core.h>
 
 #include "AST/SyntaxTreeString.h"
 #include "AST/SyntaxTreeBuilder.h"
 
-namespace ranges = std::ranges;
-namespace views = std::views;
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+#include <range/v3/action.hpp>
+namespace views = ranges::views;
 
 namespace SysYust {
     namespace AST {
@@ -21,29 +22,29 @@ namespace SysYust {
             auto infoId = decl.info_id;
             auto info = currentEnv->var_table.getInfo(infoId);
 
-            std::string buffer = std::format("PARAM {}(ID{}):{}", info.name, infoId, info.type->toString());
+            std::string buffer = fmt::format("PARAM {}(ID{}):{}", info.name, infoId, info.type->toString());
             strings.emplace_back(std::move(buffer));
         }
 
         void SyntaxTreeString::execute(const IntLiteral &literal) {
-            strings.emplace_back(std::format("<I:{}>", std::to_string(literal.value)));
+            strings.emplace_back(fmt::format("<I:{}>", std::to_string(literal.value)));
         }
 
         void SyntaxTreeString::execute(const FloatLiteral &literal) {
-            strings.emplace_back(std::format("<F:{}>", std::to_string(literal.value)));
+            strings.emplace_back(fmt::format("<F:{}>", std::to_string(literal.value)));
         }
 
         void SyntaxTreeString::execute(const Call &call) {
             auto funcId = call.func_info;
             auto info = currentEnv->func_table.getInfo(funcId);
-            std::string buffer = std::format("CALL[{}](", info.name);
+            std::string buffer = fmt::format("CALL[{}](", info.name);
             auto sPos = strings.size();
             for (auto i : call.argumentExpr) {
                 tree.getNode(i)->execute(this);
             }
             auto len = strings.size();
             for (auto i=sPos; i<len; ++i) {
-                buffer += std::format("{}, ", strings[i]);
+                buffer += fmt::format("{}, ", strings[i]);
             }
             strings.resize(sPos);
             buffer.pop_back();
@@ -65,7 +66,7 @@ namespace SysYust {
                     break;
                 default:;
             }
-            strings.emplace_back(std::format("{}{}", opS, substr));
+            strings.emplace_back(fmt::format("{}{}", opS, substr));
         }
 
         void SyntaxTreeString::execute(const BinaryOp &op) {
@@ -89,20 +90,20 @@ namespace SysYust {
                     break;
                 default:;
             }
-            strings.emplace_back(std::format("({}{}{})", lS, str, rS));
+            strings.emplace_back(fmt::format("({}{}{})", lS, str, rS));
         }
 
         void SyntaxTreeString::execute(const DeclRef &decl) {
             auto varInfo = currentEnv->var_table.getInfo(decl.var_id);
-            strings.emplace_back(std::format("{}(ID{})", varInfo.name, decl.var_id));
+            strings.emplace_back(fmt::format("{}(ID{})", varInfo.name, decl.var_id));
         }
 
         void SyntaxTreeString::execute(const ArrayRef &array) {
             auto varInfo = currentEnv->var_table.getInfo(array.var_id);
-            std::string buffer = std::format("{}(ID{})", varInfo.name, array.var_id);
+            std::string buffer = fmt::format("{}(ID{})", varInfo.name, array.var_id);
             for (auto i : array.subscripts) {
                 tree.getNode(i)->execute(this);
-                buffer += std::format("[{}]", strings.back());
+                buffer += fmt::format("[{}]", strings.back());
                 strings.pop_back();
             }
             strings.emplace_back(std::move(buffer));
@@ -118,17 +119,17 @@ namespace SysYust {
 
         void SyntaxTreeString::execute(const Not &aNot) {
             tree.getNode(aNot.subexpr)->execute(this);
-            strings.back() = std::format("!{}", strings.back());
+            strings.back() = fmt::format("!{}", strings.back());
         }
 
         void SyntaxTreeString::execute(const And &anAnd) {
             auto [lS, rS] = executeTwo(anAnd.lhs, anAnd.rhs);
-            strings.emplace_back(std::format("({} && {})", lS, rS));
+            strings.emplace_back(fmt::format("({} && {})", lS, rS));
         }
 
         void SyntaxTreeString::execute(const Or &anOr) {
             auto [lS, rS] = executeTwo(anOr.lhs, anOr.rhs);
-            strings.emplace_back(std::format("({} || {})", lS, rS));
+            strings.emplace_back(fmt::format("({} || {})", lS, rS));
         }
 
         void SyntaxTreeString::execute(const Compare &compare) {
@@ -158,7 +159,7 @@ namespace SysYust {
                 default:;
             }
             tree.getNode(compare.rhs)->execute(this);
-            strings[pos] = std::format("({}{}{})", strings[pos], opS, strings[pos+1]);
+            strings[pos] = fmt::format("({}{}{})", strings[pos], opS, strings[pos+1]);
             strings.pop_back();
         }
 
@@ -173,8 +174,8 @@ namespace SysYust {
             if (anIf.else_stmt != -1) {
                 auto sPos = strings.size();
                 tree.getNode(anIf.else_stmt)->execute(this);
-                strings[sPos] = std::format("ELSE {}", strings[sPos]);
-                strings.back() = std::format("ELSE {}", strings.back());
+                strings[sPos] = fmt::format("ELSE {}", strings[sPos]);
+                strings.back() = fmt::format("ELSE {}", strings.back());
             }
         }
 
@@ -182,13 +183,13 @@ namespace SysYust {
             auto l_val_pos = strings.size();
             tree.getNode(assign.l_val)->execute(this);
             tree.getNode(assign.r_val)->execute(this);
-            strings[l_val_pos] = std::format("({} = {})", strings[l_val_pos], strings[l_val_pos+1]);
+            strings[l_val_pos] = fmt::format("({} = {})", strings[l_val_pos], strings[l_val_pos+1]);
             strings.pop_back();
         }
 
         void SyntaxTreeString::execute(const While &aWhile) {
             tree.getNode(aWhile.cond)->execute(this);
-            strings.back() = std::format("WhileCond:[{}]", strings.back());
+            strings.back() = fmt::format("WhileCond:[{}]", strings.back());
             tree.getNode(aWhile.stmt)->execute(this);
         }
 
@@ -235,7 +236,7 @@ namespace SysYust {
                 tree.getNode(i)->execute(this);
             }
             for (auto i=sPos; i<strings.size(); ++i) {
-                str += std::format("{}, ", strings[i]);
+                str += fmt::format("{}, ", strings[i]);
             }
             str.push_back('}');
             strings.resize(sPos);
@@ -255,12 +256,12 @@ namespace SysYust {
                 // 遍历顶层变量
                 for (auto [varId, info] : rootVar) {
                     std::string buff;
-                    buff += std::format("Var {}({}) : {}", info.name, varId, info.type->toString());
+                    buff += fmt::format("Var {}({}) : {}", info.name, varId, info.type->toString());
 
                     auto node = tree.getNode<VarDecl>(info.decl);
                     if (node->init_expr) {
                         tree.getNode(node->init_expr.value())->execute(this);
-                        buff += std::format(" = {}", std::move(strings.back()));
+                        buff += fmt::format(" = {}", std::move(strings.back()));
                         strings.pop_back();
                     }
 
@@ -273,7 +274,7 @@ namespace SysYust {
                     if (SyntaxTreeBuilder::lib_funcs_id.contains(funcId)) {
                         continue; // 跳过库函数
                     }
-                    buff += std::format("Func {}({}) : {}", info.name, funcId, info.type->toString());
+                    buff += fmt::format("Func {}({}) : {}", info.name, funcId, info.type->toString());
                     strings.emplace_back(std::move(buff));
                     auto decl = tree.getNode<FuncDecl>(info.node);
 
@@ -310,7 +311,7 @@ namespace SysYust {
 
         void SyntaxTreeString::execute(const VarDecl &decl) {
             auto info = currentEnv->var_table.getInfo(decl.info_id);
-            std::string buffer = std::format("Var {}(ID{}):{}", info.name, decl.info_id, info.type->toString());
+            std::string buffer = fmt::format("Var {}(ID{}):{}", info.name, decl.info_id, info.type->toString());
 
             if (decl.init_expr) {
                 tree.getNode(decl.init_expr.value())->execute(this);

@@ -3,16 +3,18 @@
 //
 
 #include <concepts>
-#include <ranges>
 #include <limits>
 
 #include "utility/Logger.h"
 #include "AST/SyntaxTreeBuilder.h"
 
-namespace SysYust::AST {
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+#include <range/v3/action.hpp>
+namespace views = ranges::views;
 
-    namespace ranges = std::ranges;
-    namespace views = std::views;
+
+namespace SysYust::AST {
 
     std::set<FuncInfo> SyntaxTreeBuilder::lib_funcs;
 
@@ -326,7 +328,8 @@ namespace SysYust::AST {
 
     // 初始化
     std::any SyntaxTreeBuilder::Visitor::visitConstListInit(SysYParser::ConstListInitContext *ctx) {
-        auto vaList = ctx->constInitVal()
+        auto initVal = ctx->constInitVal();
+        auto vaList = initVal
         | views::transform([&](auto i) {
             return std::any_cast<HNode>(i->accept(this));
         });
@@ -337,7 +340,8 @@ namespace SysYust::AST {
     }
 
     std::any SyntaxTreeBuilder::Visitor::visitListInit(SysYParser::ListInitContext *ctx) {
-        auto vaList = ctx->initVal()
+        auto initVal = ctx->initVal();
+        auto vaList = initVal
         | views::transform([&](auto i) {
             return std::any_cast<HNode>(i->accept(this));
         });
@@ -738,7 +742,8 @@ namespace SysYust::AST {
 
     // 形参列表声明
     std::any SyntaxTreeBuilder::Visitor::visitFuncFParams(SysYParser::FuncFParamsContext *ctx) {
-        auto funcParamNode = ctx->funcFParam()
+        auto param = ctx->funcFParam();
+        auto funcParamNode = param
         | views::transform([&](auto i) {
             return std::any_cast<HNode>(i->accept(this));
         });
