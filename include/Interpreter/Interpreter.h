@@ -305,8 +305,7 @@ class Interpreter : public NodeExecutorBase {
 
     [[nodiscard]] std::optional<ControlFlowData> _executeCF(const Node &node) {
         // assert node in {If, While, Break, Continue, Return, Block}
-        // const_cast<Node&>(node).execute(this);
-        assert(!_isNone());
+        const_cast<Node&>(node).execute(this);
         assert(!_isValue());
         if (_isNone()) {
             return std::nullopt;

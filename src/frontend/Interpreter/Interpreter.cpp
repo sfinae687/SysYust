@@ -458,11 +458,11 @@ void Interpreter::execute(const Call &node) {
         return;
     }
 
-    pushCtxEnv(*_ast->seekEnv(&node));
-
     const auto &ret_type = func_info.type->getResult();
     const auto &func_decl =
         *dynamic_cast<FuncDecl *>(_ast->getNode(func_info.node));
+
+    pushCtxEnv(*_ast->seekEnv(&func_decl));
 
     // Params
     assert(func_decl.param.size() == node.argumentExpr.size());
@@ -476,9 +476,12 @@ void Interpreter::execute(const Call &node) {
         param_node.execute(this);
         assert(_isNone());
     }
+    
+    printCtx();
 
+    auto &func_body = *_ast->getNode(func_decl.entry_node);
     // Run
-    auto opt_cfd = _executeCF(func_decl);
+    auto opt_cfd = _executeCF(func_body);
 
     if (opt_cfd.has_value()) {
         auto cfd = opt_cfd.value();
