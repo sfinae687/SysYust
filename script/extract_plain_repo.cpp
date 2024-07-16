@@ -37,6 +37,9 @@ void extract_path(std::vector<path_regex>& r, fs::path p, fs::path root, fs::pat
     auto last = fs::recursive_directory_iterator();
 
     for (auto first = fs::recursive_directory_iterator(p); first != last; ++first) {
+
+        // 跳过排除目录
+
         for (auto &i : r) {
             if (std::regex_match(first->path().filename().string(), i)) {
                 if (first->is_directory()) {
@@ -46,24 +49,33 @@ void extract_path(std::vector<path_regex>& r, fs::path p, fs::path root, fs::pat
                 }
             }
         }
-        if (first->exists()
-        && first->is_regular_file()
-        && checkExtension(first->path())) {
+
+        { // 处理条目
             auto to_path = target / first->path().lexically_relative(root);
             auto parent_path = to_path.parent_path();
 
-            std::clog << "Founded:" << first->path() << std::endl;
+            if (first->exists()
+                && first->is_regular_file()
+                && checkExtension(first->path())) { // 需要拷贝的文件
 
-            fs::create_directories(parent_path);
+                std::clog << "Founded:" << first->path() << std::endl;
 
-            fs::copy_file(first->path(), to_path,
-                          fs::copy_options::overwrite_existing
-                          );
-        }
-        if (first->exists() && first->is_directory()) {
-            auto include_me_path = first->path() / "PleaseIncludeMe.h";
-            std::ofstream include_me(include_me_path, std::ios::trunc);
-            include_me << "#pragma once" << std::endl;
+                fs::create_directories(parent_path);
+
+                fs::copy_file(first->path(), to_path,
+                              fs::copy_options::overwrite_existing
+                );
+            } else if (first->exists() && first->is_directory()) { // 目录，添加一个 PleaseIncludeMe.h 的文件
+                fs::create_directories(parent_path);
+                auto include_me_path = parent_path / "PleaseIncludeMe.h";
+                std::ofstream include_me(include_me_path, std::ios::out | std::ios::trunc);
+                if (include_me) {
+                    include_me << "#pragma once" << std::endl;
+                    include_me.close();
+                } else {
+                    std::cerr << "unable to open file:" << include_me_path << std::endl;
+                }
+            }
         }
         skip_current_path:;
     }
