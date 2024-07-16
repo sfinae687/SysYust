@@ -165,6 +165,7 @@ namespace SysYust {
 
         void SyntaxTreeString::execute(const ToCond &cond) {
             tree.getNode(cond.operant)->execute(this);
+            strings.back() = fmt::format("TOCOND({})", strings.back());
         }
 
         void SyntaxTreeString::execute(const If &anIf) {

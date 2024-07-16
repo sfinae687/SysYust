@@ -4,6 +4,7 @@
 #define SYSYUST_INTERPRETER_H
 
 #include <cassert>
+#include <climits>
 #include <iostream>
 #include <limits>
 #include <optional>
@@ -20,10 +21,14 @@
 #include "AST/Node/BinaryOp.h"
 #include "AST/Node/Compare.h"
 #include "AST/Node/Continue.h"
+#include "AST/Node/FuncDecl.h"
+#include "AST/Node/ParamDecl.h"
 #include "AST/Node/UnaryOp.h"
+#include "AST/Node/VarDecl.h"
 #include "AST/SyntaxTree.h"
 #include "AST/Type/TypeBase.h"
 #include "Interpreter/Value.h"
+#include "fmt/core.h"
 
 // For Debug
 
@@ -42,9 +47,9 @@ static sp_t sp;
 
 std::ostream &operator<<(std::ostream &os, sp_t &sp);
 
-#ifndef NODEBUG
+#if 1
 #define println(fmt_str, ...)                                           \
-    (std::cerr << sp << fmt::format(fmt_str __VA_OPT__(, ) __VA_ARGS__) \
+    (std::cout << sp << fmt::format(fmt_str __VA_OPT__(, ) __VA_ARGS__) \
                << std::endl)
 #else 
 #define println(fmt_str, ...)                                           \
@@ -159,28 +164,40 @@ class Interpreter : public NodeExecutorBase {
     }
 
     std::string toString(const FuncInfo &func_info,
-                         HNode id = std::numeric_limits<HNode>::max()) {
-        auto id_str = id == std::numeric_limits<HNode>::max()
-                          ? fmt::format("id: {}, ", id)
+                         HNode lib_id) {
+        auto decl = func_info.node;
+        std::string decl_str, id_str;
+        if (decl == std::numeric_limits<HNode>::max()) {
+            decl_str = "lib_func";
+            id_str = lib_id == std::numeric_limits<HNode>::max()
+                          ? fmt::format("id: {}, ", lib_id)
                           : "";
+        } else {
+            auto &decl_node = *dynamic_cast<FuncDecl *>(_ast->getNode(decl));
+            id_str = fmt::format("id: {}, ", decl_node.info_id);
+            decl_str = fmt::format("{}", decl);
+        }
+
         auto name = func_info.name;
         auto type = func_info.type;
-        auto decl = func_info.node;
         auto type_str = type ? type->toString() : "(putf)";
-        auto decl_str = decl == std::numeric_limits<HNode>::max()
-                            ? "lib_func"
-                            : fmt::format("{}", decl);
         return fmt::format("{} \t: {} \t({}decl_id: {})", name, type_str,
                            id_str, decl_str);
     }
 
-    std::string toString(const VarInfo &var_info,
-                         HNode id = std::numeric_limits<HNode>::max()) {
-        auto id_str = id == std::numeric_limits<HNode>::max()
-                          ? fmt::format("id: {}, ", id)
-                          : "";
-        auto name = var_info.name;
+    std::string toString(const VarInfo &var_info) {
         auto decl = var_info.decl;
+        int id;
+        auto decl_node = dynamic_cast<VarDecl *>(_ast->getNode(decl));
+        if (!decl_node) {
+            auto decl_node = dynamic_cast<ParamDecl *>(_ast->getNode(decl));
+            assert(decl_node);
+            id = decl_node->info_id;
+        } else {
+            id = decl_node->info_id;
+        }
+        auto id_str = fmt::format("id: {}, ", id);
+        auto name = var_info.name;
         auto type = var_info.type;
         auto isConstant = var_info.isConstant;
         auto isParam = var_info.isParam;
@@ -208,9 +225,9 @@ class Interpreter : public NodeExecutorBase {
             no_var_entry = 0;
             auto id = var.first;
             auto var_info = var.second;
-            println("● {}", toString(var_info, id));
+            println("● {}", toString(var_info));
         }
-        if (no_func_entry) println("x No entry.");
+        if (no_var_entry) println("x No entry.");
     }
 
     std::string toString(SysYust::AST::UnaryOp::OpType op) {
@@ -292,7 +309,7 @@ class Interpreter : public NodeExecutorBase {
     void _getInfoTrace(NumId id, int layer, Context &ctx) {
         LOG_TRACE("[InfoTrace] Seek Env/Ctx symbol info with id {}", id);
         auto var_info = curEnv().var_table.getInfo(id);
-        println("In layer {}, find [{}]", layer, toString(var_info, id));
+        println("In layer {}, find [{}]", layer, toString(var_info));
         for (auto i : ctx) {
             if (i.first == id) {
                 // Hit
@@ -479,7 +496,7 @@ Value Interpreter::ArrPtr<OuterT, InnerT>::calc(
     auto arr_type = dynamic_cast<const OuterT *>(val.type);
     auto &deref_type = arr_type->index(val_scripts.size());
 
-    assert(deref_type.isBasicType());
+    // assert(deref_type.isBasicType());
 
     auto offset = arr_type->offsetWith(val_scripts);
 

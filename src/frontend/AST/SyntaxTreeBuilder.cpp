@@ -195,7 +195,7 @@ namespace SysYust::AST {
 
     HNode SyntaxTreeBuilder::Visitor::convertToCond(HNode n) {
         auto node = global.tree->getNode(n);
-        if (dynamic_cast<CondExpr*>(node)) {
+        if (!dynamic_cast<CondExpr*>(node)) {
             auto condNode = new ToCond(n);
             auto nodeId = global.tree->pushNode(condNode);
             return nodeId;
@@ -533,6 +533,7 @@ namespace SysYust::AST {
         auto op = ctx->unaryOP()->getText().front();
         if (op == '!') {
             auto notId = global.tree->pushNode();
+            subexpr = convertToCond(subexpr);
             auto notNode = new Not(subexpr);
             global.tree->setNode(notId, notNode);
             return notId;
@@ -624,8 +625,8 @@ namespace SysYust::AST {
         auto lhsId = std::any_cast<HNode>(ctx->relExp()->accept(this));
         auto rhsId = std::any_cast<HNode>(ctx->addExp()->accept(this));
 
-        lhsId = convertToCond(lhsId);
-        rhsId = convertToCond(rhsId);
+        // lhsId = convertToCond(lhsId);
+        // rhsId = convertToCond(rhsId);
 
         Compare::CompareType t;
         auto op = ctx->op->getText();
@@ -652,8 +653,8 @@ namespace SysYust::AST {
         auto lhsId = std::any_cast<HNode>(ctx->eqExp()->accept(this));
         auto rhsId = std::any_cast<HNode>(ctx->relExp()->accept(this));
 
-        lhsId = convertToCond(lhsId);
-        rhsId = convertToCond(rhsId);
+        // lhsId = convertToCond(lhsId);
+        // rhsId = convertToCond(rhsId);
 
         auto op = ctx->op->getText();
         Compare::CompareType t;
@@ -830,6 +831,7 @@ namespace SysYust::AST {
         LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         auto nodeId = global.tree->pushNode();
         auto condId = std::any_cast<HNode>(ctx->cond()->accept(this));
+        condId = convertToCond(condId);
         auto stmt = std::any_cast<HNode>(ctx->stmt(0)->accept(this));
         HNode else_stmt = -1;
         if (ctx->stmt(1)) {

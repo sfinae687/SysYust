@@ -393,25 +393,27 @@ bool Interpreter::bulitinFunc(const FuncInfo &func_info,
 
 #undef DECL_LIB_FUNC
 
-#define DECL_LIB_FUNC(fname, arg_t)        \
-    if (name == #fname) {                  \
-        assert(arg_vals.size() == 1);      \
-        auto arg = arg_vals[0].toRValue(); \
-        auto ptr = arg.getPtr();           \
-        assert(ptr);                       \
-        SyLib::fname((arg_t)ptr);          \
-        return true;                       \
+#define DECL_LIB_FUNC(fname, arg_t, ret_t)       \
+    if (name == #fname) {                        \
+        assert(arg_vals.size() == 1);            \
+        auto arg = arg_vals[0];                  \
+        auto ptr = arg.getPtr();                 \
+        assert(ptr);                             \
+        auto ret_val = SyLib::fname((arg_t)ptr); \
+        Value ret = Value(&ret_t, ret_val);      \
+        _return(ret);                            \
+        return true;                             \
     }
 
-    DECL_LIB_FUNC(getarray, Value::Int_t *)
-    DECL_LIB_FUNC(getfarray, Value::Float_t *)
+    DECL_LIB_FUNC(getarray, Value::Int_t *, Int_v)
+    DECL_LIB_FUNC(getfarray, Value::Float_t *, Int_v)
 
 #undef DECL_LIB_FUNC
 
 #define DECL_LIB_FUNC(fname, arg1_t, arg2_t)                               \
     if (name == #fname) {                                                  \
         assert(arg_vals.size() == 2);                                      \
-        auto arg1 = arg_vals[0].toRValue(), arg2 = arg_vals[1].toRValue(); \
+        auto arg1 = arg_vals[0].toRValue(), arg2 = arg_vals[1]; \
         auto get_arg1 = std::get_if<arg1_t>(&arg1._value);                 \
         auto get_arg2 = arg2.getPtr();                                     \
         assert(get_arg1 &&get_arg2);                                       \
@@ -451,7 +453,10 @@ void Interpreter::execute(const Call &node) {
         arg_vals.push_back(arg_val);
     }
 
-    enterln("Call {}", toString(func_info));
+    enterln("Call {}", toString(func_info, node.func_info));
+
+    printEnv();
+    printCtx();
 
     if (bulitinFunc(func_info, arg_vals)) {
         exitln("~Call bulitin {}", func_info.name);
@@ -476,7 +481,7 @@ void Interpreter::execute(const Call &node) {
         param_node.execute(this);
         assert(_isNone());
     }
-    
+
     printCtx();
 
     auto &func_body = *_ast->getNode(func_decl.entry_node);
@@ -510,12 +515,13 @@ void Interpreter::execute(const Call &node) {
 }
 
 void Interpreter::execute(const DeclRef &node) {
-    println("! DeclRef pre seek");
+    // println("! DeclRef pre seek");
 
+    // printEnv();
     auto &env = curEnv();
     VarInfo var_info = env.var_table.getInfo(node.var_id);
 
-    getInfoTrace(node.var_id);
+    // getInfoTrace(node.var_id);
     auto &val = getContext().getInfo(node.var_id);
     assert(val.isLValue() && !val.isUndef());
 
@@ -526,13 +532,15 @@ void Interpreter::execute(const DeclRef &node) {
 }
 
 void Interpreter::execute(const ArrayRef &node) {
-    println("! ArrayRef pre seek");
+    // println("! ArrayRef pre seek");
     auto &env = curEnv();
     auto &var_info = env.var_table.getInfo(node.var_id);
     auto var_type = var_info.type;
 
-    getInfoTrace(node.var_id);
+    // getInfoTrace(node.var_id);
     auto val = getContext().getInfo(node.var_id);
+
+    println("! ArrayRef indexes");
 
     std::vector<std::size_t> val_scripts;
     for (auto i : node.subscripts) {
@@ -550,20 +558,22 @@ void Interpreter::execute(const ArrayRef &node) {
     switch (val_type->type()) {
         case TypeId::Array: {
             auto arr_type = dynamic_cast<const Array *>(val_type);
-            ret =
-                selector<ArrayT, Int, Float>(&arr_type->baseType(), node, val, val_scripts);
+            ret = selector<ArrayT, Int, Float>(&arr_type->baseType(), node, val,
+                                               val_scripts);
             break;
         }
         case TypeId::Pointer: {
             auto ptr_type = dynamic_cast<const Pointer *>(val_type);
             auto &base_type = ptr_type->getBase();
             if (base_type.isBasicType()) {
-                ret = selector<PointerT, Int, Float>(&base_type, node, val, val_scripts);
+                ret = selector<PointerT, Int, Float>(&base_type, node, val,
+                                                     val_scripts);
             } else if (base_type.type() == TypeId::Array) {
                 auto &base =
                     dynamic_cast<const Array *>(&base_type)->baseType();
                 assert(base.isBasicType());
-                ret = selector<PointerT, Int, Float>(&base, node, val, val_scripts);
+                ret = selector<PointerT, Int, Float>(&base, node, val,
+                                                     val_scripts);
             }
             break;
         }
@@ -635,7 +645,7 @@ void Interpreter::execute(const Or &node) {
 
         exitln("~Or {} || {}", lv, rv);
     } else {
-        ret = 0;
+        ret = 1;
         _return(Value{&Int_v, ret});
 
         exitln("~Or {} || - ", lv);
@@ -745,7 +755,7 @@ void Interpreter::execute(const Break &node) {
 }
 
 void Interpreter::execute(const Continue &node) {
-    _return(ControlFlowData(CFDBreak_v));
+    _return(ControlFlowData(CFDContinue_v));
     println("Continue");
 }
 
