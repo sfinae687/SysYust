@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <memory>
-#include <concepts>
+#include <variant>
 
 #include "Env.h"
 #include "Node.h"
@@ -61,7 +61,7 @@ namespace SysYust::AST {
         /**
          * @brief 获取指定索引的节点，无条件转换至 NT* 。
          */
-        template<std::derived_from<Node> NT = Node>
+        template<typename NT = Node>
         NT* getNode(HNode no) const {
             return dynamic_cast<NT*>(_all_nodes[no]);
         }

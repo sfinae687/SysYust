@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <numeric>
 #include <memory>
-#include <span>
 
 #include "TypeBase.h"
 
@@ -51,7 +50,6 @@ namespace SysYust::AST {
          * @brief 构建 Array 指针的静态方法
          */
         template<typename BaseType>
-        requires std::constructible_from<Array, const BaseType&, std::vector<std::size_t>>
         static const Array& create(const BaseType& baseType, std::vector<std::size_t> d) {
             Array target(baseType, d);
             auto [rt, state] = _pool.insert(target);
@@ -86,7 +84,7 @@ namespace SysYust::AST {
         /**
          * @brief 使用给定索引后产生的偏移量,外层数组的索引位于前
          */
-        [[nodiscard]] std::size_t offsetWith(const std::span<std::size_t> &ind) const;
+        [[nodiscard]] std::size_t offsetWith(const std::vector<std::size_t> &ind) const;
 
         /**
          * @brief 数组 sizeof

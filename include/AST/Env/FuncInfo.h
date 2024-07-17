@@ -5,7 +5,6 @@
 
 #include <string>
 #include <memory>
-#include <compare>
 
 #include "AST/Type.h"
 
@@ -23,7 +22,7 @@ namespace SysYust::AST {
         const Function *type;
         HNode node; ///< 声明它的节点的索引编号
 
-        std::strong_ordering operator<=> (const FuncInfo &oth) const;
+        bool operator< (const FuncInfo &oth) const;
     };
 
 } // AST

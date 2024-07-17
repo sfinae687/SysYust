@@ -4,7 +4,7 @@
 #define SYSYUST_AST_POINTER_H
 
 #include <set>
-#include <span>
+#include <vector>
 
 #include "TypeBase.h"
 #include "Array.h"
@@ -51,7 +51,7 @@ namespace SysYust::AST {
         /**
          * @brief 使用给定索引后产生的偏移量,外层数组的索引位于前
          */
-        [[nodiscard]] std::size_t offsetWith(const std::span<std::size_t>& ind) const;
+        [[nodiscard]] std::size_t offsetWith(const std::vector<std::size_t> &ind) const;
 
 
 

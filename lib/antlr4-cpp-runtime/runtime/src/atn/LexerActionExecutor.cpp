@@ -5,7 +5,6 @@
 
 #include "misc/MurmurHash.h"
 #include "atn/LexerIndexedCustomAction.h"
-#include "atn/HashUtils.h"
 #include "support/CPPUtils.h"
 #include "support/Arrays.h"
 #include "support/Casts.h"
@@ -18,6 +17,10 @@ using namespace antlr4::misc;
 using namespace antlrcpp;
 
 namespace {
+
+  bool cachedHashCodeEqual(size_t lhs, size_t rhs) {
+    return lhs == rhs || lhs == 0 || rhs == 0;
+  }
 
   bool lexerActionEqual(const Ref<const LexerAction> &lhs, const Ref<const LexerAction> &rhs) {
     return *lhs == *rhs;
