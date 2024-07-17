@@ -11,14 +11,13 @@
 namespace SysYust::AST::Interpreter {
 
 void *Value::getPtr() {
-    assert(is_lvalue && "you can't get a ref of a RValue");
+    // assert(is_lvalue && "you can't get a ref of a RValue");
     auto mslice = std::get<MemorySlice>(_value);
     return mslice.pos;
 }
 
 Value Value::toLValue() {
     assert(!isUndef() && "You can't use an undef value!");
-    assert(!is_lvalue);
     ValueType ret;
     switch (type->type()) {
         case TypeId::Int: {
@@ -36,6 +35,7 @@ Value Value::toLValue() {
         case TypeId::Array:
         case TypeId::Pointer:
             ret = _value;
+            break;
         default:
             assert(false && "RValTypeErr");
             break;
