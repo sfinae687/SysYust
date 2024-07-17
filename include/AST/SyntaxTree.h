@@ -63,7 +63,7 @@ namespace SysYust::AST {
          */
         template<std::derived_from<Node> NT = Node>
         NT* getNode(HNode no) const {
-            return static_cast<NT*>(_all_nodes[no]);
+            return dynamic_cast<NT*>(_all_nodes[no]);
         }
 
         /**

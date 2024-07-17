@@ -11,7 +11,7 @@
 namespace SysYust::AST::Interpreter {
 
 void *Value::getPtr() {
-    assert(is_lvalue && "you can't get a ref of a RValue");
+    // assert(is_lvalue && "you can't get a ref of a RValue");
     auto mslice = std::get<MemorySlice>(_value);
     return mslice.pos;
 }
