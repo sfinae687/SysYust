@@ -47,6 +47,11 @@ namespace SysYust::AST {
                 std::numeric_limits<HNode>::max(),
             },
             {
+                "getfarray",
+                &Function::create(Void_v, {&Int_v, &Pointer::create(Float_v)}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
                 "putint",
                 &Function::create(Void_v, {&Int_v}),
                 std::numeric_limits<HNode>::max(),

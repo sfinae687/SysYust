@@ -10,7 +10,7 @@ if (${EnableASTBuildTest})
         list(GET sy_test_name_list ${index} current_name)
         list(GET sy_source_list ${index} current_path)
 #        message(${current_name}:${current_path})
-        add_test(NAME ${current_name}
+        add_test(NAME AST_Build_${current_name}
             COMMAND AST_Builder ${current_path}
         )
     endforeach ()

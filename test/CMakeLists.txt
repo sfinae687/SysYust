@@ -30,11 +30,6 @@ target_link_libraries(TypeToStringTest PUBLIC AST)
 AddGTestFromFile(ArrayIndexTest)
 target_link_libraries(ArrayIndexTest PUBLIC AST)
 
-# InterpreterTest
-add_executable(InterpreterTest InterpreterTest/ValueTest.cpp InterpreterTest/InterpreterFunctionalTest.cpp)
-target_link_libraries(InterpreterTest gtest GTest::gtest_main Interpreter)
-gtest_discover_tests(InterpreterTest)
-
 # 处理 sy 程序测试样例路径
 set(sy_test_name_list)
 foreach(sy_source ${sy_source_list})
@@ -47,3 +42,4 @@ endforeach ()
 
 # 语法树构建测试
 add_subdirectory(AST-BuilderTest)
+add_subdirectory(InterpreterTest)

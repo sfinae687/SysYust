@@ -18,7 +18,7 @@ namespace views = std::views;
 
 int main(int argc, char *argv[]) {
     if (argc > 3) {
-        std::cerr << "Must pass the file2 to compare by command line arguments" << std::endl;
+        std::cerr << "FETAL:Must pass the file2 to compare by command line arguments" << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
         if (ranges::any_of(stream_to_compare, [&stream_to_compare](auto &i) {
             return i.second != stream_to_compare.front().second;
         })) {
-            std::cerr << "the first different line : " << lineno << std::endl;
+            std::cerr << "FAIL:the first different line : " << lineno << std::endl;
             std::exit(EXIT_FAILURE);
         }
     }
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
     })) {
         return 0;
     } else {
-        std::cerr << "the files have different length" << std::endl;
+        std::cerr << "FAIL:the files have different length" << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
