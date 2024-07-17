@@ -109,6 +109,8 @@ namespace SysYust::AST {
         private:
             SyntaxTreeBuilder &global;
             ConstantEvaluator eval;
+            const Type *_current_expr_basic_type;
+            const Type *_returned_type;
         };
 
         Visitor v;
