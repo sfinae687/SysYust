@@ -11,7 +11,6 @@
 #include <memory>
 #include <cassert>
 
-#include "gmock/gmock.h"
 #include "utility/IdAllocator.h"
 #include "utility/Logger.h"
 
