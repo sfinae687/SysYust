@@ -1,12 +1,12 @@
-int a;
+int a = 1;
 
 void func() {
-	int e;
+	putint(a)
 	return;
 }
 
 int main() {
-	int c;
+	int a = 2;
 	func();
-	int d;
+	return 0;
 }

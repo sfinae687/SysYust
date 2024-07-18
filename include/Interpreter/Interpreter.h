@@ -193,6 +193,7 @@ class Interpreter : public NodeExecutorBase {
    private:
     ReturnType _return_value = None;
     std::stack<Context> _context_stack;
+    Context *_global_ctx;
     std::stack<Env> _env_stack;
     SyntaxTree *_ast;
 
@@ -210,6 +211,13 @@ class Interpreter : public NodeExecutorBase {
         _env_stack.push(env);
         assert(top_level || !_context_stack.empty());
         _context_stack.push(top_level ? Context() : Context(&getContext()));
+        if (top_level) _global_ctx = &_context_stack.top();
+    }
+
+    void pushFuncCallEnv(Env &env) {
+        _env_stack.push(env);
+        assert(!_context_stack.empty());
+        _context_stack.push(*_global_ctx);
     }
 
     void popCtxEnv() {
