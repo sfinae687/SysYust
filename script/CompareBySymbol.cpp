@@ -34,10 +34,18 @@ int main(int argc, char *argv[]) {
     }
 
     int lineno = 0;
-    while (ranges::all_of(stream_to_compare, [](auto &i) -> bool {
-        auto &[stream, line] = i;
-        return std::getline(stream, line).good();
-    }) ){
+    while (true) {
+        for (auto &i : stream_to_compare) {
+            auto &[stream, line] = i;
+            std::getline(stream, line);
+            if (line.back() == '\r') {
+                line.pop_back();
+            }
+        }
+        if (ranges::any_of(stream_to_compare, [](auto &i) {return i.first.eof();})) {
+            break;
+        }
+
         lineno++;
         if (ranges::any_of(stream_to_compare, [&stream_to_compare](auto &i) {
             return i.second != stream_to_compare.front().second;
