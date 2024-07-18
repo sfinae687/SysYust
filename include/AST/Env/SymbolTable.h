@@ -25,6 +25,8 @@ namespace SysYust::AST {
     public:
         using entry_t = E;
         using name_t = std::string;
+        using sequence_type = std::vector<NumId>;
+
 
         SymbolTable() = default;
         explicit SymbolTable(SymbolTable* parent)
@@ -57,6 +59,9 @@ namespace SysYust::AST {
          * @brief 设置特定 id 的符号条目
          */
         void setInfo(NumId id, const entry_t &e) {
+            if (!contains(id)) {
+                _seq.push_back(id);
+            }
             seek(id) = e;
         }
 
@@ -64,6 +69,9 @@ namespace SysYust::AST {
          * @brief 设置特定 id 的条目，使用移动语义
          */
         void setInfo(NumId id, entry_t &&e) {
+            if (!contains(id)) {
+                _seq.push_back(id);
+            }
             seek(id) = std::move(e);
         }
 
@@ -79,8 +87,13 @@ namespace SysYust::AST {
          auto end() {
              return _local_entry.end();
          }
+
+         const sequence_type& getSequence() const {
+            return _seq;
+         }
          
     private:
+        using table_type = std::unordered_map<NumId, entry_t>;
 
         const entry_t& seek(NumId id) const {
             LOG_TRACE("Seek {} symbol info with id {}", typeid(E).name(), id);
@@ -104,7 +117,8 @@ namespace SysYust::AST {
         }
 
         SymbolTable *_parent = nullptr;
-        std::unordered_map<NumId, entry_t> _local_entry = {};
+        table_type _local_entry = {};
+        sequence_type _seq = {};
     };
 
 } // AST

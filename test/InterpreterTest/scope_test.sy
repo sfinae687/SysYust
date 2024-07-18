@@ -1,0 +1,12 @@
+int a;
+
+void func() {
+	int e;
+	return;
+}
+
+int main() {
+	int c;
+	func();
+	int d;
+}
