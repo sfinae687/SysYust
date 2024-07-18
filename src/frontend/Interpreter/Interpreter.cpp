@@ -543,7 +543,7 @@ void Interpreter::execute(const Call &node) {
     const auto &func_decl =
         *dynamic_cast<FuncDecl *>(_ast->getNode(func_info.node));
 
-    pushCtxEnv(*_ast->seekEnv(&func_decl));
+    pushFuncCallEnv(*_ast->seekEnv(&func_decl));
 
     // Params
     assert(func_decl.param.size() == node.argumentExpr.size());
