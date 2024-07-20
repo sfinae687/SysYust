@@ -1,1 +1,2 @@
+add_executable(extract_plain_repo extract_plain_repo.cpp)
 add_executable(CompareBySymbol CompareBySymbol.cpp)
