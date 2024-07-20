@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include <optional>
 #include <ostream>
-
+#include <string>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -39,10 +39,28 @@ std::ostream &operator<<(std::ostream &os, sp_t &sp) {
     return os;
 }
 
+#ifdef USE_PRINTLN
+
 #define enterln(fmt_str, ...) println(fmt_str, __VA_ARGS__), sp.push();
 #define exitln(fmt_str, ...)              \
     sp.pop(), println(fmt_str " (-> {})", \
                       __VA_ARGS__ __VA_OPT__(, ) toString(_return_value));
+#else
+
+#define enterln(fmt_str, ...)
+#define exitln(fmt_str, ...)
+
+#endif
+
+#ifdef USE_SPRINTLN
+#define senterln(fmt_str, ...) sprintln(fmt_str, __VA_ARGS__), sp.push();
+#define sexitln(fmt_str, ...)              \
+    sp.pop(), sprintln(fmt_str " (-> {})", \
+                       __VA_ARGS__ __VA_OPT__(, ) toString(_return_value));
+#else
+#define senterln(fmt_str, ...)
+#define sexitln(fmt_str, ...)
+#endif
 
 namespace SysYust::AST::Interpreter {
 
@@ -59,6 +77,7 @@ Interpreter::ControlFlowData Interpreter::CFDContinue_v{std::in_place_index<1>,
 int Interpreter::enter(SyntaxTree *ast) {
     _ast = ast;
     enterln("Enter TopLevel");
+    senterln("Enter TopLevel");
 
     pushCtxEnv(*_ast->topEnv(), true);
 
@@ -69,9 +88,12 @@ int Interpreter::enter(SyntaxTree *ast) {
     printEnv();
 
     // Load global Var
-    for (auto gvar : curEnv().var_table) {
+    auto &env = curEnv();
+    auto seq = env.var_table.getSequence();
+    for (auto gind : seq) {
         auto &ctx = getContext();
-        auto var_decl = gvar.second.decl;
+        auto gvar = env.var_table.getInfo(gind);
+        auto var_decl = gvar.decl;
         auto &var_node = *_ast->getNode(var_decl);
         var_node.execute(this);
     }
@@ -80,6 +102,7 @@ int Interpreter::enter(SyntaxTree *ast) {
 
     int ret = [&] {
         enterln("Enter main");
+        senterln("Enter main");
 
         SyLib::before_main();
         main_func.execute(this);
@@ -92,6 +115,7 @@ int Interpreter::enter(SyntaxTree *ast) {
         int ret = ret_val.get<Int>();
 
         exitln("Exit main -> {}", ret);
+        sexitln("Exit main -> {}", ret);
         return ret;
     }();
 
@@ -99,6 +123,7 @@ int Interpreter::enter(SyntaxTree *ast) {
     popCtxEnv();
 
     exitln("Exit TopLevel");
+    sexitln("Exit TopLevel");
     return ret;
 }
 
@@ -110,7 +135,10 @@ Interpreter::InitList Interpreter::parseInitList(const Type &init_type,
         assert(inits.size() <= 1);
         if (inits.size()) {
             auto val_node = inits[0];
-            auto val = evalExpr(*_ast->getNode(val_node));
+            stashPush();
+            auto val = evalExpr(*_ast->getNode(val_node)).toRValue();
+            auto discard = getExprStr();
+            stashPop();
             return {val};
         } else {
             return {{}};
@@ -217,6 +245,7 @@ void Interpreter::execute(const VarDecl &node) {
             init_str);
     sp.push();
 
+    Value debug_val;
     if (node.init_expr.has_value()) {
         auto &init_node = *_ast->getNode(node.init_expr.value());
         auto list_cast = dynamic_cast<List *>(&init_node);
@@ -232,18 +261,24 @@ void Interpreter::execute(const VarDecl &node) {
             if (var_type.baseType().type() == TypeId::Int) {
                 FillInitListMemory<Int>(var_type, mslice, init_list);
             } else {
-                assert(var_type.type() == TypeId::Float);
+                assert(var_type.baseType().type() == TypeId::Float);
                 FillInitListMemory<Float>(var_type, mslice, init_list);
             }
             auto val = Value(&var_type, mslice, true);
+            debug_val = val;
             ctx.setInfo(var_id, val);
         } else {
             auto expr_cast = dynamic_cast<Expr *>(&init_node);
             if (expr_cast) {
-                Value val = evalExpr(init_node);
+                stashPush();
+                Value val = evalExpr(init_node).toRValue();
+                auto discard = getExprStr();
+                stashPop();
                 assert(val.type->isBasicType());
                 assert(val.type == var_decl.type);
-                ctx.setInfo(var_id, val.toLValue());
+                auto lval = val.toLValue();
+                ctx.setInfo(var_id, lval);
+                debug_val = lval;
             } else {
                 assert(false && "Wrong init list");
             }
@@ -251,10 +286,15 @@ void Interpreter::execute(const VarDecl &node) {
     } else {
         auto &var_type = *var_decl.type;
         MemorySlice mslice(var_type);
-        ctx.setInfo(var_id, Value(&var_type, mslice, true));
+        auto val = Value(&var_type, mslice, true);
+        ctx.setInfo(var_id, val);
+        debug_val = val;
     }
 
     exitln("~VarDecl {}", var_decl.name);
+    // VarDecl a(id) : type = value
+    sprintln("VarDecl {}({}) : {} = {}", var_decl.name, var_id,
+             var_decl.type->toString(), debug_val.toString());
 }
 
 void Interpreter::execute(const FuncDecl &node) {
@@ -279,8 +319,8 @@ void Interpreter::execute(const ParamDecl &node) {
     // validate
     if (val.type->isBasicType()) {
         // OK
-    } else if (val.is_lvalue && (val.type->type() == TypeId::Array ||
-                                 val.type->type() == TypeId::Pointer)) {
+    } else if ((val.type->type() == TypeId::Array ||
+                val.type->type() == TypeId::Pointer)) {
         assert(var_type->type() == TypeId::Pointer);
     } else {
         assert(false && "ParamDecl value type err");
@@ -288,12 +328,16 @@ void Interpreter::execute(const ParamDecl &node) {
 
     assert(*var_type == *val.type);
     auto rval = val.toRValue();  // copy
-    ctx.setInfo(var_id, rval.toLValue());
+    auto lval = rval.toLValue();
+    ctx.setInfo(var_id, lval);
 
     // Clear
     _return_value = None;
 
     exitln("DeclParam {}", var_info.name);
+    // DeclParam a : type = value from b
+    sprintln("DeclParam {} : {} = {}", var_info.name, var_type->toString(),
+             lval.toString());
 }
 
 /* -------------- Expr -------------- */
@@ -301,33 +345,37 @@ void Interpreter::execute(const ParamDecl &node) {
 void Interpreter::execute(const IntLiteral &node) {
     _return(Value(&Int_v, node.value));
     println("IntLiteral {}", std::get<Value>(_return_value).toString());
+    exprStrFmt("{}", std::get<Value>(_return_value).toString());
 }
 
 void Interpreter::execute(const FloatLiteral &node) {
     _return(Value(&Float_v, node.value));
     println("FloatLiteral {}", std::get<Value>(_return_value).toString());
+    exprStrFmt("{}", std::get<Value>(_return_value).toString());
 }
 
 void Interpreter::execute(const ToInt &node) {
     enterln("ToInt");
 
     auto &op_node = *_ast->getNode(node.operant);
-    auto val = evalExpr(op_node);
+    auto val = evalExpr(op_node).toRValue();
     assert(val.type->type() == TypeId::Float);
 
     auto casted = static_cast<Value::Int_t>(val.get<Float>());
 
     _return(Value(&Int_v, casted));
 
-    exitln("~ToInt {} -> {}", val.toString(),
-           std::get<Value>(_return_value).toString());
+    exitln("~ToInt {}", val.toString());
+    auto op_str = costExprStr();
+    exprStrFmt("({} <- ToInt {})", std::get<Value>(_return_value).toString(),
+               op_str);
 }
 
 void Interpreter::execute(const ToFloat &node) {
     enterln("ToFloat");
 
     auto &op_node = *_ast->getNode(node.operant);
-    auto val = evalExpr(op_node);
+    auto val = evalExpr(op_node).toRValue();
     assert(val.type->type() == TypeId::Int);
 
     auto casted = static_cast<Value::Float_t>(val.get<Int>());
@@ -336,28 +384,40 @@ void Interpreter::execute(const ToFloat &node) {
 
     exitln("~ToFloat {} -> {}", val.toString(),
            std::get<Value>(_return_value).toString());
+    auto op_str = costExprStr();
+    exprStrFmt("({} <- ToFloat {})", std::get<Value>(_return_value).toString(),
+               op_str);
 }
 
 void Interpreter::execute(const UnaryOp &node) {
     enterln("UnaryOp type: {}", toString(node.type));
 
-    Value operand = evalExpr(*_ast->getNode(node.subexpr));
+    Value operand = evalExpr(*_ast->getNode(node.subexpr)).toRValue();
     _return(selector<Unary, Int, Float>(operand.type, node.type, operand));
 
     exitln("~UnaryOp {} {} -> {}", toString(node.type), operand.toString(),
            std::get<Value>(_return_value).toString());
+
+    auto op_str = costExprStr();
+    exprStrFmt("({} <- {} {})", std::get<Value>(_return_value).toString(),
+               toString(node.type), op_str);
 }
 
 void Interpreter::execute(const BinaryOp &node) {
     enterln("BinaryOp type: {}", toString(node.type));
 
-    auto lhs = evalExpr(*_ast->getNode(node.lhs)),
-         rhs = evalExpr(*_ast->getNode(node.rhs));
+    auto lhs = evalExpr(*_ast->getNode(node.lhs)).toRValue(),
+         rhs = evalExpr(*_ast->getNode(node.rhs)).toRValue();
     assert(lhs.type == rhs.type);
     _return(selector<Binary, Int, Float>(lhs.type, node.type, lhs, rhs));
 
     exitln("~BinaryOp {} {} {} -> {}", lhs.toString(), toString(node.type),
            rhs.toString(), std::get<Value>(_return_value).toString());
+
+    auto rhs_str = costExprStr();
+    auto lhs_str = costExprStr();
+    exprStrFmt("({} <- {} {} {})", std::get<Value>(_return_value).toString(),
+               lhs_str, toString(node.type), rhs_str);
 }
 
 bool Interpreter::bulitinFunc(const FuncInfo &func_info,
@@ -394,30 +454,32 @@ bool Interpreter::bulitinFunc(const FuncInfo &func_info,
 
 #undef DECL_LIB_FUNC
 
-#define DECL_LIB_FUNC(fname, arg_t)        \
-    if (name == #fname) {                  \
-        assert(arg_vals.size() == 1);      \
-        auto arg = arg_vals[0].toRValue(); \
-        auto ptr = arg.getPtr();           \
-        assert(ptr);                       \
-        SyLib::fname((arg_t)ptr);          \
-        return true;                       \
+#define DECL_LIB_FUNC(fname, arg_t, ret_t)       \
+    if (name == #fname) {                        \
+        assert(arg_vals.size() == 1);            \
+        auto arg = arg_vals[0];                  \
+        auto ptr = arg.getPtr();                 \
+        assert(ptr);                             \
+        auto ret_val = SyLib::fname((arg_t)ptr); \
+        Value ret = Value(&ret_t, ret_val);      \
+        _return(ret);                            \
+        return true;                             \
     }
 
-    DECL_LIB_FUNC(getarray, Value::Int_t *)
-    DECL_LIB_FUNC(getfarray, Value::Float_t *)
+    DECL_LIB_FUNC(getarray, Value::Int_t *, Int_v)
+    DECL_LIB_FUNC(getfarray, Value::Float_t *, Int_v)
 
 #undef DECL_LIB_FUNC
 
-#define DECL_LIB_FUNC(fname, arg1_t, arg2_t)                               \
-    if (name == #fname) {                                                  \
-        assert(arg_vals.size() == 2);                                      \
-        auto arg1 = arg_vals[0].toRValue(), arg2 = arg_vals[1].toRValue(); \
-        auto get_arg1 = std::get_if<arg1_t>(&arg1._value);                 \
-        auto get_arg2 = arg2.getPtr();                                     \
-        assert(get_arg1 &&get_arg2);                                       \
-        SyLib::fname(*get_arg1, (arg2_t)get_arg2);                         \
-        return true;                                                       \
+#define DECL_LIB_FUNC(fname, arg1_t, arg2_t)                    \
+    if (name == #fname) {                                       \
+        assert(arg_vals.size() == 2);                           \
+        auto arg1 = arg_vals[0].toRValue(), arg2 = arg_vals[1]; \
+        auto get_arg1 = std::get_if<arg1_t>(&arg1._value);      \
+        auto get_arg2 = arg2.getPtr();                          \
+        assert(get_arg1 &&get_arg2);                            \
+        SyLib::fname(*get_arg1, (arg2_t)get_arg2);              \
+        return true;                                            \
     } else
 
     DECL_LIB_FUNC(putarray, Value::Int_t, Value::Int_t *)
@@ -444,18 +506,36 @@ void Interpreter::execute(const Call &node) {
     auto &env = curEnv();
     auto &func_info = env.func_table.getInfo(node.func_info);
 
+    SPRINT(auto expr_call = expr_strings.empty() ? "" : "expr ";)
+    sprintln("! {}Call {}, calc params:", expr_call, func_info.name);
+    stashPush();
+
     // Arguments evaluation
     std::vector<Value> arg_vals;
     for (auto arg : node.argumentExpr) {
         auto &arg_node = *_ast->getNode(arg);
-        auto arg_val = evalExpr(arg_node);
+        stashPush();
+        auto arg_val = evalExpr(arg_node).toRValue();
+        sprintln("! arg: {}", getExprStr());
+        stashPop();
         arg_vals.push_back(arg_val);
     }
 
-    enterln("Call {}", toString(func_info));
+    enterln("Call {}", toString(func_info, node.func_info));
+    senterln("{}Call {}", expr_call, toString(func_info, node.func_info));
+
+    printEnv();
+    printCtx();
 
     if (bulitinFunc(func_info, arg_vals)) {
         exitln("~Call bulitin {}", func_info.name);
+        sexitln("~{}Call bulitin {}", expr_call, func_info.name);
+        stashPop();
+        // (val <- name(...))
+        if (!_isNone())
+            exprStrFmt("({} <- {}(...))",
+                       std::get<Value>(_return_value).toString(),
+                       func_info.name);
         return;
     }
 
@@ -463,7 +543,7 @@ void Interpreter::execute(const Call &node) {
     const auto &func_decl =
         *dynamic_cast<FuncDecl *>(_ast->getNode(func_info.node));
 
-    pushCtxEnv(*_ast->seekEnv(&func_decl));
+    pushFuncCallEnv(*_ast->seekEnv(&func_decl));
 
     // Params
     assert(func_decl.param.size() == node.argumentExpr.size());
@@ -477,7 +557,7 @@ void Interpreter::execute(const Call &node) {
         param_node.execute(this);
         assert(_isNone());
     }
-    
+
     printCtx();
 
     auto &func_body = *_ast->getNode(func_decl.entry_node);
@@ -508,15 +588,22 @@ void Interpreter::execute(const Call &node) {
     popCtxEnv();
 
     exitln("~Call {}", func_info.name);
+    sexitln("~{}Call {}", expr_call, func_info.name);
+    stashPop();
+    // (val <- name(...))
+    if (!_isNone())
+        exprStrFmt("({} <- {}(...))", std::get<Value>(_return_value).toString(),
+                   func_info.name);
 }
 
 void Interpreter::execute(const DeclRef &node) {
-    println("! DeclRef pre seek");
+    // println("! DeclRef pre seek");
 
+    // printEnv();
     auto &env = curEnv();
     VarInfo var_info = env.var_table.getInfo(node.var_id);
 
-    getInfoTrace(node.var_id);
+    // getInfoTrace(node.var_id);
     auto &val = getContext().getInfo(node.var_id);
     assert(val.isLValue() && !val.isUndef());
 
@@ -524,21 +611,29 @@ void Interpreter::execute(const DeclRef &node) {
 
     println("DeclRef {} -> {} ({})", var_info.name,
             const_cast<Value &>(val).toString(), toString(var_info));
+    // (val <- a)
+    exprStrFmt("({} <- {})", const_cast<Value &>(val).toString(),
+               var_info.name);
 }
 
 void Interpreter::execute(const ArrayRef &node) {
-    println("! ArrayRef pre seek");
+    // println("! ArrayRef pre seek");
     auto &env = curEnv();
     auto &var_info = env.var_table.getInfo(node.var_id);
     auto var_type = var_info.type;
 
-    getInfoTrace(node.var_id);
+    // getInfoTrace(node.var_id);
     auto val = getContext().getInfo(node.var_id);
 
+    println("! ArrayRef indexes");
+    // sprintln("! ArrayRef indexes");
+
     std::vector<std::size_t> val_scripts;
+    SPRINT(std::vector<std::string> str_scripts;)
     for (auto i : node.subscripts) {
         auto &val_node = *_ast->getNode(i);
-        auto val = evalExpr(val_node);
+        auto val = evalExpr(val_node).toRValue();
+        SPRINT(str_scripts.push_back(costExprStr());)
         assert(val.type->type() == TypeId::Int);
         std::size_t ind = val.get<Int>();
         assert(ind >= 0);
@@ -551,20 +646,22 @@ void Interpreter::execute(const ArrayRef &node) {
     switch (val_type->type()) {
         case TypeId::Array: {
             auto arr_type = dynamic_cast<const Array *>(val_type);
-            ret =
-                selector<ArrayT, Int, Float>(&arr_type->baseType(), node, val, val_scripts);
+            ret = selector<ArrayT, Int, Float>(&arr_type->baseType(), node, val,
+                                               val_scripts);
             break;
         }
         case TypeId::Pointer: {
             auto ptr_type = dynamic_cast<const Pointer *>(val_type);
             auto &base_type = ptr_type->getBase();
             if (base_type.isBasicType()) {
-                ret = selector<PointerT, Int, Float>(&base_type, node, val, val_scripts);
+                ret = selector<PointerT, Int, Float>(&base_type, node, val,
+                                                     val_scripts);
             } else if (base_type.type() == TypeId::Array) {
                 auto &base =
                     dynamic_cast<const Array *>(&base_type)->baseType();
                 assert(base.isBasicType());
-                ret = selector<PointerT, Int, Float>(&base, node, val, val_scripts);
+                ret = selector<PointerT, Int, Float>(&base, node, val,
+                                                     val_scripts);
             }
             break;
         }
@@ -576,6 +673,14 @@ void Interpreter::execute(const ArrayRef &node) {
 
     println("ArrayRef {}[?] -> {} ({})", var_info.name,
             const_cast<Value &>(ret).toString(), toString(var_info));
+
+    // (val <- a[...])
+    SPRINT(std::string ind_str; auto len = str_scripts.size();
+           for (int i = len - 1; i >= 0; --i) {
+               ind_str += fmt::format("{}", str_scripts[i]);
+               if (i) ind_str += ", ";
+           })
+    exprStrFmt("({} <- {}[{}])", ret.toString(), var_info.name, ind_str);
 }
 
 /* ------------ CondExpr ------------ */
@@ -583,25 +688,29 @@ void Interpreter::execute(const ArrayRef &node) {
 void Interpreter::execute(const Not &node) {
     enterln("Not");
 
-    auto val = evalExpr(*_ast->getNode(node.subexpr));
+    auto val = evalExpr(*_ast->getNode(node.subexpr)).toRValue();
     assert(val.type->type() == TypeId::Int);
 
     auto operand = val.get<Int>();
     _return(Value(&Int_v, operand == 0));
 
     exitln("~Not !{}", operand);
+
+    auto op_str = costExprStr();
+    exprStrFmt("({} <- ! {})", std::get<Value>(_return_value).toString(),
+               op_str);
 }
 
 void Interpreter::execute(const And &node) {
     enterln("And");
 
-    auto lhs = evalExpr(*_ast->getNode(node.lhs));
+    auto lhs = evalExpr(*_ast->getNode(node.lhs)).toRValue();
     auto lv = lhs.get<Int>();
     assert(0 <= lv && lv <= 1);
 
     Value::Int_t ret;
     if (lv != 0) {
-        auto rhs = evalExpr(*_ast->getNode(node.rhs));
+        auto rhs = evalExpr(*_ast->getNode(node.rhs)).toRValue();
         assert(lhs.type->type() == rhs.type->type());
         auto rv = rhs.get<Int>();
         assert(0 <= rv && rv <= 1);
@@ -610,23 +719,33 @@ void Interpreter::execute(const And &node) {
         _return(Value{&Int_v, ret});
 
         exitln("~And {} && {}", lv, rv);
+
+        auto rhs_str = costExprStr();
+        auto lhs_str = costExprStr();
+        exprStrFmt("({} <- {} && {})",
+                   std::get<Value>(_return_value).toString(), lhs_str, rhs_str);
+
     } else {
         ret = 0;
         _return(Value{&Int_v, ret});
 
         exitln("~And {} && -", lv);
+
+        auto lhs_str = costExprStr();
+        exprStrFmt("({} <- {} && -)", std::get<Value>(_return_value).toString(),
+                   lhs_str);
     }
 }
 
 void Interpreter::execute(const Or &node) {
     enterln("Or");
-    auto lhs = evalExpr(*_ast->getNode(node.lhs));
+    auto lhs = evalExpr(*_ast->getNode(node.lhs)).toRValue();
     auto lv = lhs.get<Int>();
     assert(0 <= lv && lv <= 1);
 
     Value::Int_t ret;
     if (lv == 0) {
-        auto rhs = evalExpr(*_ast->getNode(node.rhs));
+        auto rhs = evalExpr(*_ast->getNode(node.rhs)).toRValue();
         assert(lhs.type->type() == rhs.type->type());
         auto rv = rhs.get<Int>();
         assert(0 <= rv && rv <= 1);
@@ -635,32 +754,46 @@ void Interpreter::execute(const Or &node) {
         _return(Value{&Int_v, ret});
 
         exitln("~Or {} || {}", lv, rv);
+
+        auto rhs_str = costExprStr();
+        auto lhs_str = costExprStr();
+        exprStrFmt("({} <- {} || {})",
+                   std::get<Value>(_return_value).toString(), lhs_str, rhs_str);
     } else {
-        ret = 0;
+        ret = 1;
         _return(Value{&Int_v, ret});
 
         exitln("~Or {} || - ", lv);
+
+        auto lhs_str = costExprStr();
+        exprStrFmt("({} <- {} || -)", std::get<Value>(_return_value).toString(),
+                   lhs_str);
     }
 }
 
 void Interpreter::execute(const Compare &node) {
     enterln("Compare type: {}", toString(node.type));
 
-    auto lhs = evalExpr(*_ast->getNode(node.lhs)),
-         rhs = evalExpr(*_ast->getNode(node.rhs));
+    auto lhs = evalExpr(*_ast->getNode(node.lhs)).toRValue(),
+         rhs = evalExpr(*_ast->getNode(node.rhs)).toRValue();
     assert(lhs.type == rhs.type);
 
     auto ret = selector<Comp, Int, Float>(lhs.type, node.type, lhs, rhs);
     _return(ret);
 
-    exitln("~Compare {} {} {}", lhs.get<Int>(), toString(node.type),
-           rhs.get<Int>());
+    exitln("~Compare {} {} {}", lhs.toString(), toString(node.type),
+           rhs.toString());
+
+    auto rhs_str = costExprStr();
+    auto lhs_str = costExprStr();
+    exprStrFmt("({} <- {} {} {})", std::get<Value>(_return_value).toString(),
+               lhs_str, toString(node.type), rhs_str);
 }
 
 void Interpreter::execute(const ToCond &node) {
     enterln("ToCond");
 
-    auto operand = evalExpr(*_ast->getNode(node.operant));
+    auto operand = evalExpr(*_ast->getNode(node.operant)).toRValue();
     int ret = 0;
     if (operand.type == &Int_v) {
         ret = operand.get<Int>() != 0;
@@ -670,52 +803,65 @@ void Interpreter::execute(const ToCond &node) {
         assert(false && "ToCond operand type err");
     }
 
-    _return(Value{operand.type, ret});
+    _return(Value{&Int_v, ret});
 
     exitln("~ToCond {}", operand.toString());
+
+    auto op_str = costExprStr();
+    exprStrFmt("({} <- ToCond {})", std::get<Value>(_return_value).toString(),
+               op_str);
 }
 
 /* ---------- Control Flow ---------- */
 
 void Interpreter::execute(const If &node) {
     enterln("If");
+    senterln("If");
 
-    auto cond_node = evalExpr(*_ast->getNode(node.cond));
+    auto cond_node = evalExpr(*_ast->getNode(node.cond)).toRValue();
+    sprintln("Cond: {}", getExprStr());
     assert(cond_node.type->type() == TypeId::Int);
     int cond = cond_node.get<Int>();
     assert(0 <= cond && cond <= 1);
 
     if (cond) {
         println("! Iftrue:");
+        sprintln("! Iftrue:");
 
         auto &iftrue = *_ast->getNode(node.stmts);
         iftrue.execute(this);
     } else {
         println("! Iffalse:");
+        sprintln("! Iffalse:");
 
         if (node.else_stmt != -1) {
             auto &iffalse = *_ast->getNode(node.else_stmt);
             iffalse.execute(this);
         } else {
             println("! No else_stmt");
+            sprintln("! No else_stmt");
         }
     }
 
     exitln("~If");
+    sexitln("~If");
 }
 
 void Interpreter::execute(const While &node) {
     enterln("While");
+    senterln("While");
 
     auto &cond_node = *_ast->getNode(node.cond);
     auto &block = *_ast->getNode(node.stmt);
     int cnt = 0;
     while (true) {
         auto cond = evalExpr(cond_node).get<Int>();
+        sprintln("! WCond: {}", getExprStr());
         if (!cond) break;
 
         ++cnt;
         println("! Block iter {}", cnt);
+        sprintln("! Block iter {}", cnt);
 
         auto cfd_opt = _executeCF(block);
 
@@ -738,32 +884,38 @@ void Interpreter::execute(const While &node) {
     }
 
     exitln("~While {} times", cnt);
+    sexitln("~While {} times", cnt);
 }
 
 void Interpreter::execute(const Break &node) {
     _return(ControlFlowData(CFDBreak_v));
     println("Break");
+    sprintln("Break");
 }
 
 void Interpreter::execute(const Continue &node) {
-    _return(ControlFlowData(CFDBreak_v));
+    _return(ControlFlowData(CFDContinue_v));
     println("Continue");
+    sprintln("Continue");
 }
 
 void Interpreter::execute(const Return &node) {
     enterln("Return");
     if (node.returned) {
-        auto ret = evalExpr(*_ast->getNode(node.returned));
+        auto ret = evalExpr(*_ast->getNode(node.returned)).toRValue();
         _return(ControlFlowData(ret));
         exitln("~Return");
+        sprintln("Return ", getExprStr());
     } else {
         _return(ControlFlowData(std::nullopt));
         exitln("~Return");
+        sprintln("Return");
     }
 }
 
 void Interpreter::execute(const Block &node) {
     enterln("Block");
+    senterln("Block");
 
     // New Context / Env
     pushCtxEnv(*_ast->seekEnv(&node));
@@ -782,10 +934,12 @@ void Interpreter::execute(const Block &node) {
             // discard ExprNode
             _return(None);
             println("Discard Value");
+            sprintln("Discard {}", getExprStr());
             continue;
         } else if (_isCFD()) {
             // Passdown
             println("Passdown CFD");
+            sprintln("Passdown CFD");
             break;
         } else
             assert(false && "Block _return_value err");
@@ -794,6 +948,7 @@ void Interpreter::execute(const Block &node) {
     popCtxEnv();
 
     exitln("~Block");
+    sexitln("~Block");
 }
 
 /* ---------------------------------- */
@@ -802,17 +957,21 @@ void Interpreter::execute(const Assign &node) {
     enterln("Assign");
 
     auto lv = evalExpr(*_ast->getNode(node.l_val));
+    auto lv_str = getExprStr();
     auto rv = evalExpr(*_ast->getNode(node.r_val));
+    auto rv_str = getExprStr();
     assert(lv.isLValue());
     auto rval = rv.toRValue();
     lv.assign(rval);
 
     exitln("~Assign ? = {}", lv.toString());
+    sprintln("{} = {}", lv_str, rv_str);
 }
 
 void Interpreter::execute(const Empty &node) {
     // empty
     println("Empty");
+    sprintln("Empty");
 }
 
 }  // namespace SysYust::AST::Interpreter

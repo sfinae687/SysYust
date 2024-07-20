@@ -1,0 +1,12 @@
+int a = 1;
+
+void func() {
+	putint(a)
+	return;
+}
+
+int main() {
+	int a = 2;
+	func();
+	return 0;
+}

@@ -3,7 +3,9 @@
 #ifndef SYSYUST_INTERPRETER_H
 #define SYSYUST_INTERPRETER_H
 
+#include <any>
 #include <cassert>
+#include <climits>
 #include <iostream>
 #include <limits>
 #include <optional>
@@ -20,10 +22,15 @@
 #include "AST/Node/BinaryOp.h"
 #include "AST/Node/Compare.h"
 #include "AST/Node/Continue.h"
+#include "AST/Node/FuncDecl.h"
+#include "AST/Node/IntLiteral.h"
+#include "AST/Node/ParamDecl.h"
 #include "AST/Node/UnaryOp.h"
+#include "AST/Node/VarDecl.h"
 #include "AST/SyntaxTree.h"
 #include "AST/Type/TypeBase.h"
 #include "Interpreter/Value.h"
+#include "fmt/core.h"
 
 // For Debug
 
@@ -42,24 +49,87 @@ static sp_t sp;
 
 std::ostream &operator<<(std::ostream &os, sp_t &sp);
 
-#ifndef NODEBUG
+// #define USE_PRINTLN
+#ifdef USE_PRINTLN
+#if 1 // print to cout
 #define println(fmt_str, ...)                                           \
-    (std::cerr << sp << fmt::format(fmt_str __VA_OPT__(, ) __VA_ARGS__) \
+    (std::cout << sp << fmt::format(fmt_str __VA_OPT__(, ) __VA_ARGS__) \
                << std::endl)
-#else 
-#define println(fmt_str, ...)                                           \
+#else // print to log_string
+#define println(fmt_str, ...)                                          \
     (log_data << sp << fmt::format(fmt_str __VA_OPT__(, ) __VA_ARGS__) \
-               << std::endl)
+              << std::endl)
+#endif
+#else 
+#define println(fmt_str, ...)
 #endif
 
+// #define USE_SPRINTLN
+#ifdef USE_SPRINTLN
+#define SPRINT(x) x
+#define sprintln(fmt_str, ...)                                          \
+    (std::cout << sp << fmt::format(fmt_str __VA_OPT__(, ) __VA_ARGS__) \
+               << std::endl)
+#define exprStrFmt(fmt_str, ...) expr_strings.push_back(fmt::format(fmt_str __VA_OPT__(,) __VA_ARGS__))
+#else 
+#define SPRINT(x)
+#define sprintln(fmt_str, ...)
+#define exprStrFmt(fmt_str, ...)
+#endif
+
+
 // End Debug
+
 
 namespace SysYust::AST::Interpreter {
 
 class Interpreter : public NodeExecutorBase {
    public:
     std::stringstream log_data;
-
+    SPRINT(
+    std::vector<std::string> expr_strings;
+    std::stack<std::vector<std::string>> expr_strings_stash;
+    std::string costExprStr() {
+        assert(expr_strings.size());
+        auto str = expr_strings.back();
+        expr_strings.pop_back();
+        return str;
+    }
+    std::string getExprStr() {
+        if (expr_strings.size() != 1) {
+            sprintln("Err expr: size({})", expr_strings.size());
+            for (auto s : expr_strings) {
+                sprintln("{}", s);
+            }
+        }
+        assert(expr_strings.size() == 1);
+        auto expr_str = expr_strings[0];
+        expr_strings.clear();
+        return expr_str;
+    }
+    void stashPush() {
+        // std::vector<std::string> push_strings;
+        // std::swap(push_strings, expr_strings);
+        // expr_strings_stash.push(std::move(push_strings))
+        
+        expr_strings_stash.push(expr_strings);
+        expr_strings.clear();
+    }
+    void stashPop() {
+        assert(!expr_strings_stash.empty());
+        assert(expr_strings.size() == 0);
+        // expr_strings = std::move(expr_strings_stash.top());
+        // expr_strings_stash.pop();
+        expr_strings = expr_strings_stash.top();
+        expr_strings_stash.pop();
+    }
+    )
+    #ifndef USE_SPRINTLN
+    void stashPush() {}
+    void stashPop() {}
+    int costExprStr() { return 1; }
+    int getExprStr() { return 1; }
+    #endif
     enum CFDType { CFDBreak = 0, CFDContinue, CFDReturn };
     /// enum ControlFlowData = Break | Continue | Return Option<Value>;
     using ControlFlowData =
@@ -104,11 +174,13 @@ class Interpreter : public NodeExecutorBase {
     [[nodiscard]] Value evalExpr(Node &node) {
         // assert node in {IntLiteral, FloatLiteral, Call, UnaryOp, BinaryOp,
         // DeclRef, ArrayRef, ToInt, ToFloat}
+
         node.execute(this);
         assert(!_isNone());
         assert(!_isCFD());
         auto val = get<Value>(_return_value);
         _return_value = None;
+
         return val;
     }
 
@@ -121,6 +193,7 @@ class Interpreter : public NodeExecutorBase {
    private:
     ReturnType _return_value = None;
     std::stack<Context> _context_stack;
+    Context *_global_ctx;
     std::stack<Env> _env_stack;
     SyntaxTree *_ast;
 
@@ -138,6 +211,13 @@ class Interpreter : public NodeExecutorBase {
         _env_stack.push(env);
         assert(top_level || !_context_stack.empty());
         _context_stack.push(top_level ? Context() : Context(&getContext()));
+        if (top_level) _global_ctx = &_context_stack.top();
+    }
+
+    void pushFuncCallEnv(Env &env) {
+        _env_stack.push(env);
+        assert(!_context_stack.empty());
+        _context_stack.push(*_global_ctx);
     }
 
     void popCtxEnv() {
@@ -158,29 +238,40 @@ class Interpreter : public NodeExecutorBase {
         if (no_entry) println("x No entry.");
     }
 
-    std::string toString(const FuncInfo &func_info,
-                         HNode id = std::numeric_limits<HNode>::max()) {
-        auto id_str = id == std::numeric_limits<HNode>::max()
-                          ? fmt::format("id: {}, ", id)
-                          : "";
+    std::string toString(const FuncInfo &func_info, HNode lib_id) {
+        auto decl = func_info.node;
+        std::string decl_str, id_str;
+        if (decl == std::numeric_limits<HNode>::max()) {
+            decl_str = "lib_func";
+            id_str = lib_id == std::numeric_limits<HNode>::max()
+                         ? fmt::format("id: {}, ", lib_id)
+                         : "";
+        } else {
+            auto &decl_node = *dynamic_cast<FuncDecl *>(_ast->getNode(decl));
+            id_str = fmt::format("id: {}, ", decl_node.info_id);
+            decl_str = fmt::format("{}", decl);
+        }
+
         auto name = func_info.name;
         auto type = func_info.type;
-        auto decl = func_info.node;
         auto type_str = type ? type->toString() : "(putf)";
-        auto decl_str = decl == std::numeric_limits<HNode>::max()
-                            ? "lib_func"
-                            : fmt::format("{}", decl);
         return fmt::format("{} \t: {} \t({}decl_id: {})", name, type_str,
                            id_str, decl_str);
     }
 
-    std::string toString(const VarInfo &var_info,
-                         HNode id = std::numeric_limits<HNode>::max()) {
-        auto id_str = id == std::numeric_limits<HNode>::max()
-                          ? fmt::format("id: {}, ", id)
-                          : "";
-        auto name = var_info.name;
+    std::string toString(const VarInfo &var_info) {
         auto decl = var_info.decl;
+        int id;
+        auto decl_node = dynamic_cast<VarDecl *>(_ast->getNode(decl));
+        if (!decl_node) {
+            auto decl_node = dynamic_cast<ParamDecl *>(_ast->getNode(decl));
+            assert(decl_node);
+            id = decl_node->info_id;
+        } else {
+            id = decl_node->info_id;
+        }
+        auto id_str = fmt::format("id: {}, ", id);
+        auto name = var_info.name;
         auto type = var_info.type;
         auto isConstant = var_info.isConstant;
         auto isParam = var_info.isParam;
@@ -208,9 +299,9 @@ class Interpreter : public NodeExecutorBase {
             no_var_entry = 0;
             auto id = var.first;
             auto var_info = var.second;
-            println("● {}", toString(var_info, id));
+            println("● {}", toString(var_info));
         }
-        if (no_func_entry) println("x No entry.");
+        if (no_var_entry) println("x No entry.");
     }
 
     std::string toString(SysYust::AST::UnaryOp::OpType op) {
@@ -292,7 +383,7 @@ class Interpreter : public NodeExecutorBase {
     void _getInfoTrace(NumId id, int layer, Context &ctx) {
         LOG_TRACE("[InfoTrace] Seek Env/Ctx symbol info with id {}", id);
         auto var_info = curEnv().var_table.getInfo(id);
-        println("In layer {}, find [{}]", layer, toString(var_info, id));
+        println("In layer {}, find [{}]", layer, toString(var_info));
         for (auto i : ctx) {
             if (i.first == id) {
                 // Hit
@@ -313,9 +404,14 @@ class Interpreter : public NodeExecutorBase {
 
     [[nodiscard]] std::optional<ControlFlowData> _executeCF(const Node &node) {
         // assert node in {If, While, Break, Continue, Return, Block}
-        const_cast<Node&>(node).execute(this);
-        assert(!_isValue());
-        if (_isNone()) {
+        const_cast<Node &>(node).execute(this);
+        if (_isValue()) {
+            // discard value
+            auto val_str = getExprStr();
+            sprintln("Discard: {}", val_str);
+            _return_value = None;
+            return std::nullopt;
+        } else if (_isNone()) {
             return std::nullopt;
         } else {
             auto cfd = get<ControlFlowData>(_return_value);
@@ -479,7 +575,7 @@ Value Interpreter::ArrPtr<OuterT, InnerT>::calc(
     auto arr_type = dynamic_cast<const OuterT *>(val.type);
     auto &deref_type = arr_type->index(val_scripts.size());
 
-    assert(deref_type.isBasicType());
+    // assert(deref_type.isBasicType());
 
     auto offset = arr_type->offsetWith(val_scripts);
 

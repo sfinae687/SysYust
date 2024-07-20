@@ -111,10 +111,12 @@ namespace SysYust {
 
         void SyntaxTreeString::execute(const ToInt &anInt) {
             tree.getNode(anInt.operant)->execute(this);
+            strings.back() = fmt::format("<ToI:{}>", strings.back());
         }
 
         void SyntaxTreeString::execute(const ToFloat &aFloat) {
             tree.getNode(aFloat.operant)->execute(this);
+            strings.back() = fmt::format("<ToF:{}>", strings.back());
         }
 
         void SyntaxTreeString::execute(const Not &aNot) {
@@ -165,6 +167,7 @@ namespace SysYust {
 
         void SyntaxTreeString::execute(const ToCond &cond) {
             tree.getNode(cond.operant)->execute(this);
+            strings.back() = fmt::format("TOCOND({})", strings.back());
         }
 
         void SyntaxTreeString::execute(const If &anIf) {

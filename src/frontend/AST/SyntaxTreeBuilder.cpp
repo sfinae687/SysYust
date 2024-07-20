@@ -5,6 +5,8 @@
 #include <limits>
 #include <type_traits>
 
+#include "AST/Node/Expr.h"
+#include "AST/Type/Float.h"
 #include "utility/Logger.h"
 #include "AST/SyntaxTreeBuilder.h"
 
@@ -44,6 +46,11 @@ namespace SysYust::AST {
             {
                 "getfloat",
                 &Function::create(Float_v, {&Void_v}),
+                std::numeric_limits<HNode>::max(),
+            },
+            {
+                "getfarray",
+                &Function::create(Int_v, {&Pointer::create(Float_v)}),
                 std::numeric_limits<HNode>::max(),
             },
             {
@@ -160,6 +167,9 @@ namespace SysYust::AST {
     }
 
     HNode SyntaxTreeBuilder::Visitor::convertTo(const Type &t, HNode n) {
+        if (typeid(*global.tree->getNode(n)) == typeid(List)) {
+            return n; // 忽略List
+        }
         auto &nodeType = *global.tree->getNode<Expr>(n)->type;
         if (t.isBasicType()) { // Float 与 Int 之间的转换
             assert(nodeType.isBasicType());
@@ -195,7 +205,7 @@ namespace SysYust::AST {
 
     HNode SyntaxTreeBuilder::Visitor::convertToCond(HNode n) {
         auto node = global.tree->getNode(n);
-        if (dynamic_cast<CondExpr*>(node)) {
+        if (!dynamic_cast<CondExpr*>(node)) {
             auto condNode = new ToCond(n);
             auto nodeId = global.tree->pushNode(condNode);
             return nodeId;
@@ -219,6 +229,7 @@ namespace SysYust::AST {
         LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         // 查询基础类型
         auto &baseType = toType(ctx->type()->getText());
+        _current_expr_basic_type = &baseType;
 
         std::vector<HNode> declNodes;
 
@@ -257,7 +268,7 @@ namespace SysYust::AST {
             // 构建节点
             auto varNode = new VarDecl();
             varNode->info_id = varId;
-            varNode->init_expr = std::any_cast<HNode>(def->constInitVal()->accept(this));
+            varNode->init_expr = convertTo(*type, std::any_cast<HNode>(def->constInitVal()->accept(this)));
             global.tree->setNode(info.decl, varNode);
             // 节点构建结束
             info.isConstant = true;
@@ -274,6 +285,7 @@ namespace SysYust::AST {
     std::any SyntaxTreeBuilder::Visitor::visitVarDecl(SysYParser::VarDeclContext *ctx) {
         LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         auto &baseType = toType(ctx->type()->getText());
+        _current_expr_basic_type = &baseType;
         std::vector<HNode> varNodes;
         // 通过这个Lambda表达式复用一些代码
         auto impl = [&](auto &def_ctx) {
@@ -302,8 +314,9 @@ namespace SysYust::AST {
             info.isConstant = false;
             info.isParam = false;
             auto varNode = new VarDecl();
-            if constexpr (std::is_same_v<std::remove_cvref_t<decltype(def_ctx)>, SysYParser::InitVarDefContext>) {
-                varNode->init_expr = std::any_cast<HNode>(def_ctx.initVal()->accept(this));
+
+            if constexpr (std::same_as<std::remove_cvref_t<decltype(def_ctx)>, SysYParser::InitVarDefContext>) {
+                varNode->init_expr = convertTo(*type, std::any_cast<HNode>(def_ctx.initVal()->accept(this)));
             }
             varNode->info_id = infoId;
             global.tree->setNode(info.decl, varNode);
@@ -328,7 +341,7 @@ namespace SysYust::AST {
         auto initVal = ctx->constInitVal();
         auto vaList = initVal
         | views::transform([&](auto i) {
-            return std::any_cast<HNode>(i->accept(this));
+            return convertTo(*_current_expr_basic_type, std::any_cast<HNode>(i->accept(this)));
         });
         auto nodeId = global.tree->pushNode();
         auto node = new List(std::vector(vaList.begin(), vaList.end()));
@@ -340,7 +353,7 @@ namespace SysYust::AST {
         auto initVal = ctx->initVal();
         auto vaList = initVal
         | views::transform([&](auto i) {
-            return std::any_cast<HNode>(i->accept(this));
+            return convertTo(*_current_expr_basic_type, std::any_cast<HNode>(i->accept(this)));
         });
         auto nodeId = global.tree->pushNode();
         auto node = new List(std::vector(vaList.begin(), vaList.end()));
@@ -530,6 +543,7 @@ namespace SysYust::AST {
         auto op = ctx->unaryOP()->getText().front();
         if (op == '!') {
             auto notId = global.tree->pushNode();
+            subexpr = convertToCond(subexpr);
             auto notNode = new Not(subexpr);
             global.tree->setNode(notId, notNode);
             return notId;
@@ -621,8 +635,10 @@ namespace SysYust::AST {
         auto lhsId = std::any_cast<HNode>(ctx->relExp()->accept(this));
         auto rhsId = std::any_cast<HNode>(ctx->addExp()->accept(this));
 
-        lhsId = convertToCond(lhsId);
-        rhsId = convertToCond(rhsId);
+        // lhsId = convertToCond(lhsId);
+        // rhsId = convertToCond(rhsId);
+
+        std::tie(lhsId, rhsId) = numberTypeCast(lhsId, rhsId);
 
         Compare::CompareType t;
         auto op = ctx->op->getText();
@@ -649,8 +665,8 @@ namespace SysYust::AST {
         auto lhsId = std::any_cast<HNode>(ctx->eqExp()->accept(this));
         auto rhsId = std::any_cast<HNode>(ctx->relExp()->accept(this));
 
-        lhsId = convertToCond(lhsId);
-        rhsId = convertToCond(rhsId);
+        // lhsId = convertToCond(lhsId);
+        // rhsId = convertToCond(rhsId);
 
         auto op = ctx->op->getText();
         Compare::CompareType t;
@@ -703,6 +719,7 @@ namespace SysYust::AST {
         funcDeclNode->info_id = nameId;
 
         auto &resultType = toType(ctx->type()->getText());
+        _returned_type = &resultType;
 
         // 处理形参并获取形参类型
         global.currentEnv = global.tree->pushEnv();
@@ -818,6 +835,8 @@ namespace SysYust::AST {
         auto rhsCtx = ctx->exp();
         auto lhsId = std::any_cast<HNode>(lhsCtx->accept(this));
         auto rhsId = std::any_cast<HNode>(rhsCtx->accept(this));
+        auto lhsType = global.tree->getNode<Expr>(lhsId)->type;
+        rhsId = convertTo(*lhsType, rhsId);
         auto node = new Assign(lhsId, rhsId);
         global.tree->setNode(nodeId, node);
         return nodeId;
@@ -827,6 +846,7 @@ namespace SysYust::AST {
         LOG_TRACE("To process source line {}", ctx->getStart()->getLine());
         auto nodeId = global.tree->pushNode();
         auto condId = std::any_cast<HNode>(ctx->cond()->accept(this));
+        condId = convertToCond(condId);
         auto stmt = std::any_cast<HNode>(ctx->stmt(0)->accept(this));
         HNode else_stmt = -1;
         if (ctx->stmt(1)) {
@@ -863,6 +883,7 @@ namespace SysYust::AST {
         auto returnedCtx = ctx->exp();
         if (returnedCtx) {
             auto expId = std::any_cast<HNode>(ctx->exp()->accept(this));
+            expId = convertTo(*_returned_type, expId);
             auto node = new Return(expId);
             global.tree->setNode(nodeId, node);
             return nodeId;
