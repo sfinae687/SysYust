@@ -2,10 +2,6 @@
 // Created by LL06p on 24-7-16.
 //
 
-#ifdef NDEBUG
-#define NLOG
-#endif
-
 #include <utility>
 #include <filesystem>
 #include <ranges>

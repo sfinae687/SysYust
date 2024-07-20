@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.22)
 project(SysYust VERSION 0.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -9,11 +9,6 @@ option(GeneratedDocument "add a target to generate document by doxygen form code
 option(EnableASTBuildTest "enable the tests of AST Build" OFF)
 option(EnableInterpreterTest "enable the tests of Interpreter" ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-set(
-  CMAKE_CXX_FLAGS
-  "${CMAKE_CXX_FLAGS} -O0 -fsanitize=undefined "
-)
 
 
 include(FetchContent)

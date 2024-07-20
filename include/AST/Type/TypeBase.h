@@ -28,7 +28,7 @@ namespace SysYust::AST {
      * @tparam T 类型标识类型
      */
     template<typename T>
-    constexpr TypeId getTypeIdOf = TypeId::Invalid;
+    inline constexpr TypeId getTypeIdOf = TypeId::Invalid;
 
     // 类型标识的前置声明
     class Type;
@@ -40,12 +40,12 @@ namespace SysYust::AST {
     class Function;
 
     // getTypeIdOf的特化
-    template<> constexpr TypeId getTypeIdOf<Int> = TypeId::Int;
-    template<> constexpr TypeId getTypeIdOf<Float> = TypeId::Float;
-    template<> constexpr TypeId getTypeIdOf<Array> = TypeId::Array;
-    template<> constexpr TypeId getTypeIdOf<Pointer> = TypeId::Pointer;
-    template<> constexpr TypeId getTypeIdOf<Void> = TypeId::Void;
-    template<> constexpr TypeId getTypeIdOf<Function> = TypeId::Function;
+    template<> inline constexpr TypeId getTypeIdOf<Int> = TypeId::Int;
+    template<> inline constexpr TypeId getTypeIdOf<Float> = TypeId::Float;
+    template<> inline constexpr TypeId getTypeIdOf<Array> = TypeId::Array;
+    template<> inline constexpr TypeId getTypeIdOf<Pointer> = TypeId::Pointer;
+    template<> inline constexpr TypeId getTypeIdOf<Void> = TypeId::Void;
+    template<> inline constexpr TypeId getTypeIdOf<Function> = TypeId::Function;
 
     /**
      * @brief 类型标识特性,依赖于 getTypeIdOf 获取 TypeId 并据此计算
