@@ -7,11 +7,11 @@
 
 #include <utility>
 
-#include "Expr.h"
+#include "CondExpr.h"
 
 namespace SysYust::AST {
 
-    class Not : public Expr {
+    class Not : public CondExpr {
     public:
         explicit Not(HNode e);
 

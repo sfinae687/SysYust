@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.27)
 project(SysYust VERSION 0.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -10,6 +10,11 @@ option(EnableASTBuildTest "enable the tests of AST Build" OFF)
 option(EnableInterpreterTest "enable the tests of Interpreter" ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(
+  CMAKE_CXX_FLAGS
+  "${CMAKE_CXX_FLAGS} -O0 -fsanitize=undefined"
+)
+
 
 include(FetchContent)
 
@@ -18,9 +23,7 @@ include(FetchContent)
 set(DOXYGEN_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
 set(SYSYUST_PUBLIC_HEADER_DIR ${CMAKE_SOURCE_DIR}/include)
 
-set(sy_source_root ${CMAKE_SOURCE_DIR}/compiler2023/TestCase)
-set(sy_lib ${CMAKE_SOURCE_DIR}/compiler2023/TestCase/sylib.c)
-set(sy_header ${CMAKE_SOURCE_DIR}/compiler2023/TestCase/sylib.h)
+set(sy_source_root ${CMAKE_SOURCE_DIR}/compiler2023/TestCase/functional)
 file(GLOB_RECURSE sy_source_list  ${sy_source_root}/*.sy)
 
 set(ScriptDir ${CMAKE_SOURCE_DIR}/script)

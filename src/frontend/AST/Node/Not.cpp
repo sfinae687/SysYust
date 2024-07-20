@@ -8,9 +8,8 @@
 
 namespace SysYust::AST {
     Not::Not(HNode e)
-        : Expr(&Int_v, false)
-        , subexpr(e)
-        {
+    : CondExpr()
+    , subexpr(e) {
 
     }
 

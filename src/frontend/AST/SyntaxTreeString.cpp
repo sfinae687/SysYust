@@ -205,11 +205,7 @@ namespace SysYust {
         }
 
         void SyntaxTreeString::execute(const Return &aReturn) {
-            if (aReturn.returned != -1) {
-                tree.getNode(aReturn.returned)->execute(this);
-            } else {
-                strings.push_back("");
-            }
+            tree.getNode(aReturn.returned)->execute(this);
             strings.back() = "Return[" + strings.back() + "]";
         }
 

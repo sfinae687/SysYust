@@ -543,9 +543,7 @@ namespace SysYust::AST {
         auto op = ctx->unaryOP()->getText().front();
         if (op == '!') {
             auto notId = global.tree->pushNode();
-
-            subexpr = convertTo(Int_v, subexpr);
-
+            subexpr = convertToCond(subexpr);
             auto notNode = new Not(subexpr);
             global.tree->setNode(notId, notNode);
             return notId;
@@ -891,9 +889,7 @@ namespace SysYust::AST {
             return nodeId;
         } else {
             auto returnedNode = global.tree->pushNode(new Empty);
-            auto returnNode = new Return(-1);
-            global.tree->setNode(nodeId, returnNode);
-            return nodeId;
+            return returnedNode;
         }
     }
 

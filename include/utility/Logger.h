@@ -158,10 +158,6 @@ namespace SysYust {
         Logger::Record _r;
     };
 
-#ifdef NDEBUG
-#define NLOG
-#endif
-
 #define LOG_RECORD(level, message) (::SysYust::Logger::Record{__FILE__, TRACER, ((message)), __LINE__, ((level))})
 #ifndef NLOG
 #define LOG(level, message) (::SysYust::Logger::getLogger().log(LOG_RECORD(((level)), ((message)))))

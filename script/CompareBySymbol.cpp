@@ -8,10 +8,9 @@
 #include <iterator>
 #include <filesystem>
 #include <algorithm>
+#include <format>
 #include <vector>
 #include <ranges>
-
-#include <fmt/core.h>
 
 namespace fs = std::filesystem;
 namespace ranges = std::ranges;
@@ -23,8 +22,6 @@ int main(int argc, char *argv[]) {
         std::exit(EXIT_FAILURE);
     }
 
-    std::cout << "Begin compare" << std::endl;
-
     fs::path file1 = argv[1];
     fs::path file2 = argv[2];
     std::ifstream stream1(file1);
@@ -35,7 +32,7 @@ int main(int argc, char *argv[]) {
     std::istream_iterator<std::string> token2(stream2);
     auto [word_on_1, word_on_2] = std::mismatch(token1, last_iter, token2, last_iter);
     if (word_on_1 != last_iter || word_on_2 != last_iter) {
-        std::cerr << fmt::format("FAIL:token difference founded") << std::endl;
+        std::cerr << std::format("FAIL:token difference founded") << std::endl;
         std::exit(EXIT_FAILURE);
     }
     return 0;

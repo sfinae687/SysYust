@@ -901,7 +901,7 @@ void Interpreter::execute(const Continue &node) {
 
 void Interpreter::execute(const Return &node) {
     enterln("Return");
-    if (node.returned != -1) {
+    if (node.returned) {
         auto ret = evalExpr(*_ast->getNode(node.returned)).toRValue();
         _return(ControlFlowData(ret));
         exitln("~Return");

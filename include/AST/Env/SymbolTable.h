@@ -108,7 +108,6 @@ namespace SysYust::AST {
                 return _parent->getInfo(id);
             } else {
                 assert(false); // 不检查带查找条目是否存在
-                __builtin_unreachable();
             }
         }
 
