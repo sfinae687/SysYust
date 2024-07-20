@@ -1,7 +1,4 @@
 # InterpreterTest
-add_executable(InterpreterTest ValueTest.cpp InterpreterFunctionalTest.cpp)
-target_link_libraries(InterpreterTest gtest GTest::gtest_main Interpreter)
-gtest_discover_tests(InterpreterTest)
 
 # 自动测试
 
