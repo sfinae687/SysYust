@@ -315,7 +315,7 @@ namespace SysYust::AST {
             info.isParam = false;
             auto varNode = new VarDecl();
 
-            if constexpr (std::same_as<std::remove_cvref_t<decltype(def_ctx)>, SysYParser::InitVarDefContext>) {
+            if constexpr (std::is_same_v<std::remove_cvref_t<decltype(def_ctx)>, SysYParser::InitVarDefContext>) {
                 varNode->init_expr = convertTo(*type, std::any_cast<HNode>(def_ctx.initVal()->accept(this)));
             }
             varNode->info_id = infoId;

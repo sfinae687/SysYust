@@ -16,10 +16,12 @@ fs::path path_to_extract[] = {
         "./lib/fmt/include",
         "./lib/fmt/src",
         "./lib/range-v3/include",
+        "./script/CommandGenerator.java",
 };
 
 std::string exclude[] = {
         "cmake-build.*",
+        "fmt.cc"
 };
 
 using path_regex = std::basic_regex<fs::path::value_type>;
@@ -33,6 +35,15 @@ bool checkExtension(fs::path p) {
 }
 
 void extract_path(std::vector<path_regex>& r, fs::path p, fs::path root, fs::path target) {
+
+    if (is_regular_file(p)) {
+        auto tp = target / p.filename();
+        auto parent_path = tp.parent_path();
+        fs::create_directories(parent_path);
+        fs::copy_file(p, tp, fs::copy_options::overwrite_existing);
+        std::clog << "Founded:" << p << std::endl;
+        return ;
+    }
 
     auto last = fs::recursive_directory_iterator();
 
