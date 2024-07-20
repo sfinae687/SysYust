@@ -1,6 +1,7 @@
 //
 // Created by LL06p on 24-7-16.
 //
+
 #include <utility>
 #include <filesystem>
 #include <ranges>
@@ -19,6 +20,7 @@
 #include "utility/Logger.h"
 #include "utility/StreamLogger.h"
 #include "Interpreter/Interpreter.h"
+#include "AST/SyntaxTreeString.h"
 
 namespace fs = std::filesystem;
 namespace ranges = std::ranges;
@@ -32,6 +34,12 @@ int main(int argc, char *argv[]) {
     fs::path output_dir("output");
     fs::path input_file;
     if (argc == 2) {
+        auto len = std::strlen(argv[1]);
+        for (auto i = 0; i<len; ++i) {
+            if (argv[1][i] == '\\') {
+                argv[1][i] = '/';
+            }
+        }
         input_file = argv[1];
     } else {
         throw std::invalid_argument("Use command line to specify the input file");
@@ -55,15 +63,16 @@ int main(int argc, char *argv[]) {
 
     auto ASTree = SysYust::AST::SyntaxTreeBuilder::getTree(tree);
 
+#ifndef NDEBUG
+    SysYust::AST::SyntaxTreeString formatted_tree(*ASTree);
+    output_stream << static_cast<std::string>(formatted_tree) << std::endl;
+#endif
+
     LOG_INFO("AST build complete.");
 
     Interpreter::Interpreter interpreter{};
     auto rt = interpreter.enter(ASTree.get());
 
-    std::cout << std::endl;
-
-    std::cout << rt << std::endl;
-
-    return 0;
+    return rt;
 
 }

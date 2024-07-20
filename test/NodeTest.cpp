@@ -26,7 +26,7 @@ TEST(NodeTest, CreateTest1) {
     auto mainFuncNo = tree.pushNode(); // 分配节点的编号
     auto &mainFuncType = Function::create(Int_v, {&Void_v}); // 创建函数的类型
     auto nameId = currentEnv->getId("main"); // 分配函数名字符号的 Id
-    FuncInfo mainInfo("main", &mainFuncType, mainFuncNo); // 创建函数符号信息
+    FuncInfo mainInfo{"main", &mainFuncType, mainFuncNo}; // 创建函数符号信息
 
     // 创建函数内的语句 {return 0 + 1 - 1};
     auto blockNo = tree.pushNode();
