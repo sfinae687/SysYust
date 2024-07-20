@@ -2,7 +2,6 @@ import os
 import shutil
 import sys
 
-
 def process_files(directory):
     # 遍历目录下的所有文件
     for root, _, files in os.walk(directory):
@@ -14,14 +13,20 @@ def process_files(directory):
                 # 创建备份文件
                 shutil.copyfile(file_path, backup_path)
 
-                # 读取文件内容，删除前两行
+                # 读取文件内容
                 with open(file_path, 'r') as f:
                     lines = f.readlines()
 
-                # 写回文件，去掉前两行
-                with open(file_path, 'w') as f:
-                    f.writelines(lines[2:])
+                # 删除前两行
+                lines = lines[2:]
 
+                # 如果文件名是 SysYLexer.cpp，在文件头添加预处理宏
+                if file == 'SysYLexer.h':
+                    lines.insert(0, '#define ANTLR4_USE_THREAD_LOCAL_CACHE 1\n')
+
+                # 写回文件
+                with open(file_path, 'w') as f:
+                    f.writelines(lines)
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
