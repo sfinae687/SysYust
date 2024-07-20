@@ -2,8 +2,8 @@
 
 # 自动测试
 
-add_executable(InterpreterTestDriver InterpreterTest.cpp)
-target_link_libraries(InterpreterTestDriver GTest::gtest_main AST Interpreter)
+add_executable(InterpreterTest InterpreterTest.cpp)
+target_link_libraries(InterpreterTest PRIVATE Interpreter)
 
 list(LENGTH sy_source_list test_case_number)
 if (${EnableInterpreterTest} AND NOT ${test_case_number} EQUAL 0)
@@ -25,7 +25,7 @@ if (${EnableInterpreterTest} AND NOT ${test_case_number} EQUAL 0)
                 unset(rd_input)
             endif ()
             add_test(NAME ${sy_test_name}
-                COMMAND bash -c "$<TARGET_FILE:InterpreterTestDriver> ${sy_source_path} ${rd_input} >${sy_test_program_output} &&
+                COMMAND bash -c "$<TARGET_FILE:InterpreterTest> ${sy_source_path} ${rd_input} >${sy_test_program_output} &&
                         $<TARGET_FILE:CompareBySymbol> ${sy_test_output_path} ${sy_test_program_output} ||
                         diff ${sy_test_output_path} ${sy_test_program_output}"
             )

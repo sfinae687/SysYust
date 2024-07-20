@@ -12,7 +12,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(
   CMAKE_CXX_FLAGS
-  "${CMAKE_CXX_FLAGS} -O0 -fsanitize=undefined"
+  "${CMAKE_CXX_FLAGS} -O0 -fsanitize=undefined "
 )
 
 

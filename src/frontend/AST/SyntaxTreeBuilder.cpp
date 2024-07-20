@@ -891,7 +891,9 @@ namespace SysYust::AST {
             return nodeId;
         } else {
             auto returnedNode = global.tree->pushNode(new Empty);
-            return returnedNode;
+            auto returnNode = new Return(-1);
+            global.tree->setNode(nodeId, returnNode);
+            return nodeId;
         }
     }
 
