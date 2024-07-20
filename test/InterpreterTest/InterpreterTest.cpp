@@ -39,9 +39,9 @@ int main(int argc, char *argv[]) {
 
     std::ifstream input_stream(input_file);
 
-    auto build_output_file = output_dir / input_file.stem().concat(".AST_Build.txt");
+    auto build_output_file = output_dir / input_file.stem().concat(".Interpreter.txt");
 //    auto interpret_output_file = output_dir / input_file.stem().concat(".Interpreter.out");
-    auto log_file = output_dir / input_file.stem().concat(".AST_Builder.log");
+    auto log_file = output_dir / input_file.stem().concat(".Interpreter.log");
     std::ofstream output_stream(build_output_file, std::ios::trunc);
     std::ofstream log_stream(log_file, std::ios::trunc);
     SysYust::Logger::setLogger(new SysYust::StreamLogger(log_stream));
@@ -58,7 +58,11 @@ int main(int argc, char *argv[]) {
     LOG_INFO("AST build complete.");
 
     Interpreter::Interpreter interpreter{};
-    interpreter.enter(ASTree.get());
+    auto rt = interpreter.enter(ASTree.get());
+
+    std::cout << std::endl;
+
+    std::cout << rt << std::endl;
 
     return 0;
 
