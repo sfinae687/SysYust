@@ -543,9 +543,9 @@ namespace SysYust::AST {
         auto op = ctx->unaryOP()->getText().front();
         if (op == '!') {
             auto notId = global.tree->pushNode();
-#if 0 // not 不再在AST意义上是条件表达式
-            subexpr = convertToCond(subexpr);
-#endif
+
+            subexpr = convertTo(Int_v, subexpr);
+
             auto notNode = new Not(subexpr);
             global.tree->setNode(notId, notNode);
             return notId;

@@ -23,6 +23,8 @@ int main(int argc, char *argv[]) {
         std::exit(EXIT_FAILURE);
     }
 
+    std::cout << "Begin compare" << std::endl;
+
     fs::path file1 = argv[1];
     fs::path file2 = argv[2];
     std::ifstream stream1(file1);

@@ -9,27 +9,52 @@ list(LENGTH sy_source_list test_case_number)
 if (${EnableInterpreterTest} AND NOT ${test_case_number} EQUAL 0)
     math(EXPR test_case_number "${test_case_number} - 1")
     foreach (ind RANGE ${test_case_number})
-        list(GET sy_source_list ${ind} sy_source_path)
-        string(REGEX REPLACE "(.*)\.sy" "\\1" sy_source_stem ${sy_source_path})
-        list(GET sy_test_name_list ${ind} sy_test_name)
-        set(sy_test_name Interpret_${sy_test_name})
-        set(sy_test_input_path ${sy_source_stem}.in)
-        set(sy_test_output_path ${sy_source_stem}.out)
-        set(sy_test_program_output ${sy_test_name}.out)
-        if (NOT EXISTS ${sy_test_input_path} AND NOT EXISTS ${sy_test_output_path})
-            message("missing test case for ${sy_source_path}")
+        list(GET sy_source_list ${ind} sy_source)
+        list(GET sy_test_name_list ${ind} sy_name)
+        set(sy_name Interpreter_${sy_name})
+        list(GET sy_test_output_list ${ind} sy_output)
+        list(GET sy_test_input_list ${ind} sy_input)
+        list(GET sy_test_ret_list ${ind} sy_ret)
+        list(GET sy_test_exe_list ${ind} sy_executable)
+        string(REGEX REPLACE "(.*)\.sy" "\\1" sy_source_stem ${sy_source})
+        set(sy_program_output ${sy_name}.out)
+        set(sy_program_ret ${sy_name}.ret)
+        if (NOT EXISTS ${sy_input} AND NOT EXISTS ${sy_output})
+            message("missing test case for ${sy_source}")
             continue()
         else()
-            set(rd_input "<${sy_test_input_path}")
-            if (NOT EXISTS ${sy_test_input_path})
+            set(rd_input "<${sy_input}")
+            if (NOT EXISTS ${sy_input})
                 unset(rd_input)
             endif ()
-            add_test(NAME ${sy_test_name}
-                COMMAND bash -c "$<TARGET_FILE:InterpreterTest> ${sy_source_path} ${rd_input} >${sy_test_program_output} &&
-                        $<TARGET_FILE:CompareBySymbol> ${sy_test_output_path} ${sy_test_program_output} ||
-                        diff ${sy_test_output_path} ${sy_test_program_output}"
+            add_test(NAME ${sy_name}
+                COMMAND bash -c "
+                    cp ${sy_source} ${CMAKE_CURRENT_BINARY_DIR}/${sy_name}.cpp
+                    ${CMAKE_CXX_COMPILER} -std=c++17 -include ${sy_header} -o ${sy_executable} ${CMAKE_CURRENT_BINARY_DIR}/${sy_name}.cpp ${sy_lib}
+                    ${sy_executable} ${rd_input} >${sy_output}
+                    echo $? >${sy_ret}
+                    $<TARGET_FILE:InterpreterTest> ${sy_source} ${rd_input} >${sy_program_output}
+                    echo $? >${sy_program_ret} && {
+                        $<TARGET_FILE:CompareBySymbol> ${sy_output} ${sy_program_output}
+                        if [  $? -ne 0 ];
+                        then
+                            echo OUTPUT DIFFERENT
+                            diff ${sy_output} ${sy_program_output}
+                            exit 1
+                        fi
+                    } && {
+                        $<TARGET_FILE:CompareBySymbol> ${sy_ret} ${sy_program_ret}
+                        if [  $? -ne 0 ];
+                        then
+                            echo OUTPUT DIFFERENT
+                            diff ${sy_ret} ${sy_program_ret}
+                            exit 1
+                        fi
+                    }
+                    exit 0
+                    "
             )
-            set_tests_properties(${sy_test_name} PROPERTIES
+            set_tests_properties(${sy_name} PROPERTIES
                 FAIL_REGULAR_EXPRESSION "FAIL"
             )
         endif ()

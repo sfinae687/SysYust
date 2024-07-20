@@ -62,19 +62,17 @@ int main(int argc, char *argv[]) {
     auto tree = parser.compUnit();
 
     auto ASTree = SysYust::AST::SyntaxTreeBuilder::getTree(tree);
-    SysYust::AST::SyntaxTreeString formatted_tree(*ASTree);
 
-//    output_stream << static_cast<std::string>(formatted_tree) << std::endl;
+#ifndef NDEBUG
+    SysYust::AST::SyntaxTreeString formatted_tree(*ASTree);
+    output_stream << static_cast<std::string>(formatted_tree) << std::endl;
+#endif
 
     LOG_INFO("AST build complete.");
 
     Interpreter::Interpreter interpreter{};
     auto rt = interpreter.enter(ASTree.get());
 
-    std::cout << std::endl;
-
-    std::cout << rt << std::endl;
-
-    return 0;
+    return rt;
 
 }
