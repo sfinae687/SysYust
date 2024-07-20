@@ -118,7 +118,7 @@ namespace SysYust::AST {
 
         auto blockSize = std::reduce(_dimensions.begin(), toRef, 1ull, std::multiplies{});
         auto indView = ind | views::reverse;
-        std::span dimView(toRef, _dimensions.end());
+        std::vector dimView(toRef, _dimensions.end());
         assert(dimView.size() == indView.size());
         std::size_t index = 0;
         for (int i=0; i<layer; ++i) {
