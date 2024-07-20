@@ -305,11 +305,10 @@ class Interpreter : public NodeExecutorBase {
     }
 
     std::string toString(SysYust::AST::UnaryOp::OpType op) {
-        using enum SysYust::AST::UnaryOp::OpType;
         switch (op) {
-            case Positive:
+            case SysYust::AST::UnaryOp::OpType::Positive:
                 return "(+)";
-            case Negative:
+            case SysYust::AST::UnaryOp::OpType::Negative:
                 return "(-)";
             default:
                 assert(0 && "Err Unary OpType");
@@ -317,17 +316,16 @@ class Interpreter : public NodeExecutorBase {
     }
 
     std::string toString(SysYust::AST::BinaryOp::OpType op) {
-        using enum SysYust::AST::BinaryOp::OpType;
         switch (op) {
-            case Add:
+            case BinaryOp::OpType::Add:
                 return "+";
-            case Sub:
+            case BinaryOp::OpType::Sub:
                 return "-";
-            case Mul:
+            case BinaryOp::OpType::Mul:
                 return "*";
-            case Div:
+            case BinaryOp::OpType::Div:
                 return "/";
-            case Mod:
+            case BinaryOp::OpType::Mod:
                 return "%";
             default:
                 assert(0 && "Err BinOp");
@@ -335,14 +333,12 @@ class Interpreter : public NodeExecutorBase {
     }
 
     std::string toString(SysYust::AST::Compare::CompareType op) {
-        using enum SysYust::AST::Compare::CompareType;
         std::string tab[] = {"==", "!=", ">", ">=", "<", "<="};
         return tab[op];
     }
 
     std::string toString(
         SysYust::AST::Interpreter::Interpreter::ReturnType ret) {
-        using enum SysYust::AST::Interpreter::Interpreter::CFDType;
         switch (ret.index()) {
             case 0:  // Void
                 return "Void";
@@ -352,11 +348,11 @@ class Interpreter : public NodeExecutorBase {
                     SysYust::AST::Interpreter::Interpreter::ControlFlowData>(
                     ret);
                 switch (cfd.index()) {
-                    case CFDBreak:
+                    case Interpreter::CFDType::CFDBreak:
                         return "Break";
-                    case CFDContinue:
+                    case Interpreter::CFDType::CFDContinue:
                         return "Continue";
-                    case CFDReturn: {
+                    case Interpreter::CFDType::CFDReturn: {
                         auto ret_val = std::get<2>(cfd);
                         if (ret_val.has_value()) {
                             return fmt::format("Return {}",
