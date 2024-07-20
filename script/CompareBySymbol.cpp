@@ -17,51 +17,23 @@ namespace ranges = std::ranges;
 namespace views = std::views;
 
 int main(int argc, char *argv[]) {
-    if (argc > 3) {
-        std::cerr << "FETAL:Must pass the file2 to compare by command line arguments" << std::endl;
+    if (argc != 3) {
+        std::cerr << "You must specify just two files to compare";
         std::exit(EXIT_FAILURE);
     }
 
-    std::vector<fs::path> file_to_compare;
-    std::vector<std::pair<std::ifstream, std::string>> stream_to_compare;
+    fs::path file1 = argv[1];
+    fs::path file2 = argv[2];
+    std::ifstream stream1(file1);
+    std::ifstream stream2(file2);
 
-    std::cout << fs::current_path() << std::endl;
-    for (int i=1; i<argc; ++i) {
-        file_to_compare.emplace_back(argv[i]);
-        stream_to_compare.emplace_back(std::piecewise_construct,
-                                       std::tuple{argv[i], std::ios::binary},
-                                       std::tuple{});
-    }
-
-    int lineno = 0;
-    while (true) {
-        for (auto &i : stream_to_compare) {
-            auto &[stream, line] = i;
-            std::getline(stream, line);
-            if (line.back() == '\r') {
-                line.pop_back();
-            }
-        }
-        if (ranges::any_of(stream_to_compare, [](auto &i) {return i.first.eof();})) {
-            break;
-        }
-
-        lineno++;
-        if (ranges::any_of(stream_to_compare, [&stream_to_compare](auto &i) {
-            return i.second != stream_to_compare.front().second;
-        })) {
-            std::cerr << "FAIL:the first different line : " << lineno << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
-    }
-
-    if (ranges::all_of(stream_to_compare, [](auto &i) {
-        return i.first.eof();
-    })) {
-        return 0;
-    } else {
-        std::cerr << "FAIL:the files have different length" << std::endl;
+    std::istream_iterator<std::string> last_iter{};
+    std::istream_iterator<std::string> token1(stream1);
+    std::istream_iterator<std::string> token2(stream2);
+    auto [word_on_1, word_on_2] = std::mismatch(token1, last_iter, token2, last_iter);
+    if (word_on_1 != last_iter || word_on_2 != last_iter) {
+        std::cerr << std::format("FAIL:token difference founded") << std::endl;
         std::exit(EXIT_FAILURE);
     }
-
+    return 0;
 }

@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     Interpreter::Interpreter interpreter{};
     auto rt = interpreter.enter(ASTree.get());
 
-//    std::cout << std::endl;
+    std::cout << std::endl;
 
     std::cout << rt << std::endl;
 

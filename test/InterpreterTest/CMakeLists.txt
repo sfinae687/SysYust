@@ -28,8 +28,9 @@ if (${EnableInterpreterTest} AND NOT ${test_case_number} EQUAL 0)
                 unset(rd_input)
             endif ()
             add_test(NAME ${sy_test_name}
-                COMMAND bash -c "$<TARGET_FILE:InterpreterTestDriver> ${sy_source_path} ${rd_input} >${sy_test_program_output}
-                        $<TARGET_FILE:CompareBySymbol> ${sy_test_output_path} ${sy_test_program_output}"
+                COMMAND bash -c "$<TARGET_FILE:InterpreterTestDriver> ${sy_source_path} ${rd_input} >${sy_test_program_output} &&
+                        $<TARGET_FILE:CompareBySymbol> ${sy_test_output_path} ${sy_test_program_output} ||
+                        diff ${sy_test_output_path} ${sy_test_program_output}"
             )
             set_tests_properties(${sy_test_name} PROPERTIES
                 FAIL_REGULAR_EXPRESSION "FAIL"
