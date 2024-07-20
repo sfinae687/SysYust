@@ -18,7 +18,7 @@ include(FetchContent)
 set(DOXYGEN_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
 set(SYSYUST_PUBLIC_HEADER_DIR ${CMAKE_SOURCE_DIR}/include)
 
-set(sy_source_root ${CMAKE_SOURCE_DIR}/compiler2023/TestCase)
+set(sy_source_root ${CMAKE_SOURCE_DIR}/compiler2023/TestCase/hidden_functional)
 set(sy_lib ${CMAKE_SOURCE_DIR}/compiler2023/TestCase/sylib.c)
 set(sy_header ${CMAKE_SOURCE_DIR}/compiler2023/TestCase/sylib.h)
 file(GLOB_RECURSE sy_source_list  ${sy_source_root}/*.sy)

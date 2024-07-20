@@ -525,7 +525,7 @@ namespace SysYust::AST {
         auto lineno = ctx->getStart()->getLine();
         auto funcName = ctx->Ident()->getText();
         auto fullName = "_sysy_" + funcName;
-        auto funcId = global.currentEnv->getId(funcName);
+        auto funcId = global.currentEnv->getId(fullName);
 
         auto callId = global.tree->pushNode();
         auto argument = global.tree->pushNode(new IntLiteral(lineno));
