@@ -5,7 +5,9 @@ set(IR_source
         BasicBlock.cpp
         Instruction.cpp
         TypeUtil.cpp
-        InstructionUtil.cpp
+        SymbolUtil.cpp
+        ProcedureContext.cpp
+        CodeContext.cpp
 )
 add_library(IR ${IR_source})
 target_link_libraries(IR utility)

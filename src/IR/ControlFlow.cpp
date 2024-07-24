@@ -4,7 +4,7 @@
 
 #include "IR/ControlFlow.h"
 
-namespace SysYust {
-    namespace IR {
-    } // IR
-} // SysYust
+
+namespace SysYust::IR {
+
+} // IR

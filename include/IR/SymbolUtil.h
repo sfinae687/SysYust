@@ -1,7 +1,7 @@
 ///@file Instruction 的辅助工具，主要为符号的实现
 
-#ifndef SYSYUST_INSTRUCTIONUTIL_H
-#define SYSYUST_INSTRUCTIONUTIL_H
+#ifndef SYSYUST_SYMBOLUTIL_H
+#define SYSYUST_SYMBOLUTIL_H
 
 #include <utility>
 #include <type_traits>
@@ -11,9 +11,17 @@
 
 #include "IR/TypeUtil.h"
 
-#ifndef NDEBUG
-#define SYSY_IR_STRICT_CHECK 1
+#define IR_DEBUG
+
+#ifdef NDEBUG
+#undef IR_DEBUG
 #endif
+
+#ifdef IR_DEBUG
+#define SYSY_IR_STRICT_CHECK 1
+#define SYSY_IR_DEBUG 1
+#endif
+
 
 namespace SysYust::IR {
 
@@ -22,6 +30,12 @@ namespace SysYust::IR {
                     true;
         #else
                     false;
+        #endif
+    inline constexpr bool ir_debug_flag =
+        #ifdef SYSY_IR_DEBUG
+                true;
+        #else
+                false;
         #endif
 
     namespace alias {
@@ -138,13 +152,30 @@ namespace SysYust::IR {
      template <typename TargetType>
      constinit as_fn<TargetType> as; ///< 便利调用对象
 
+     /**
+      * @brief 函数信息的描述是结构
+      */
+     struct func_info {
+         using side_effect_flag = bool;
+         const Type *type = nullptr; ///< 函数的返回类型标识
+         side_effect_flag side_effect = false; ///< 函数的副作用描述，待定
+     };
+
 } // IR
+
+// func_symbol 的哈希对象
+template<>
+struct std::hash<SysYust::IR::func_symbol> {
+    using key_type = SysYust::IR::func_symbol;
+    std::size_t operator() (const key_type &e) const {
+        return std::hash<key_type::label_type>{}(e.full());
+    }
+};
 
 // val_symbol 哈希对象
 template<>
 struct std::hash<SysYust::IR::var_symbol> {
     using key_type = SysYust::IR::var_symbol;
-    hash() = default;
     std::size_t operator() (const key_type &e) const {
         return symbol_hash(e.symbol) ^ revision_hash(e.revision);
     }
@@ -156,7 +187,6 @@ struct std::hash<SysYust::IR::var_symbol> {
 template<>
 struct std::hash<SysYust::IR::im_symbol> {
     using key_type = SysYust::IR::im_symbol;
-    hash() = default;
     std::size_t operator() (const key_type &e) const {
         return v_hash(e.data);
     }
@@ -167,11 +197,10 @@ struct std::hash<SysYust::IR::im_symbol> {
 template<>
 struct std::hash<SysYust::IR::operant> {
     using key_type = SysYust::IR::operant;
-    hash() = default;
     std::size_t operator() (const key_type &e) const {
         return v_hash(e.symbol);
     }
     std::hash<SysYust::IR::operant::data_type> v_hash;
 };
 
-#endif //SYSYUST_INSTRUCTIONUTIL_H
+#endif //SYSYUST_SYMBOLUTIL_H

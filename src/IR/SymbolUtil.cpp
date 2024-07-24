@@ -5,7 +5,7 @@
 #include <fmt/core.h>
 #include <cassert>
 
-#include "IR/InstructionUtil.h"
+#include "IR/SymbolUtil.h"
 
 SysYust::IR::compose_type
 SysYust::IR::operant_compose(const SysYust::IR::operant &lhs, const SysYust::IR::operant &rhs) {

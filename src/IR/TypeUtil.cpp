@@ -27,6 +27,8 @@ namespace SysYust::IR {
             return pointer_size;
         } else if (isArr()) {
             return data * subType->size();
+        } else {
+            __builtin_unreachable();
         }
     }
 } // IR

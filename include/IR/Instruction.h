@@ -8,7 +8,7 @@
 #include <variant>
 #include <optional>
 
-#include "InstructionUtil.h"
+#include "SymbolUtil.h"
 
 namespace SysYust::IR {
 
@@ -200,6 +200,16 @@ namespace SysYust::IR {
         ret();
     };
 
+    /**
+     * @brief 用于创建一条指令的模板函数
+     * @details
+     *
+     *      # usage
+     *
+     *      ```c++
+     *          IR::inst<add>(assigned, op_a, op_b);
+     *      ```
+     */
     template<instruct_type t, typename... Args>
     auto inst(Args&&... args) {
         if constexpr (constexpr auto ct = cate(t); ct == instruct_cate::out_of_instruct) {
