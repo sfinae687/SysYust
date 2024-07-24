@@ -11,7 +11,7 @@
 namespace SysYust::IR {
 
     compute_with_2::compute_with_2(instruct_type type, var_symbol v, operant op1, operant op2)
-        : instruct_base(type)
+        : instruct(type)
         , assigned(std::move(v))
         , opr1(std::move(op1))
         , opr2(std::move(op2))
@@ -20,7 +20,7 @@ namespace SysYust::IR {
     }
 
     compute_with_1::compute_with_1(instruct_type t, var_symbol v, operant op1, operant op2)
-        : instruct_base(t)
+        : instruct(t)
         , assigned(std::move(v))
         , opr(std::move(op1))
         {
@@ -28,7 +28,7 @@ namespace SysYust::IR {
     }
 
     compute_with_1::compute_with_1(instruct_type t, var_symbol v, operant op1)
-        : instruct_base(t)
+        : instruct(t)
         , assigned(std::move(v))
         , opr(std::move(op1))
         {
@@ -37,7 +37,7 @@ namespace SysYust::IR {
 
 
     call_instruct::call_instruct(func_symbol f, std::initializer_list<operant> oprs)
-        : instruct_base(instruct_type::call)
+        : instruct(instruct_type::call)
         , func(f)
         , args(oprs)
         {
@@ -45,25 +45,25 @@ namespace SysYust::IR {
     }
 
     branch::branch(operant cond)
-        : instruct_base(instruct_type::br)
+        : instruct(instruct_type::br)
         , cond(std::move(cond)) {
 
     }
 
     jump::jump()
-        : instruct_base(instruct_type::jp)
+        : instruct(instruct_type::jp)
         {
 
     }
 
     ret::ret()
-        : instruct_base(instruct_type::rt)
+        : instruct(instruct_type::rt)
         {
 
     }
 
     indexOf::indexOf(var_symbol assigned, const Type *type, operant index)
-        : instruct_base<indexOf>(indexof)
+        : instruct<indexOf>(indexof)
         , assigned(std::move(assigned))
         , type(type)
         , ind(std::move(index))
@@ -74,7 +74,7 @@ namespace SysYust::IR {
     }
 
     alloc::alloc(var_symbol assigned, const Type *type)
-        : instruct_base<struct alloc>(alc)
+        : instruct<struct alloc>(alc)
         , assigned(std::move(assigned))
         , type(type)
     {
@@ -84,7 +84,7 @@ namespace SysYust::IR {
     }
 
     load::load(var_symbol t, var_symbol s)
-        : instruct_base<load>(ld)
+        : instruct<load>(ld)
         , source(std::move(s))
         , target(std::move(t))
     {
@@ -95,7 +95,7 @@ namespace SysYust::IR {
     }
 
     store::store(var_symbol t, var_symbol s)
-        : instruct_base<store>(st)
+        : instruct<store>(st)
         , source(std::move(s))
         , target(std::move(t))
     {

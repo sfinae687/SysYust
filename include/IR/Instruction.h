@@ -12,6 +12,18 @@
 
 namespace SysYust::IR {
 
+    struct undef_inst;
+    struct compute_with_2;
+    struct compute_with_1;
+    struct indexOf;
+    struct load;
+    struct store;
+    struct alloc;
+    struct call_instruct;
+    struct branch;
+    struct jump;
+    struct ret;
+
     /**
      * @brief 指令的详细类型标识符
      */
@@ -54,6 +66,40 @@ namespace SysYust::IR {
         alloc,
         index,
     };
+
+    template<typename Inst>
+    inline constexpr instruct_cate inst_cate = instruct_cate::out_of_instruct;
+    template<>
+    inline constexpr instruct_cate inst_cate<compute_with_2> = instruct_cate::with_2;
+    template<>
+    inline constexpr instruct_cate inst_cate<compute_with_1> = instruct_cate::with_1;
+    template<>
+    inline constexpr instruct_cate inst_cate<call_instruct> = instruct_cate::call;
+    template<>
+    inline constexpr instruct_cate inst_cate<branch> = instruct_cate::branch;
+    template<>
+    inline constexpr instruct_cate inst_cate<jump> = instruct_cate::jump;
+    template<>
+    inline constexpr instruct_cate inst_cate<ret> = instruct_cate::ret;
+    template<>
+    inline constexpr instruct_cate inst_cate<load> = instruct_cate::load;
+    template<>
+    inline constexpr instruct_cate inst_cate<store> = instruct_cate::store;
+    template<>
+    inline constexpr instruct_cate inst_cate<alloc> = instruct_cate::alloc;
+    template<>
+    inline constexpr instruct_cate inst_cate<indexOf> = instruct_cate::index;
+
+    constexpr bool is_gateway(instruct_cate c) {
+        if (c == instruct_cate::jump
+        || c == instruct_cate::branch
+        || c == instruct_cate::ret
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     /**
      * @brief 归类器的实现函数
@@ -99,26 +145,50 @@ namespace SysYust::IR {
         }
     }
 
-    /**
-     * @brief 指令共同基类，提供了类型支持
-     */
-     template<typename D>
     struct instruct_base {
+
         explicit instruct_base(instruct_type type)
             : type(type)
         {
 
         }
-
-
         instruct_base(const instruct_base &) = default;
+
+        [[nodiscard]] bool is_gateway() const {
+            return type == br
+                   || type == jp
+                   || type == rt;
+        }
+
+        [[nodiscard]] bool is_mem() const {
+            return type == ld
+                   || type == st
+                   || type == alc;
+        }
+
         const instruct_type type;
+    };
+
+    /**
+     * @brief 指令共同基类，提供了类型支持
+     */
+     template<typename D>
+    struct instruct : instruct_base {
+
+        static constexpr instruct_cate cateId = inst_cate<D>;
+
+        explicit instruct(instruct_type type)
+            : instruct_base(type)
+        {
+
+        }
+        instruct(const instruct&) = default;
     };
 
     /**
      * @brief 带有两个操作数的指令
      */
-    struct compute_with_2 : instruct_base<compute_with_2> {
+    struct compute_with_2 : instruct<compute_with_2> {
 
         compute_with_2 (instruct_type type, var_symbol v, operant op1, operant op2);
 
@@ -130,7 +200,7 @@ namespace SysYust::IR {
     /**
      * @brief 带有一个操作数的指令
      */
-    struct compute_with_1 : instruct_base<compute_with_2> {
+    struct compute_with_1 : instruct<compute_with_2> {
 
         compute_with_1(instruct_type t, var_symbol v, operant op1, operant op2);
         compute_with_1(instruct_type t, var_symbol v, operant op1);
@@ -143,7 +213,7 @@ namespace SysYust::IR {
     };
 
 
-    struct indexOf : instruct_base<indexOf> {
+    struct indexOf : instruct<indexOf> {
 
         indexOf(var_symbol assigned, const Type *type, operant index);
 
@@ -152,7 +222,7 @@ namespace SysYust::IR {
         const operant ind;
     };
 
-    struct load : instruct_base<load> {
+    struct load : instruct<load> {
 
         load(var_symbol in, var_symbol out);
 
@@ -160,7 +230,7 @@ namespace SysYust::IR {
         const var_symbol target;
     };
 
-    struct store : instruct_base<store> {
+    struct store : instruct<store> {
 
         store(var_symbol t, var_symbol s);
 
@@ -168,7 +238,7 @@ namespace SysYust::IR {
         const var_symbol target;
     };
 
-    struct alloc : instruct_base<alloc> {
+    struct alloc : instruct<alloc> {
 
         alloc(var_symbol assigned, const Type *type);
 
@@ -176,7 +246,7 @@ namespace SysYust::IR {
         const Type *type;
     };
 
-    struct call_instruct : instruct_base<call_instruct> {
+    struct call_instruct : instruct<call_instruct> {
 
         call_instruct(func_symbol f, std::initializer_list<operant> oprs);
 
@@ -186,17 +256,17 @@ namespace SysYust::IR {
 
     // 基本块结尾命令
 
-    struct branch : instruct_base<branch> {
+    struct branch : instruct<branch> {
         explicit branch(operant cond);
         const operant cond;
 
     };
 
-    struct jump : instruct_base<jump> {
+    struct jump : instruct<jump> {
         jump();
     };
 
-    struct ret : instruct_base<ret> {
+    struct ret : instruct<ret> {
         ret();
     };
 
@@ -237,6 +307,24 @@ namespace SysYust::IR {
         }
     }
 
+    using instruction = std::variant<
+            compute_with_2,
+            compute_with_1,
+            indexOf,
+            load,
+            store,
+            alloc,
+            call_instruct,
+            branch,
+            jump,
+            ret
+            >;
+    using gateway_inst = std::variant<
+            std::monostate,
+            branch,
+            jump,
+            ret
+            >;
 
 } // IR
 
