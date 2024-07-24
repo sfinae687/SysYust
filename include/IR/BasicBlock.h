@@ -56,6 +56,10 @@ namespace SysYust::IR {
          * @brief 获取分支的否则跳转目标
          */
         BasicBlock* elseBlock();
+        /**
+         * @brief 获取前驱节点
+         */
+        const std::vector<BasicBlock*>& prevBlocks();
 
         // 指令序列操作
 
@@ -112,6 +116,7 @@ namespace SysYust::IR {
     private:
 
         bool sealed = false;
+        std::vector<BasicBlock*> _prevBlock;
         BasicBlock *trueTarget = nullptr;
         BasicBlock *falseTarget = nullptr;
         instruction_list_t instruction_list{};

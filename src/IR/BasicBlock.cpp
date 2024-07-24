@@ -91,4 +91,8 @@ namespace SysYust::IR {
     BasicBlock::iterator BasicBlock::erase(BasicBlock::iterator first, BasicBlock::iterator last) {
         return instruction_list.erase(first, last);
     }
+
+    const std::vector<BasicBlock *> &BasicBlock::prevBlocks() {
+        return _prevBlock;
+    }
 } // IR
