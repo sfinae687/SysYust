@@ -239,7 +239,6 @@ namespace SysYust::IR {
             || ct == instruct_cate::call
             || ct == instruct_cate::index
             ) {
-                ///  @todo 符号类型问题
                 assert(_procedure_context);
                 if (_procedure_context)
                 return ContextualInst(inst<t>(_procedure_context->nextSymbol(), std::forward<Args>(args)...), this);

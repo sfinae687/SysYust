@@ -50,6 +50,8 @@ namespace SysYust::IR {
         // 整数
         neg, add, sub, mul, mod, divi, rem, i2f, i2b,
         eq, ne, lt, le, gt, ge,
+
+        // 指针操作
         indexof,
 
         // 浮点操作
@@ -239,6 +241,10 @@ namespace SysYust::IR {
 
     /**
      * @brief 带有两个操作数的指令
+     * @details
+     * # 类型传播行为
+     *
+     * 除了比较操作外按照参数类型传播，比较操作返回类型为整数。
      */
     struct compute_with_2 : instruct<compute_with_2> {
 
@@ -251,6 +257,10 @@ namespace SysYust::IR {
 
     /**
      * @brief 带有一个操作数的指令
+     * @details
+     * # 类型传播行为
+     *
+     * 除了 i2f，fneg返回浮点类型，其他返回整数类型
      */
     struct compute_with_1 : instruct<compute_with_2> {
 
@@ -262,6 +272,14 @@ namespace SysYust::IR {
     };
 
 
+    /**
+     * @brief 获取数组成员的指针
+     * @todo 重新命名为更相关的名字
+     * @details
+     * # 类型传播行为
+     *
+     * arr_like 类型的第 index 长度 深度的子类型的指针类型
+     */
     struct indexOf : instruct<indexOf> {
 
         indexOf(var_symbol assigned, var_symbol arr_like, std::vector<operant> index);
@@ -271,6 +289,13 @@ namespace SysYust::IR {
         const std::vector<operant> ind;
     };
 
+    /**
+     * @brief 读取操作
+     * @details
+     * # 类型传递操作
+     *
+     * 操作数类型的子类型，操作数应为指针类型。
+     */
     struct load : instruct<load> {
 
         load(var_symbol t, var_symbol s);
@@ -280,6 +305,13 @@ namespace SysYust::IR {
         const var_symbol &assigned{target};
     };
 
+    /**
+     * @brief 写入操作
+     * @details
+     * # 类型传播操作
+     *
+     * 不自动生成符号，也不控制传播，但是检查类型匹配。
+     */
     struct store : instruct<store> {
 
         store(var_symbol t, operant s);
@@ -289,6 +321,14 @@ namespace SysYust::IR {
         const var_symbol &assigned{target};
     };
 
+    /**
+     * @brief 获取一个特定类型的指针
+     * @details
+     * # 类型传播
+     *
+     * 给定类型的指针类型
+     * @todo 数组类型处理待决
+     */
     struct alloc : instruct<alloc> {
 
         alloc(var_symbol v, const Type *type);
@@ -297,6 +337,13 @@ namespace SysYust::IR {
         const Type *type;
     };
 
+    /**
+     * @brief 函数调用操作
+     * @details
+     * # 类型传播
+     *
+     * 无法根据符号获取类型，需要获取上下文
+     */
     struct call_instruct : instruct<call_instruct> {
 
         call_instruct(var_symbol v, func_symbol f, std::vector<operant> opr);

@@ -10,20 +10,32 @@
 
 namespace SysYust::IR {
 
-    compute_with_2::compute_with_2(instruct_type type, var_symbol v, operant op1, operant op2)
+    compute_with_2::compute_with_2(instruct_type type, var_symbol v, operant op1a, operant op2a)
         : instruct(type)
-        , assigned({v.symbol, v.revision, op1.type})
-        , opr1(std::move(op1))
-        , opr2(std::move(op2))
+        , assigned({v.symbol, v.revision, [&] {
+            if (f2i <= type && type <= fge) {
+                return Type::get(Type::i);
+            } else {
+                return op1a.type;
+            }
+        }()})
+        , opr1(std::move(op1a))
+        , opr2(std::move(op2a))
     {
 
     }
 
     compute_with_1::compute_with_1(instruct_type t, var_symbol v, operant op1)
         : instruct(t)
-        , assigned({v.symbol, v.revision, op1.type})
+        , assigned({v.symbol, v.revision, [&] {
+            if (t == i2f || t == fneg) {
+                return Type::get(Type::f);
+            } else {
+                return Type::get(Type::i);
+            }
+        }()})
         , opr(std::move(op1))
-        {
+    {
 
     }
 
