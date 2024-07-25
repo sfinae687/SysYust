@@ -25,6 +25,8 @@ namespace SysYust::IR {
     struct jump;
     struct ret;
 
+    using arg_list = std::vector<operant>;
+
     /**
      * @brief 指令的详细类型标识符
      * @details
@@ -301,21 +303,21 @@ namespace SysYust::IR {
 
         const var_symbol assigned; ///< 需要根据上下文确定符号 v 的类型
         const func_symbol func;
-        const std::vector<operant> args;
+        const arg_list args;
     };
 
     // 基本块结尾命令
 
     struct branch : instruct<branch> {
-        explicit branch(operant cond, std::vector<operant> true_a, std::vector<operant> false_a);
+        explicit branch(operant cond, arg_list true_a, arg_list false_a);
         const operant cond;
-        std::vector<operant> ture_args;
-        std::vector<operant> false_args;
+        arg_list ture_args;
+        arg_list false_args;
     };
 
     struct jump : instruct<jump> {
-        jump(std::vector<operant> aArg);
-        std::vector<operant> args;
+        jump(arg_list aArg);
+        arg_list args;
     };
 
     struct ret : instruct<ret> {

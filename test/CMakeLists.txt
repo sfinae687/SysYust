@@ -64,3 +64,4 @@ endforeach ()
 # 语法树构建测试
 add_subdirectory(AST-BuilderTest)
 add_subdirectory(InterpreterTest)
+add_subdirectory(IR)

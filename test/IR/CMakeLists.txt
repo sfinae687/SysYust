@@ -1,0 +1,7 @@
+add_executable(IR_TypeTest TypeTest.cpp)
+target_link_libraries(IR_TypeTest IR GTest::gtest_main)
+gtest_discover_tests(IR_TypeTest)
+
+add_executable(IR_InstructionTest InstructionTest.cpp)
+target_link_libraries(IR_InstructionTest IR GTest::gtest_main)
+gtest_discover_tests(IR_InstructionTest)
