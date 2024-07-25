@@ -62,7 +62,7 @@ namespace SysYust::IR {
 
     ret::ret(std::optional<operant> aArg)
         : instruct(instruct_type::rt)
-        , args(aArg)
+        , args(std::move(aArg))
     {
 
     }

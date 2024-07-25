@@ -93,7 +93,7 @@ namespace SysYust::IR {
          */
         BasicBlock* newBasicBlock();
         /**
-         * @brief 进入一个新的基本块
+         * @brief 创建一个新的基本块，并将它设置为当前基本块
          */
         void entry_block();
         /**
@@ -116,24 +116,33 @@ namespace SysYust::IR {
         void push_block();
         /**
          * @brief 将一个特定的基本块设置为当前基本块并入栈
+         * @details 如果 blk 与当前基本块相同，那么仅会将当前基本块入栈
          */
-        void push_block(BasicBlock *blk);
+        void save_and_entry(BasicBlock *blk);
+        /**
+         * @brief 将当前基本块保存并进入它的后继节点
+         */
+        void save_and_next();
+        /**
+         * @brief 将当前基本块保存并进入它的否定后继节点
+         */
+        void save_and_else();
         /**
          * @brief 回到上一个入栈的基本块
          */
-        void pop_back();
+        void pop_block();
         /**
          * @brief 获取当前基本块
          */
-        BasicBlock* current_block() const;
+        [[nodiscard]] BasicBlock* current_block() const;
         /**
          * @brief 设置当前基本块的后继节点
          */
-        void setTarget(BasicBlock *blk);
+        void setNext(BasicBlock *blk);
         /**
          * @brief 设置当前基本块的否定后继节点
          */
-        void setElseTarget(BasicBlock *blk);
+        void setElse(BasicBlock *blk);
 
         // instruction //
 
@@ -167,11 +176,13 @@ namespace SysYust::IR {
 
             }
 
+            // 带有上下文的操作
+
             /**
              * @brief 将当前指令推出关联的基本块
              * @details 当当前基本块为空时无行为。
              */
-            void push_in_block() {
+            void push() {
                 if (_currentBlock) {
                     _currentBlock->push(inst);
                 } else {
@@ -195,6 +206,20 @@ namespace SysYust::IR {
             }
 
             inst_t inst;
+
+            // 上下文获取
+
+            Code* code() {
+                return _global;
+            }
+            Procedure* procedure() {
+                return _procedure;
+            }
+            BasicBlock* block() {
+                return _currentBlock;
+            }
+
+
         private:
             Code *_global;
             CodeContext *_global_context;
@@ -214,9 +239,10 @@ namespace SysYust::IR {
             || ct == instruct_cate::call
             || ct == instruct_cate::index
             ) {
+                ///  @tod 符号类型问题
                 assert(_procedure_context);
-                return
-                ContextualInst(inst<t>(_procedure_context->nextSymbol(), std::forward<Args>(args)...), this);
+                if (_procedure_context)
+                return ContextualInst(inst<t>(_procedure_context->nextSymbol(), std::forward<Args>(args)...), this);
             } else {
                 return
                 ContextualInst(inst<t>(std::forward<Args>(args)...), this);
@@ -228,12 +254,13 @@ namespace SysYust::IR {
     private:
 
         void reset();
+        BasicBlock*& top_block();
 
         Code *ir_code = nullptr;
         CodeContext *_code_context = nullptr;
         Procedure *_current_procedure = nullptr;
         ProcedureContext *_procedure_context = nullptr;
-        std::stack<BasicBlock*> _current_block{};
+        std::stack<BasicBlock*> _block_stack{};
     }; // CodeBuildMixin
 
 } // IR

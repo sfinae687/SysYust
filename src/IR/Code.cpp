@@ -10,6 +10,10 @@ namespace SysYust::IR {
         return _all_procedure.back();
     }
 
+    std::list<Procedure> & Code::procedures() {
+        return _all_procedure;
+    }
+
     const std::list<Procedure> &Code::procedures() const {
         return _all_procedure;
     }

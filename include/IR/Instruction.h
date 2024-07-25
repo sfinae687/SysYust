@@ -7,6 +7,7 @@
 
 #include <variant>
 #include <optional>
+#include <cassert>
 
 #include "SymbolUtil.h"
 
@@ -51,6 +52,39 @@ namespace SysYust::IR {
     };
 
     /**
+     * @brief 返回类型识别支持
+     */
+    constexpr Type::TypeId getTypeId(instruct_type i) {
+        switch (i) {
+            case INT:
+            case br:
+            case jp:
+                return Type::none;
+            case call:
+            case rt:
+            case ld:
+            case st:
+                return Type::dyn;
+            default:
+                break;
+        }
+        if (i < indexof) {
+            if (i == i2f) {
+                return Type::f;
+            } else {
+                return Type::i;
+            }
+        } else if (i == indexof) {
+            return Type::ptr;
+        } else if (i <= frem) {
+            return Type::f;
+        } else if (i <= fge) {
+            return Type::i;
+        }
+        __builtin_unreachable();
+    }
+
+    /**
      * @brief 指令的归类描述，同一归类的指令由同一个类实现
      */
     enum class instruct_cate {
@@ -67,6 +101,9 @@ namespace SysYust::IR {
         index,
     };
 
+    /**
+     * @brief 指令类型到归类序号的转换
+     */
     template<typename Inst>
     inline constexpr instruct_cate inst_cate = instruct_cate::out_of_instruct;
     template<>
@@ -286,7 +323,7 @@ namespace SysYust::IR {
     template<instruct_type t, typename... Args>
     auto inst(Args&&... args) {
         if constexpr (constexpr auto ct = cate(t); ct == instruct_cate::out_of_instruct) {
-            assert(("The instruct can't be created", false));
+            assert("The instruct can't be created"&&false);
         } else if constexpr (ct == instruct_cate::call) {
             return call_instruct(std::forward<Args>(args)...);
         } else if constexpr (ct == instruct_cate::with_1) {

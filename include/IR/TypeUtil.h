@@ -24,10 +24,12 @@ namespace SysYust::IR {
         static constexpr std::size_t float_size = 4;
         static constexpr std::size_t pointer_size = 8;
         enum TypeId {
+            none = -1,
             i,
             f,
             arr,
             ptr,
+            dyn, ///< 特殊标记，用于表示无法从指令类型推断参数
         };
 
 

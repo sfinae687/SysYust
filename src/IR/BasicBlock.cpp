@@ -45,7 +45,7 @@ namespace SysYust::IR {
         }
     }
 
-    void BasicBlock::setTarget(BasicBlock *t) {
+    void BasicBlock::setNext(BasicBlock *t) {
         assert(t);
         // 删除下一个节点的前驱
         if (trueTarget == nullptr) {
@@ -59,7 +59,7 @@ namespace SysYust::IR {
         trueTarget = t;
     }
 
-    void BasicBlock::setElseTarget(BasicBlock *t) {
+    void BasicBlock::setElse(BasicBlock *t) {
         assert(t);
         // 删除下一个节点的前驱
         if (trueTarget == nullptr) {

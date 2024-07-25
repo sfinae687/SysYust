@@ -47,11 +47,11 @@ namespace SysYust::IR {
         /**
          * @brief 设置出口的跳转目标
          */
-        void setTarget(BasicBlock *t);
+        void setNext(BasicBlock *t);
         /**
          * @brief 设置分支的否则跳转目标
          */
-        void setElseTarget(BasicBlock *t);
+        void setElse(BasicBlock *t);
         /**
          * @brief 获取跳转目标
          */
