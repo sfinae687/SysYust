@@ -8,6 +8,8 @@ set(IR_source
         SymbolUtil.cpp
         ProcedureContext.cpp
         CodeContext.cpp
+        InstructionUtil.cpp
+        CodeUtil.cpp
 )
 add_library(IR ${IR_source})
 target_link_libraries(IR utility)

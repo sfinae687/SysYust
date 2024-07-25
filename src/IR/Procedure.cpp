@@ -41,4 +41,8 @@ namespace SysYust::IR {
         return &_context;
     }
 
+    func_symbol Procedure::name() const {
+        return _name;
+    }
+
 } // IR

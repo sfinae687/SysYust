@@ -54,7 +54,7 @@ namespace SysYust::IR {
      * @brief 指令的归类描述，同一归类的指令由同一个类实现
      */
     enum class instruct_cate {
-        out_of_instruct,
+        out_of_instruct = -1,
         with_2,
         with_1,
         call,
@@ -224,7 +224,7 @@ namespace SysYust::IR {
 
     struct load : instruct<load> {
 
-        load(var_symbol in, var_symbol out);
+        load(var_symbol t, var_symbol s);
 
         const var_symbol source;
         const var_symbol target;
@@ -257,21 +257,24 @@ namespace SysYust::IR {
     // 基本块结尾命令
 
     struct branch : instruct<branch> {
-        explicit branch(operant cond);
+        explicit branch(operant cond, std::initializer_list<operant> true_a, std::initializer_list<operant> false_a);
         const operant cond;
-
+        std::vector<operant> ture_args;
+        std::vector<operant> false_args;
     };
 
     struct jump : instruct<jump> {
-        jump();
+        jump(std::initializer_list<operant> aArg);
+        std::vector<operant> args;
     };
 
     struct ret : instruct<ret> {
-        ret();
+        explicit ret(std::optional<operant> aArg = std::nullopt);
+        std::optional<operant> args;
     };
 
     /**
-     * @brief 用于创建一条指令的模板函数
+     * @brief 用于创建一条指令的模板函数,不建议直接使用
      * @details
      *
      *      # usage
@@ -283,7 +286,7 @@ namespace SysYust::IR {
     template<instruct_type t, typename... Args>
     auto inst(Args&&... args) {
         if constexpr (constexpr auto ct = cate(t); ct == instruct_cate::out_of_instruct) {
-            assert("The instruct can't be created");
+            assert(("The instruct can't be created", false));
         } else if constexpr (ct == instruct_cate::call) {
             return call_instruct(std::forward<Args>(args)...);
         } else if constexpr (ct == instruct_cate::with_1) {
@@ -291,7 +294,7 @@ namespace SysYust::IR {
         } else if constexpr (ct == instruct_cate::with_2) {
             return compute_with_2(std::forward<Args>(args)...);
         } else if constexpr (ct == instruct_cate::jump) {
-            return jump(std::forward<Args>(args)...);
+            return jump(std::initializer_list<operant>());
         } else if constexpr (ct == instruct_cate::branch) {
             return branch(std::forward<Args>(args)...);
         } else if constexpr (ct == instruct_cate::ret) {
@@ -304,21 +307,28 @@ namespace SysYust::IR {
             return alloc(std::forward<Args>(args)...);
         } else if constexpr (ct == instruct_cate::index /*always true*/ ) {
             return indexOf(std::forward<Args>(args)...);
+        } else {
+            __builtin_unreachable();
         }
     }
 
     using instruction = std::variant<
             compute_with_2,
             compute_with_1,
-            indexOf,
-            load,
-            store,
-            alloc,
             call_instruct,
             branch,
             jump,
-            ret
+            ret,
+            load,
+            store,
+            alloc,
+            indexOf
             >;
+    enum class gateway_type {
+        branch = 1,
+        jump,
+        ret
+    };
     using gateway_inst = std::variant<
             std::monostate,
             branch,

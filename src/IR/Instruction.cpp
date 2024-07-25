@@ -44,21 +44,26 @@ namespace SysYust::IR {
 
     }
 
-    branch::branch(operant cond)
+    branch::branch(operant cond, std::initializer_list<operant> true_a, std::initializer_list<operant> false_a)
         : instruct(instruct_type::br)
-        , cond(std::move(cond)) {
+        , cond(std::move(cond))
+        , ture_args(true_a)
+        , false_args(false_a)
+    {
 
     }
 
-    jump::jump()
+    jump::jump(std::initializer_list<operant> aArg)
         : instruct(instruct_type::jp)
-        {
+        , args(std::initializer_list<operant>())
+    {
 
     }
 
-    ret::ret()
+    ret::ret(std::optional<operant> aArg)
         : instruct(instruct_type::rt)
-        {
+        , args(aArg)
+    {
 
     }
 

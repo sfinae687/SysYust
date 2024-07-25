@@ -5,6 +5,8 @@
 #ifndef SYSYUST_BASICBLOCK_H
 #define SYSYUST_BASICBLOCK_H
 
+#include <unordered_set>
+
 #include "IR/Instruction.h"
 
 namespace SysYust::IR {
@@ -14,7 +16,9 @@ namespace SysYust::IR {
      * @details 提供了存储一个基本块所有指令序列的机制，并提供了快速访问基本快出口的方法。
      */
     class BasicBlock {
+        using instruction = IR::instruction;
     public:
+        using block_arg_list_type = std::unordered_set<var_symbol>;
         using instruction_list_t = std::list<instruction>;
         using iterator = instruction_list_t::iterator;
         using const_iteraor = instruction_list_t::const_iterator;
@@ -60,6 +64,21 @@ namespace SysYust::IR {
          * @brief 获取前驱节点
          */
         const std::vector<BasicBlock*>& prevBlocks();
+
+        // 基本块参数操作
+
+        /**
+         * @brief 重设基本块变量
+         */
+        void setArg(const std::vector<var_symbol>& names);
+        /**
+         * @brief 获取基本块变量的名字集合
+         */
+        [[nodiscard]] const block_arg_list_type & getArg() const;
+        /**
+         * @brief 检测符号名称是否是基本块变量
+         */
+        [[nodiscard]] bool is_arg(const var_symbol& name);
 
         // 指令序列操作
 
@@ -119,6 +138,7 @@ namespace SysYust::IR {
         std::vector<BasicBlock*> _prevBlock;
         BasicBlock *trueTarget = nullptr;
         BasicBlock *falseTarget = nullptr;
+        block_arg_list_type _block_parm{};
         instruction_list_t instruction_list{};
 
         /// @todo 用例维护

@@ -35,6 +35,8 @@ find_package(Doxygen)
 
 if (NOT DEFINED DOXYGEN_FOUND)
     message("Doxygen is not found")
+else()
+    message(Doxygen:${DOXYGEN_EXECUTABLE})
 endif ()
 
 # 启用第三方库

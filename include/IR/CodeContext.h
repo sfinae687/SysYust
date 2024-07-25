@@ -32,6 +32,11 @@ namespace SysYust::IR {
          * @brief 设定指定函数符号的函数描述
          */
         void set_func(const func_symbol& sym, func_info func);
+
+        /**
+         * @brief 添加一个全局变量符号
+         */
+        void addGlobal(const var_symbol &sym);
         /**
          * @brief 检测指定变量符号是否是全局变量
          */

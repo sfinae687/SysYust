@@ -36,4 +36,8 @@ namespace SysYust::IR {
     bool CodeContext::is_global(const var_symbol& sym) const {
         return global_vars.contains(sym);
     }
+
+    void CodeContext::addGlobal(const var_symbol &sym) {
+        global_vars.insert(sym);
+    }
 } // IR

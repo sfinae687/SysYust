@@ -31,7 +31,7 @@ namespace SysYust::IR {
         ControlFlow& getGraph();
 
         // 附加信息
-
+        func_symbol name() const;
         /**
          * @brief 获取当前函数对象关联的描述信息,常量使用
          */

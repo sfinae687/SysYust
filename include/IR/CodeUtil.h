@@ -1,0 +1,241 @@
+//
+// Created by LL06p on 24-7-24.
+//
+
+#ifndef SYSYUST_CODEUTIL_H
+#define SYSYUST_CODEUTIL_H
+
+#include <cassert>
+#include <stack>
+
+#include "IR/Code.h"
+#include "IR/CodeContext.h"
+#include "IR/ProcedureContext.h"
+#include "IR/SymbolUtil.h"
+#include "IR/TypeUtil.h"
+#include "Logger.h"
+
+namespace SysYust::IR {
+
+    /**
+     * @brief 用于构建 Code 的混入类
+     */
+    class CodeBuildMixin {
+        using Instruction = IR::instruction;
+    protected:
+
+        /**
+         * @brief 初始化Code和上下文
+         * @details 新建一个code对象和上下文，如果先前已经存在一个code对象，该对象将会被释放
+         */
+        void setup_code();
+        /**
+         * @brief 获取构造的 Code 对象
+         */
+        Code* getCode();
+        /**
+         * @brief 设置一个全局变量名字
+         */
+        void setGlobalVar(const var_symbol& sym);
+        /**
+         * @brief 检测该符号是否是全局变量
+         */
+         [[nodiscard]] bool is_global(const var_symbol &sym);
+
+        // function //
+
+        /**
+         * @brief 进入一个函数
+         */
+        void entry_function(SysYust::IR::func_symbol name, SysYust::IR::func_info info);
+        /**
+         * @brief 获取当前函数
+         */
+        Procedure* current_procedure();
+        /**
+         * @brief 根据名字查找一个函数
+         */
+        Procedure* procedure(func_symbol name);
+        /**
+         * @brief 离开一个函数
+         */
+        void exit_function();
+
+        /**
+         * @brief RAII 的函数进出控制。请在具有明确块作用域的情况下使用
+         */
+        friend class function_guard;
+        class function_guard {
+        public:
+            function_guard(CodeBuildMixin *context, func_symbol name, func_info info)
+                : _context(*context)
+                , _name(name)
+            {
+                _context.entry_function(name, info);
+            }
+            ~function_guard() {
+                if (_context.current_procedure()->name() == _name) {
+                    _context.exit_function();
+                } else {
+                    LOG_WARN("Function guard broken");
+                }
+            }
+        private:
+            CodeBuildMixin &_context;
+            func_symbol _name;
+        };
+
+
+        // basic block && control flow graph //
+
+        /**
+         * @brief 在当前函数建立新的基本块。
+         */
+        BasicBlock* newBasicBlock();
+        /**
+         * @brief 进入一个新的基本块
+         */
+        void entry_block();
+        /**
+         * @brief 将特定的基本块设置为当前基本块
+         */
+        void entry_block(BasicBlock *blk);
+        /**
+         * @brief 进入后继节点
+         * @details 如果后继节点不存在，则新建后继节点。
+         */
+        void entry_next();
+        /**
+         * @brief 进入否定后继节点
+         * @details 进入否定后继节点不存在，则新建否定后继节点。
+         */
+        void entry_else();
+        /**
+         * @brief 将当前基本块入栈
+         */
+        void push_block();
+        /**
+         * @brief 将一个特定的基本块设置为当前基本块并入栈
+         */
+        void push_block(BasicBlock *blk);
+        /**
+         * @brief 回到上一个入栈的基本块
+         */
+        void pop_back();
+        /**
+         * @brief 获取当前基本块
+         */
+        BasicBlock* current_block() const;
+        /**
+         * @brief 设置当前基本块的后继节点
+         */
+        void setTarget(BasicBlock *blk);
+        /**
+         * @brief 设置当前基本块的否定后继节点
+         */
+        void setElseTarget(BasicBlock *blk);
+
+        // instruction //
+
+        /**
+         * @brief 带有上下文信息的指令包装器
+         */
+        friend class ContextualInst;
+        template<typename inst_t>
+        class ContextualInst {
+        public:
+
+            /**
+             * @brief 从当前上下文根据当前上下文创建一条命令
+             */
+            ContextualInst(inst_t aInst, CodeBuildMixin *context)
+                : ContextualInst(aInst, context->ir_code, context->current_procedure(), context->current_block())
+            {
+
+            }
+            /**
+             * @brief 根据给定句柄初始化上下文
+             */
+            ContextualInst(inst_t aInst, Code *global, Procedure *procedure, BasicBlock *basicBlock)
+                : inst(aInst)
+                , _global(global)
+                , _global_context(&global->context)
+                , _procedure(procedure)
+                , _procedure_context(procedure->context())
+                , _currentBlock(basicBlock)
+            {
+
+            }
+
+            /**
+             * @brief 将当前指令推出关联的基本块
+             * @details 当当前基本块为空时无行为。
+             */
+            void push_in_block() {
+                if (_currentBlock) {
+                    _currentBlock->push(inst);
+                } else {
+                    LOG_WARN("Try push a inst into nullptr basic block");
+                }
+            }
+
+            // 解引用运算
+
+            inst_t& operator* () {
+                return inst;
+            }
+            const inst_t& operator* () const {
+                return inst;
+            }
+            inst_t* operator-> () {
+                return &inst;
+            }
+            const inst_t* operator-> () const {
+                return &inst;
+            }
+
+            inst_t inst;
+        private:
+            Code *_global;
+            CodeContext *_global_context;
+            Procedure *_procedure;
+            ProcedureContext *_procedure_context;
+            BasicBlock* _currentBlock;
+        };
+        /**
+         * @brief 构建一个新的指令，可以自动生成被赋值的
+         * @return 一个被 ContextualInst 包装的指令对象
+         */
+        template<instruct_type t, typename... Args>
+        auto auto_inst(Args&&... args) {
+            constexpr auto ct = cate(t);
+            if constexpr (ct == instruct_cate::with_1
+            || ct == instruct_cate::with_2
+            || ct == instruct_cate::call
+            || ct == instruct_cate::index
+            ) {
+                assert(_procedure_context);
+                return
+                ContextualInst(inst<t>(_procedure_context->nextSymbol(), std::forward<Args>(args)...), this);
+            } else {
+                return
+                ContextualInst(inst<t>(std::forward<Args>(args)...), this);
+            }
+        }
+
+
+
+    private:
+
+        void reset();
+
+        Code *ir_code = nullptr;
+        CodeContext *_code_context = nullptr;
+        Procedure *_current_procedure = nullptr;
+        ProcedureContext *_procedure_context = nullptr;
+        std::stack<BasicBlock*> _current_block{};
+    }; // CodeBuildMixin
+
+} // IR
+
+#endif //SYSYUST_CODEUTIL_H
