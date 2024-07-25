@@ -12,39 +12,31 @@ namespace SysYust::IR {
 
     compute_with_2::compute_with_2(instruct_type type, var_symbol v, operant op1, operant op2)
         : instruct(type)
-        , assigned(std::move(v))
+        , assigned({v.symbol, v.revision, op1.type})
         , opr1(std::move(op1))
         , opr2(std::move(op2))
-        {
-
-    }
-
-    compute_with_1::compute_with_1(instruct_type t, var_symbol v, operant op1, operant op2)
-        : instruct(t)
-        , assigned(std::move(v))
-        , opr(std::move(op1))
-        {
+    {
 
     }
 
     compute_with_1::compute_with_1(instruct_type t, var_symbol v, operant op1)
         : instruct(t)
-        , assigned(std::move(v))
+        , assigned({v.symbol, v.revision, op1.type})
         , opr(std::move(op1))
         {
 
     }
 
-
-    call_instruct::call_instruct(func_symbol f, std::initializer_list<operant> oprs)
+    call_instruct::call_instruct(var_symbol v, func_symbol f, std::vector<operant> opr)
         : instruct(instruct_type::call)
-        , func(f)
-        , args(oprs)
-        {
+        , assigned(v)
+        , func(std::move(f))
+        , args(std::move(opr))
+    {
 
     }
 
-    branch::branch(operant cond, std::initializer_list<operant> true_a, std::initializer_list<operant> false_a)
+    branch::branch(operant cond, std::vector<operant> true_a, std::vector<operant> false_a)
         : instruct(instruct_type::br)
         , cond(std::move(cond))
         , ture_args(true_a)
@@ -53,7 +45,7 @@ namespace SysYust::IR {
 
     }
 
-    jump::jump(std::initializer_list<operant> aArg)
+    jump::jump(std::vector<operant> aArg)
         : instruct(instruct_type::jp)
         , args(std::initializer_list<operant>())
     {
@@ -67,20 +59,27 @@ namespace SysYust::IR {
 
     }
 
-    indexOf::indexOf(var_symbol assigned, const Type *type, operant index)
+    indexOf::indexOf(var_symbol assigned, var_symbol arr_like, std::vector<operant> index)
         : instruct<indexOf>(indexof)
-        , assigned(std::move(assigned))
-        , type(type)
+        , assigned({assigned.symbol, assigned.revision, [&]{
+            // 计算结果类型
+            auto curT = arr_like.type;
+            for (int i=0; i<index.size(); ++i) {
+                curT = curT->subtype();
+            }
+            return Type::get(Type::ptr, curT);
+        }() })
+        , arr(arr_like)
         , ind(std::move(index))
     {
         if constexpr (strict_check_flag) {
-            assert(type->isArr());
+            assert(arr.type->isArr() || arr.type->isPtr());
         }
     }
 
-    alloc::alloc(var_symbol assigned, const Type *type)
+    alloc::alloc(var_symbol v, const Type *type)
         : instruct<struct alloc>(alc)
-        , assigned(std::move(assigned))
+        , assigned({v.symbol, v.revision, Type::get(Type::ptr, type)})
         , type(type)
     {
         if constexpr (strict_check_flag) {
@@ -91,22 +90,22 @@ namespace SysYust::IR {
     load::load(var_symbol t, var_symbol s)
         : instruct<load>(ld)
         , source(std::move(s))
-        , target(std::move(t))
+        , target({t.symbol, t.revision, s.type->subtype()})
     {
         if constexpr (strict_check_flag) {
             assert(source.type->isPtr());
-            assert(target.type->isScalar());
+            assert(target.type->isBasic());
         }
     }
 
-    store::store(var_symbol t, var_symbol s)
+    store::store(var_symbol t, operant s)
         : instruct<store>(st)
         , source(std::move(s))
         , target(std::move(t))
     {
         if constexpr (strict_check_flag) {
             assert(target.type->isPtr());
-            assert(source.type->isScalar());
+            assert(source.type->isBasic());
         }
     }
 } // IR

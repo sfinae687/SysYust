@@ -44,7 +44,7 @@ SysYust::IR::im_symbol::label_type SysYust::IR::im_symbol::full() const {
 
 SysYust::IR::operant::operant(SysYust::IR::var_symbol val)
     : symbolType(symbol_type::v)
-    , type(get<var_symbol>(symbol).type)
+    , type(val.type)
     , symbol(val)
 {
 
@@ -52,11 +52,11 @@ SysYust::IR::operant::operant(SysYust::IR::var_symbol val)
 
 SysYust::IR::operant::operant(SysYust::IR::im_symbol im_val)
     : symbolType(symbol_type::im)
-    , type(get<var_symbol>(symbol).type)
+    , type(im_val.type)
     , symbol(im_val)
 {
     if constexpr (strict_check_flag) {
-        assert(type->isScalar());
+        assert(type->isBasic());
     }
 }
 

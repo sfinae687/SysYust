@@ -27,13 +27,26 @@ namespace SysYust::IR {
 
     /**
      * @brief 指令的详细类型标识符
+     * @details
+     *  # 类型传播规则
+     *
+     *  - INT 无效指令
+     *  - 整数分区的所有操作结果为整数
+     *  - 浮点分区中转换操作和比较操作为整数，其他为浮点数
+     *  - 调用操作取决于上下文
+     *  - indexof 操作返回数组类型子类型的指针
+     *  - alc 操作返回该类型的指针 @todo 待决
+     *  - ld 生成的符号类型为参数指针的根类型
+     *  - st 不自动生成符号，也不自动传播类型
+     *
+     *  @todo 重命名indexof
      */
     enum  instruct_type {
         // 占用0位
         INT = 0,
 
         // 整数
-        neg, add, sub, mul, mod, div, rem, i2f, i2b,
+        neg, add, sub, mul, mod, divi, rem, i2f, i2b,
         eq, ne, lt, le, gt, ge,
         indexof,
 
@@ -239,45 +252,44 @@ namespace SysYust::IR {
      */
     struct compute_with_1 : instruct<compute_with_2> {
 
-        compute_with_1(instruct_type t, var_symbol v, operant op1, operant op2);
         compute_with_1(instruct_type t, var_symbol v, operant op1);
 
         const var_symbol assigned;
         const operant opr;
         const operant &opr1{opr}; ///< 兼容接口，辅助泛型编程, 虽然不太可能用得到
-        static const operant opr2_base;
-        const operant &opr2{opr2_base};
     };
 
 
     struct indexOf : instruct<indexOf> {
 
-        indexOf(var_symbol assigned, const Type *type, operant index);
+        indexOf(var_symbol assigned, var_symbol arr_like, std::vector<operant> index);
 
         const var_symbol assigned;
-        const Type *type;
-        const operant ind;
+        const var_symbol arr;
+        const std::vector<operant> ind;
     };
 
     struct load : instruct<load> {
 
         load(var_symbol t, var_symbol s);
 
-        const var_symbol source;
-        const var_symbol target;
+        const var_symbol source; ///< 读取的位置，必须为指针类型
+        const var_symbol target; ///< 读取到的变量名称
+        const var_symbol &assigned{target};
     };
 
     struct store : instruct<store> {
 
-        store(var_symbol t, var_symbol s);
+        store(var_symbol t, operant s);
 
-        const var_symbol source;
-        const var_symbol target;
+        const operant source;
+        const var_symbol target; ///< 写入的位置，必须为指针类型
+        const var_symbol &assigned{target};
     };
 
     struct alloc : instruct<alloc> {
 
-        alloc(var_symbol assigned, const Type *type);
+        alloc(var_symbol v, const Type *type);
 
         const var_symbol assigned;
         const Type *type;
@@ -285,8 +297,9 @@ namespace SysYust::IR {
 
     struct call_instruct : instruct<call_instruct> {
 
-        call_instruct(func_symbol f, std::initializer_list<operant> oprs);
+        call_instruct(var_symbol v, func_symbol f, std::vector<operant> opr);
 
+        const var_symbol assigned; ///< 需要根据上下文确定符号 v 的类型
         const func_symbol func;
         const std::vector<operant> args;
     };
@@ -294,14 +307,14 @@ namespace SysYust::IR {
     // 基本块结尾命令
 
     struct branch : instruct<branch> {
-        explicit branch(operant cond, std::initializer_list<operant> true_a, std::initializer_list<operant> false_a);
+        explicit branch(operant cond, std::vector<operant> true_a, std::vector<operant> false_a);
         const operant cond;
         std::vector<operant> ture_args;
         std::vector<operant> false_args;
     };
 
     struct jump : instruct<jump> {
-        jump(std::initializer_list<operant> aArg);
+        jump(std::vector<operant> aArg);
         std::vector<operant> args;
     };
 
@@ -327,9 +340,9 @@ namespace SysYust::IR {
         } else if constexpr (ct == instruct_cate::call) {
             return call_instruct(std::forward<Args>(args)...);
         } else if constexpr (ct == instruct_cate::with_1) {
-            return compute_with_1(std::forward<Args>(args)...);
+            return compute_with_1(t, std::forward<Args>(args)...);
         } else if constexpr (ct == instruct_cate::with_2) {
-            return compute_with_2(std::forward<Args>(args)...);
+            return compute_with_2(t, std::forward<Args>(args)...);
         } else if constexpr (ct == instruct_cate::jump) {
             return jump(std::initializer_list<operant>());
         } else if constexpr (ct == instruct_cate::branch) {

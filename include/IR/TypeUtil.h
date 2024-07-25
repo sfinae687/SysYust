@@ -43,21 +43,29 @@ namespace SysYust::IR {
         friend auto operator<=> (const Type &, const Type &) = default;
 
         [[nodiscard]] bool isInt() const {
-            return id == i;
+            return _id == i;
         }
         [[nodiscard]] bool isFlt() const {
-            return id == f;
+            return _id == f;
         }
         [[nodiscard]] bool isArr() const {
-            return id == arr;
+            return _id == arr;
         }
         [[nodiscard]] bool isPtr() const {
-            return id == ptr;
+            return _id == ptr;
         }
-        [[nodiscard]] bool isScalar() const {
+
+        /**
+         * @brief 不具有子类型的类型
+         */
+        [[nodiscard]] bool isBasic() const {
             return isInt() || isFlt();
         }
-        [[nodiscard]] bool isPlain() const {
+
+        /**
+         * @brief 具有固定长度的类型
+         */
+        [[nodiscard]] bool isScalar() const {
             return isInt() || isFlt() || isPtr();
         }
 
@@ -66,29 +74,31 @@ namespace SysYust::IR {
          */
         [[nodiscard]] std::size_t size() const;
 
-        [[nodiscard]] const Type* getSubType() const {
-            return subType;
+        [[nodiscard]] TypeId id() const;
+        [[nodiscard]] const Type* subtype() const {
+            return _subType;
         }
+        [[nodiscard]] const Type* root_type() const;
 
-        [[nodiscard]] std::size_t getData() const {
-            return data;
+        [[nodiscard]] std::size_t data() const {
+            return _data;
         }
 
     private:
 
         Type(TypeId id, unsigned data, const Type *ptr)
-            : id(id)
-            , data(data)
-            , subType(ptr)
+            : _id(id)
+            , _data(data)
+            , _subType(ptr)
         {
 
         }
 
         static std::set<Type> _singletons;
 
-        TypeId id : 16;
-        std::size_t data : 48 = 0;
-        const Type *subType = nullptr;
+        TypeId _id : 16;
+        std::size_t _data : 48 = 0;
+        const Type *_subType = nullptr;
     };
 
 
@@ -98,8 +108,8 @@ template<>
 struct std::hash<SysYust::IR::Type> {
     using value_type = SysYust::IR::Type;
     std::size_t operator() (const value_type &v) {
-        auto val = (v.id << 24) | v.data;
-        auto ptr = v.subType;
+        auto val = (v._id << 24) | v._data;
+        auto ptr = v._subType;
         return std::hash<decltype(val)>{}(val) ^ std::hash<decltype(ptr)>{}(ptr);
     }
 };

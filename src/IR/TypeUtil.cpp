@@ -7,6 +7,8 @@
 
 namespace SysYust::IR {
 
+    std::set<Type> Type::_singletons{};
+
     /**
      * Type::get(arr,
      */
@@ -26,9 +28,21 @@ namespace SysYust::IR {
         } else if (isPtr()) {
             return pointer_size;
         } else if (isArr()) {
-            return data * subType->size();
+            return _data * _subType->size();
         } else {
             __builtin_unreachable();
+        }
+    }
+
+    Type::TypeId Type::id() const {
+        return _id;
+    }
+
+    const Type *Type::root_type() const {
+        if (isBasic()) {
+            return this;
+        } else {
+            return subtype();
         }
     }
 } // IR

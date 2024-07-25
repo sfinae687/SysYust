@@ -180,7 +180,7 @@ namespace SysYust::IR {
 
             /**
              * @brief 将当前指令推出关联的基本块
-             * @details 当当前基本块为空时无行为。
+             * @details 当当前基本块上下文为空引用时无行为。
              */
             void push() {
                 if (_currentBlock) {
@@ -239,7 +239,7 @@ namespace SysYust::IR {
             || ct == instruct_cate::call
             || ct == instruct_cate::index
             ) {
-                ///  @tod 符号类型问题
+                ///  @todo 符号类型问题
                 assert(_procedure_context);
                 if (_procedure_context)
                 return ContextualInst(inst<t>(_procedure_context->nextSymbol(), std::forward<Args>(args)...), this);

@@ -122,7 +122,7 @@ namespace SysYust::IR {
         [[nodiscard]] label_type full() const;
 
         const symbol_type symbolType;
-        const Type * const &type;
+        const Type * const type;
         const std::variant<var_symbol, im_symbol> symbol;
     };
 
