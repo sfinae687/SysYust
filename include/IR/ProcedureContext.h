@@ -40,6 +40,7 @@ namespace SysYust::IR {
          * @brief 默认变量符号，无参数的 nextSymbol。
          */
         std::string defaultSymbol = "t";
+        var_symbol depressed_symbol{"_", 0, Type::get(Type::none)};
         CodeContext &global;
     private:
         revision_map _nxt_revision{};

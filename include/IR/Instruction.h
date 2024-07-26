@@ -37,7 +37,7 @@ namespace SysYust::IR {
      *  - 浮点分区中转换操作和比较操作为整数，其他为浮点数
      *  - 调用操作取决于上下文
      *  - indexof 操作返回数组类型子类型的指针
-     *  - alc 操作返回该类型的指针 @todo 待决
+     *  - alc 操作返回该类型的指针
      *  - ld 生成的符号类型为参数指针的根类型
      *  - st 不自动生成符号，也不自动传播类型
      *
@@ -327,7 +327,6 @@ namespace SysYust::IR {
      * # 类型传播
      *
      * 给定类型的指针类型
-     * @todo 数组类型处理待决
      */
     struct alloc : instruct<alloc> {
 

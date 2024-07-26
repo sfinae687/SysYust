@@ -19,6 +19,7 @@ namespace SysYust::IR {
 
     /**
      * @brief 用于构建 Code 的混入类
+     * @todo 重构，将上下文管理功能提取到父类
      */
     class CodeBuildMixin {
         using Instruction = IR::instruction;
@@ -236,16 +237,34 @@ namespace SysYust::IR {
             constexpr auto ct = cate(t);
             if constexpr (ct == instruct_cate::with_1
             || ct == instruct_cate::with_2
-            || ct == instruct_cate::call
             || ct == instruct_cate::index
-            ) {
+            || ct == instruct_cate::alloc
+            ) { // 上述几种类型需要自动生成符号
                 assert(_procedure_context);
                 if (_procedure_context)
                 return ContextualInst(inst<t>(_procedure_context->nextSymbol(), std::forward<Args>(args)...), this);
-            } else {
+            } else if constexpr (ct == instruct_cate::call) { // 处理调用的清理
+                if (_procedure_context) {
+                    auto rt_type = _code_context->get_fun_type(std::get<0>(std::forward_as_tuple(args...)));
+                    if (rt_type->id() == Type::none) { // 返回类型未空的情况，返回值无意义，使用弃用的符号
+                        auto rt_inst = inst<call>(_procedure_context->depressed_symbol, std::forward<Args>(args)...);
+                        return ContextualInst(rt_inst, this);
+                    } else { // 具有返回类型，设置符号的类型
+                        auto nxtSym = _procedure_context->nextSymbol();
+                        auto rt_inst = inst<call>(var_symbol{nxtSym.symbol, nxtSym.revision, rt_type},
+                                                  std::forward<Args>(args)...);
+                        return ContextualInst(rt_inst, this);
+                    }
+                } else {
+                    LOG_ERROR("create a instruction with context that leak function");
+                    __builtin_unreachable();
+                }
+            }
+            else {
                 return
                 ContextualInst(inst<t>(std::forward<Args>(args)...), this);
             }
+            __builtin_unreachable();
         }
 
 
