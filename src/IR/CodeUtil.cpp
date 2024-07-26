@@ -7,6 +7,7 @@
 #include <range/v3/action.hpp>
 
 #include "IR/CodeUtil.h"
+#include "IR/ContextualMixin.h"
 
 namespace SysYust::IR {
 
@@ -16,65 +17,50 @@ namespace SysYust::IR {
     // IR 级
 
     void CodeBuildMixin::reset() {
-        delete ir_code;
-        _code_context = nullptr;
-        _current_procedure = nullptr;
-        _procedure_context = nullptr;
-        while (!_block_stack.empty()) {
-            _block_stack.pop();
-        }
+        delete _ir_code;
+        clear_context();
     }
 
     void CodeBuildMixin::setup_code() {
         reset();
-        ir_code = new Code;
-        _code_context = &ir_code->context;
+        set_context(new Code);
     }
 
     void CodeBuildMixin::setGlobalVar(const var_symbol& sym) {
-        _code_context->addGlobal(sym);
+        global_context()->addGlobal(sym);
     }
 
     Code *CodeBuildMixin::getCode() {
-        auto rt = ir_code;
-        ir_code = nullptr;
-        reset();
+        auto rt = ir_code();
+        clear_context();
         return rt;
     }
 
     bool CodeBuildMixin::is_global(const var_symbol &sym) {
-        return _code_context->is_global(sym);
+        return global_context()->is_global(sym);
     }
 
     // procedure 级
 
     void CodeBuildMixin::entry_function(func_symbol name, func_info info) {
-        auto func = &ir_code->setup_procedure(name, info);
-        _current_procedure = func;
-        _procedure_context = _current_procedure->context();
+        auto func = &ir_code()->setup_procedure(name, info);
+        set_procedure(func);
     }
 
     Procedure *CodeBuildMixin::current_procedure() {
-        return _current_procedure;
+        return procedure();
     }
 
-    Procedure* CodeBuildMixin::procedure(func_symbol name) {
-        auto proc = ranges::find_if(ir_code->procedures(), [name](const auto &i){
-            return i.name() == name;
-        });
-        return std::addressof(*proc);
-    }
 
     void CodeBuildMixin::exit_function() {
-        _current_procedure = nullptr;
-        _procedure_context = nullptr;
+        set_procedure(nullptr);
     }
 
     // block 级
 
     BasicBlock *CodeBuildMixin::newBasicBlock() {
-        if (_current_procedure) {
-            auto newBlock = _current_procedure->getGraph().add();
+        if (procedure()) {
+            auto newBlock = control_flow()->add();
             return newBlock;
         } else {
             LOG_WARN("Get basic when not entry any function");
@@ -84,12 +70,12 @@ namespace SysYust::IR {
 
     void CodeBuildMixin::entry_block() {
         auto blk = newBasicBlock();
-        entry_block(blk);
+        set_basic_block(blk);
     }
 
     void CodeBuildMixin::entry_block(BasicBlock *blk) {
         if (blk) {
-            top_block() = blk;
+            set_basic_block(blk);
         } else {
             LOG_WARN("Set Basic Block as nullptr");
         }
@@ -124,12 +110,11 @@ namespace SysYust::IR {
     }
 
     void CodeBuildMixin::push_block() {
-        _block_stack.push(top_block());
+        save_basic_block();
     }
 
     void CodeBuildMixin::save_and_entry(BasicBlock *blk) {
-        push_block();
-        top_block() = blk;
+        save_and_set(blk);
     }
 
     void CodeBuildMixin::save_and_next() {
@@ -143,17 +128,11 @@ namespace SysYust::IR {
     }
 
     void CodeBuildMixin::pop_block() {
-        if (!_block_stack.empty()) {
-            _block_stack.pop();
-        }
+        pop_basic_block();
     }
 
     BasicBlock *CodeBuildMixin::current_block() const {
-        if (_block_stack.empty()) {
-            return nullptr;
-        } else {
-            return _block_stack.top();
-        }
+        return current_basic_block();
     }
 
     void CodeBuildMixin::setNext(BasicBlock *blk) {

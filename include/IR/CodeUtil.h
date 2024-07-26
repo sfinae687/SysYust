@@ -14,6 +14,7 @@
 #include "IR/SymbolUtil.h"
 #include "IR/TypeUtil.h"
 #include "Logger.h"
+#include "ContextualMixin.h"
 
 namespace SysYust::IR {
 
@@ -21,7 +22,7 @@ namespace SysYust::IR {
      * @brief 用于构建 Code 的混入类
      * @todo 重构，将上下文管理功能提取到父类
      */
-    class CodeBuildMixin {
+    class CodeBuildMixin : protected ContextualMixin {
         using Instruction = IR::instruction;
     protected:
 
@@ -53,10 +54,7 @@ namespace SysYust::IR {
          * @brief 获取当前函数
          */
         Procedure* current_procedure();
-        /**
-         * @brief 根据名字查找一个函数
-         */
-        Procedure* procedure(func_symbol name);
+
         /**
          * @brief 离开一个函数
          */
@@ -159,7 +157,7 @@ namespace SysYust::IR {
              * @brief 从当前上下文根据当前上下文创建一条命令
              */
             ContextualInst(inst_t aInst, CodeBuildMixin *context)
-                : ContextualInst(aInst, context->ir_code, context->current_procedure(), context->current_block())
+                : ContextualInst(aInst, context->_ir_code, context->current_procedure(), context->current_block())
             {
 
             }
@@ -274,11 +272,6 @@ namespace SysYust::IR {
         void reset();
         BasicBlock*& top_block();
 
-        Code *ir_code = nullptr;
-        CodeContext *_code_context = nullptr;
-        Procedure *_current_procedure = nullptr;
-        ProcedureContext *_procedure_context = nullptr;
-        std::stack<BasicBlock*> _block_stack{};
     }; // CodeBuildMixin
 
 } // IR
