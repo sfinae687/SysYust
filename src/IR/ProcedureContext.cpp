@@ -2,9 +2,17 @@
 // Created by LL06p on 24-7-24.
 //
 
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+#include <range/v3/action.hpp>
+
 #include "IR/ProcedureContext.h"
 
 namespace SysYust::IR {
+
+    namespace ranges = ::ranges;
+    namespace views = ranges::views;
+
     ProcedureContext::ProcedureContext(CodeContext &context)
         : global(context)
     {
@@ -12,7 +20,7 @@ namespace SysYust::IR {
     }
 
     bool ProcedureContext::is_param(var_symbol v) const {
-        return param_var_set.contains(v);
+        return ranges::find(param_var_set, v) != param_var_set.end();
     }
 
     std::size_t ProcedureContext::lastRevision(const var_symbol& v) const {
@@ -42,5 +50,14 @@ namespace SysYust::IR {
 
     var_symbol ProcedureContext::nextSymbol() {
         return nextSymbol(defaultSymbol);
+    }
+
+    std::size_t ProcedureContext::param_index(var_symbol v) const {
+        auto founded = ranges::find(param_var_set, v);
+        if (founded != param_var_set.end()) {
+            return founded - param_var_set.begin();
+        } else {
+            return -1;
+        }
     }
 } // IR

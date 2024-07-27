@@ -18,7 +18,7 @@ namespace SysYust::IR {
     class BasicBlock {
         using instruction = IR::instruction;
     public:
-        using block_arg_list_type = std::unordered_set<var_symbol>;
+        using block_arg_list_type = std::vector<var_symbol>;
         using instruction_list_t = std::list<instruction>;
         using iterator = instruction_list_t::iterator;
         using const_iteraor = instruction_list_t::const_iterator;
@@ -68,17 +68,33 @@ namespace SysYust::IR {
         // 基本块参数操作
 
         /**
-         * @brief 重设基本块变量
+         * @brief 重设基本块变量列表
          */
-        void setArg(const std::vector<var_symbol>& names);
+        void setArgs(const std::vector<var_symbol>& names);
         /**
          * @brief 获取基本块变量的名字集合
          */
-        [[nodiscard]] const block_arg_list_type & getArg() const;
+        [[nodiscard]] const block_arg_list_type & getArgs() const;
+        /**
+         * @brief 在基本块参数列表的末尾添加一个参数
+         */
+        void add_arg(var_symbol name);
+        /**
+         * @brief 移除一个基本块参数
+         */
+        bool remove_arg(var_symbol name);
+        /**
+         * @brief 通过索引删除一个基本块参数
+         */
+        void remove_arg(std::size_t ind);
         /**
          * @brief 检测符号名称是否是基本块变量
          */
         [[nodiscard]] bool is_arg(const var_symbol& name);
+        /**
+         * @brief 获取一个基本块参数在列表中的索引
+         */
+        [[nodiscard]] std::size_t arg_index(var_symbol name) const;
 
         // 指令序列操作
 

@@ -35,16 +35,32 @@ namespace SysYust::IR {
 
         /**
          * @brief 添加一个全局变量符号
+         * @note 添加全局符号时请注意添加正确的符号类型
          */
         void addGlobal(const var_symbol &sym);
         /**
+         * @brief 删除一个全局变量符号
+         */
+        void removeGlobal(const var_symbol &sym);
+        /**
+         * @brief 获取一个全局变量的类型
+         */
+        const Type * globalType(const var_symbol &sym);
+        /**
          * @brief 检测指定变量符号是否是全局变量
          */
-        [[nodiscard]] bool is_global(const var_symbol& sym) const;
+        [[nodiscard]] bool isGlobal(const var_symbol& sym) const;
+
+        /**
+         * @brief 获取全局变量集合
+         */
+        const global_var_set& global_vars() const;
+
+        // 在 Code 对象中获取/设置全局符号的初始值
 
     private:
         func_set_t func_set{};
-        global_var_set global_vars{};
+        global_var_set _global_vars{};
     };
 
 } // IR

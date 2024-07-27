@@ -20,7 +20,6 @@ namespace SysYust::IR {
 
     /**
      * @brief 用于构建 Code 的混入类
-     * @todo 重构，将上下文管理功能提取到父类
      */
     class CodeBuildMixin : protected ContextualMixin {
         using Instruction = IR::instruction;
@@ -142,6 +141,19 @@ namespace SysYust::IR {
          * @brief 设置当前基本块的否定后继节点
          */
         void setElse(BasicBlock *blk);
+
+        /**
+         * @brief 从当前函数上下文获取一个新的符号名字
+         */
+        [[nodiscard]] var_symbol nxt_sym();
+        /**
+         * @brief 从当前函数获取指定符号的下一个修订号的符号
+         */
+        [[nodiscard]] var_symbol nxt_sym(std::string sym);
+        /**
+         * @brief 从当前函数获取指定符号的下一个修订号的符号
+         */
+        [[nodiscard]] var_symbol nxt_sym(var_symbol sym);
 
         // instruction //
 

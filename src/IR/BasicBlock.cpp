@@ -28,21 +28,19 @@ namespace SysYust::IR {
         return sealed;
     }
 
+    /**
+     * todo 重写gateway并加入带有上下文的gateway
+     */
     gateway_inst BasicBlock::gateway() const {
-        if (is_sealed()) {
-            auto &last_inst = back();
-            return std::visit([](auto i) -> gateway_inst {
-                    if constexpr (is_gateway(i.cateId)) {
-                        return {i};
-                    } else {
-                        __builtin_unreachable();
-                        return std::monostate{};
-                    }
-                }, last_inst);
-        } else {
-            LOG_ERROR("acquire a gateway for a unsealed basic block");
-            throw std::domain_error("acquire a gateway for a unsealed basic block");
-        }
+        auto &last_inst = back();
+        return std::visit([](auto i) -> gateway_inst {
+                if constexpr (is_gateway(i.cateId)) {
+                    return {i};
+                } else {
+                    __builtin_unreachable();
+                    return std::monostate{};
+                }
+            }, last_inst);
     }
 
     void BasicBlock::setNext(BasicBlock *t) {
@@ -123,16 +121,43 @@ namespace SysYust::IR {
         return instruction_list.insert(pos, value);
     }
 
-    void BasicBlock::setArg(const std::vector<var_symbol>& names) {
-        _block_parm.clear();
-        _block_parm.insert(names.begin(), names.end());
+    void BasicBlock::setArgs(const std::vector<var_symbol>& names) {
+        _block_parm = names;
     }
 
-    const BasicBlock::block_arg_list_type & BasicBlock::getArg() const {
+    const BasicBlock::block_arg_list_type & BasicBlock::getArgs() const {
         return _block_parm;
     }
 
     bool BasicBlock::is_arg(const var_symbol& name) {
-        return _block_parm.contains(name);
+        auto founded = ranges::find(_block_parm, name);
+        return founded != _block_parm.end();
+    }
+
+    void BasicBlock::add_arg(var_symbol name) {
+        _block_parm.emplace_back(std::move(name));
+    }
+
+    bool BasicBlock::remove_arg(var_symbol name) {
+        auto founded = ranges::find(_block_parm, name);
+        if (founded != _block_parm.end()) {
+            _block_parm.erase(founded);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    void BasicBlock::remove_arg(std::size_t ind) {
+        _block_parm.erase(_block_parm.begin() + ind);
+    }
+
+    std::size_t BasicBlock::arg_index(var_symbol name) const {
+        auto founded = ranges::find(_block_parm, name);
+        if (founded != _block_parm.end()) {
+            return founded - _block_parm.begin();
+        } else {
+            return -1;
+        }
     }
 } // IR

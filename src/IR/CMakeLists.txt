@@ -11,7 +11,7 @@ set(IR_source
         InstructionUtil.cpp
         CodeUtil.cpp
         ContextualMixin.cpp
-
+        InitInfo.cpp
 )
 add_library(IR ${IR_source})
 target_link_libraries(IR utility)

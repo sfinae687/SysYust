@@ -42,18 +42,25 @@ SysYust::IR::im_symbol::label_type SysYust::IR::im_symbol::full() const {
     return *this | [](auto i) {return std::to_string(i);};
 }
 
+SysYust::IR::im_symbol::im_symbol(SysYust::IR::im_symbol::flag f, const SysYust::IR::Type *type)
+    : data(f)
+    , type(type)
+{
+
+}
+
 SysYust::IR::operant::operant(SysYust::IR::var_symbol val)
-    : symbolType(symbol_type::v)
-    , type(val.type)
-    , symbol(val)
+    : _symbolType(symbol_type::v)
+    , _type(val.type)
+    , _symbol(val)
 {
 
 }
 
 SysYust::IR::operant::operant(SysYust::IR::im_symbol im_val)
-    : symbolType(symbol_type::im)
-    , type(im_val.type)
-    , symbol(im_val)
+    : _symbolType(symbol_type::im)
+    , _type(im_val.type)
+    , _symbol(im_val)
 {
     if constexpr (strict_check_flag) {
         assert(type->isBasic());

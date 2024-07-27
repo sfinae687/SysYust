@@ -18,13 +18,14 @@ namespace SysYust::IR {
      */
     class ProcedureContext {
         using revision_map = std::unordered_map<std::string, std::size_t>;
-        using param_var_set_t = std::unordered_set<var_symbol>;
+        using param_var_list_type = std::vector<var_symbol>;
     public:
         explicit ProcedureContext(CodeContext &context);
 
         // 用于检测符号信息的方法
 
         [[nodiscard]] bool is_param(var_symbol v) const;
+        [[nodiscard]] std::size_t param_index(var_symbol v) const;
 
         // 用于生成变量符号的一组方法
 
@@ -36,15 +37,19 @@ namespace SysYust::IR {
         var_symbol nextSymbol(const std::string& sym);
         var_symbol nextSymbol();
 
+        CodeContext &global; ///< 固定不变的全局上下文
+
         /**
          * @brief 默认变量符号，无参数的 nextSymbol。
          */
         std::string defaultSymbol = "t";
+        /**
+         * @brief 弃用的变量符号，可以用于调用无法值函数的返回值接受符号
+         */
         var_symbol depressed_symbol{"_", 0, Type::get(Type::none)};
-        CodeContext &global;
+        param_var_list_type param_var_set; ///< 函数形参集合，开放成员变量，不应缓存相关内容
     private:
         revision_map _nxt_revision{};
-        param_var_set_t param_var_set;
     };
 
 } // IR

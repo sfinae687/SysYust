@@ -37,7 +37,7 @@ namespace SysYust::IR {
     }
 
     bool CodeBuildMixin::is_global(const var_symbol &sym) {
-        return global_context()->is_global(sym);
+        return global_context()->isGlobal(sym);
     }
 
     // procedure 级
@@ -156,6 +156,18 @@ namespace SysYust::IR {
             _block_stack.push(nullptr);
         }
         return _block_stack.top();
+    }
+
+    var_symbol CodeBuildMixin::nxt_sym() {
+        return procedure_context()->nextSymbol();
+    }
+
+    var_symbol CodeBuildMixin::nxt_sym(std::string sym) {
+        return procedure_context()->nextSymbol(sym);
+    }
+
+    var_symbol CodeBuildMixin::nxt_sym(var_symbol sym) {
+        return procedure_context()->nextSymbol(sym);
     }
 
 }

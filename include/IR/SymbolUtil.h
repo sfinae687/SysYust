@@ -73,7 +73,16 @@ namespace SysYust::IR {
         static constexpr char seq = '@';
 
         [[nodiscard]] label_type full() const;
-        friend auto operator<=> (const var_symbol&, const var_symbol &) = default;
+        friend bool operator< (const var_symbol &lhs, const var_symbol &rhs) {
+            if (lhs.symbol != rhs.symbol) {
+                return lhs.symbol < rhs.symbol;
+            } else {
+                return lhs.revision < rhs.revision;
+            }
+        }
+        friend bool operator== (const var_symbol &lhs, const var_symbol &rhs) {
+            return lhs.symbol == rhs.symbol && lhs.revision == rhs.revision;
+        }
 
         auto operator| (auto F) const {
             if constexpr (std::is_invocable_v<decltype(F), label_type, size_t>) {
@@ -83,20 +92,27 @@ namespace SysYust::IR {
             }
         }
 
-        const label_type symbol{};
-        const std::size_t revision = 0;
-        const Type * const type;
+        label_type symbol{};
+        std::size_t revision = 0;
+        const Type * type;
     };
 
     /**
      * @brief 常量标签
      */
     struct im_symbol {
-        using data_type = std::variant<i32, f32>;
+        /**
+         * @brief 标签，用于标识改立即数具有特殊的值.标签类型的立即数
+         */
+        enum flag {
+            undef,
+        };
+        using data_type = std::variant<i32, f32, flag>;
         using label_type = std::string;
 
         im_symbol(i32 val);
         im_symbol(f32 val);
+        im_symbol(flag f, const Type *type = Type::get(Type::i));
         ~im_symbol() = default;
 
         [[nodiscard]] label_type full() const;
@@ -104,8 +120,8 @@ namespace SysYust::IR {
             return std::visit(F, data);
         }
 
-        const Type * const type;
-        const data_type data;
+        const Type * type;
+        data_type data;
     };
 
     struct operant {
@@ -114,6 +130,11 @@ namespace SysYust::IR {
 
         operant(var_symbol val);
         operant(im_symbol im_val);
+        operant(const operant &oth) {
+            this->_symbol = oth._symbol;
+            this->_type = oth._type;
+            this->_symbolType = oth._symbolType;
+        }
 
         auto operator| (auto F) const {
             return std::visit(F, symbol);
@@ -121,9 +142,14 @@ namespace SysYust::IR {
 
         [[nodiscard]] label_type full() const;
 
-        const symbol_type symbolType;
-        const Type * const type;
-        const std::variant<var_symbol, im_symbol> symbol;
+    private:
+        symbol_type _symbolType;
+        const Type *_type;
+        std::variant<var_symbol, im_symbol> _symbol;
+    public:
+        const symbol_type &symbolType{_symbolType};
+        const Type * const &type{_type};
+        const std::variant<var_symbol, im_symbol> symbol{_symbol};
     };
 
     enum class compose_type {

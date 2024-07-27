@@ -33,11 +33,27 @@ namespace SysYust::IR {
         func_set[sym] = func;
     }
 
-    bool CodeContext::is_global(const var_symbol& sym) const {
-        return global_vars.contains(sym);
+    bool CodeContext::isGlobal(const var_symbol& sym) const {
+        return _global_vars.contains(sym);
     }
 
     void CodeContext::addGlobal(const var_symbol &sym) {
-        global_vars.insert(sym);
+        _global_vars.insert(sym);
+    }
+
+    void CodeContext::removeGlobal(const var_symbol &sym) {
+        _global_vars.erase(sym);
+    }
+
+    const Type * CodeContext::globalType(const var_symbol &sym) {
+        if (isGlobal(sym)) {
+            return _global_vars.find(sym)->type;
+        } else {
+            return Type::get(Type::none);
+        }
+    }
+
+    const CodeContext::global_var_set &CodeContext::global_vars() const {
+        return _global_vars;
     }
 } // IR
