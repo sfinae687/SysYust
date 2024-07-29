@@ -5,6 +5,7 @@
 #ifndef SYSYUST_BASICBLOCK_H
 #define SYSYUST_BASICBLOCK_H
 
+#include <list>
 #include <unordered_set>
 #include <list>
 

@@ -2,3 +2,4 @@
 add_subdirectory(frontend)
 add_subdirectory(utility)
 add_subdirectory(IR)
+add_subdirectory(IRPrinter)

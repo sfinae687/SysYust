@@ -52,7 +52,7 @@ namespace SysYust::IR {
         const global_var_value_type& all_var_init_value() const;
 
         CodeContext context{};
-    private:
+    // private:
         std::list<Procedure> _all_procedure{};
         global_var_value_type global_var_value{};
     };
