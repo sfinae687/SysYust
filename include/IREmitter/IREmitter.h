@@ -33,7 +33,6 @@
 #include "IR/SymbolUtil.h"
 #include "IR/TypeUtil.h"
 #include "IRPrinter/IRPrinter.h"
-#include "fmt/base.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
 #include "utility/IdAllocator.h"
