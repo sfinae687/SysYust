@@ -6,6 +6,7 @@
 #define SYSYUST_BASICBLOCK_H
 
 #include <unordered_set>
+#include <list>
 
 #include "IR/Instruction.h"
 

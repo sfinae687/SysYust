@@ -220,7 +220,7 @@ namespace SysYust::IR {
                    || type == alc;
         }
 
-        const instruct_type type;
+        instruct_type type;
     };
 
     /**
@@ -250,9 +250,9 @@ namespace SysYust::IR {
 
         compute_with_2 (instruct_type type, var_symbol v, operant op1, operant op2);
 
-        const var_symbol assigned;
-        const operant opr1;
-        const operant opr2;
+        var_symbol assigned;
+        operant opr1;
+        operant opr2;
     };
 
     /**
@@ -266,10 +266,11 @@ namespace SysYust::IR {
 
         compute_with_1(instruct_type t, var_symbol v, operant op1);
 
-        const var_symbol assigned;
-        const operant opr;
-        const operant &opr1{opr}; ///< 兼容接口，辅助泛型编程, 虽然不太可能用得到
+        var_symbol assigned;
+        operant opr;
     };
+
+    static_assert(std::is_copy_assignable_v<compute_with_1>);
 
 
     /**
@@ -284,10 +285,14 @@ namespace SysYust::IR {
 
         indexOf(var_symbol assigned, var_symbol arr_like, std::vector<operant> index);
 
-        const var_symbol assigned;
-        const var_symbol arr;
-        const std::vector<operant> ind;
+        indexOf& operator= (const indexOf &oth) = default;
+
+        var_symbol assigned;
+        var_symbol arr;
+        std::vector<operant> ind;
     };
+
+    static_assert(std::is_copy_assignable_v<indexOf>);
 
     /**
      * @brief 读取操作
@@ -300,10 +305,18 @@ namespace SysYust::IR {
 
         load(var_symbol t, var_symbol s);
 
-        const var_symbol source; ///< 读取的位置，必须为指针类型
-        const var_symbol target; ///< 读取到的变量名称
-        const var_symbol &assigned{target};
+        load& operator= (const load &oth) {
+            source = oth.source;
+            target = oth.target;
+            return *this;
+        }
+
+        var_symbol source; ///< 读取的位置，必须为指针类型
+        var_symbol target; ///< 读取到的变量名称
+        var_symbol &assigned{target};
     };
+
+    static_assert(std::is_copy_assignable_v<load>);
 
     /**
      * @brief 写入操作
@@ -316,10 +329,18 @@ namespace SysYust::IR {
 
         store(var_symbol t, operant s);
 
-        const operant source;
-        const var_symbol target; ///< 写入的位置，必须为指针类型
-        const var_symbol &assigned{target};
+        store& operator= (const store &oth) {
+            source = oth.source;
+            target = oth.target;
+            return *this;
+        }
+
+        operant source;
+        var_symbol target; ///< 写入的位置，必须为指针类型
+        var_symbol &assigned{target};
     };
+
+    static_assert(std::is_copy_assignable_v<store>);
 
     /**
      * @brief 获取一个特定类型的指针
@@ -332,7 +353,7 @@ namespace SysYust::IR {
 
         alloc(var_symbol v, const Type *type);
 
-        const var_symbol assigned;
+        var_symbol assigned;
         const Type *type;
     };
 
@@ -347,29 +368,37 @@ namespace SysYust::IR {
 
         call_instruct(var_symbol v, func_symbol f, std::vector<operant> opr);
 
-        const var_symbol assigned; ///< 需要根据上下文确定符号 v 的类型
-        const func_symbol func;
-        const arg_list args;
+        var_symbol assigned; ///< 需要根据上下文确定符号 v 的类型
+        func_symbol func;
+        arg_list args;
     };
+
+    static_assert(std::is_copy_assignable_v<call_instruct>);
 
     // 基本块结尾命令
 
     struct branch : instruct<branch> {
         explicit branch(operant cond, arg_list true_a, arg_list false_a);
-        const operant cond;
-        arg_list ture_args;
+        operant cond;
+        arg_list true_args;
         arg_list false_args;
     };
 
+    static_assert(std::is_copy_assignable_v<branch>);
+
     struct jump : instruct<jump> {
-        jump(arg_list aArg);
+        explicit jump(arg_list aArg);
         arg_list args;
     };
+
+    static_assert(std::is_copy_assignable_v<jump>);
 
     struct ret : instruct<ret> {
         explicit ret(std::optional<operant> aArg = std::nullopt);
         std::optional<operant> args;
     };
+
+    static_assert(std::is_copy_assignable_v<ret>);
 
     /**
      * @brief 用于创建一条指令的模板函数,不建议直接使用
@@ -422,6 +451,15 @@ namespace SysYust::IR {
             alloc,
             indexOf
             >;
+    static_assert(std::copy_constructible<instruction>);
+    static_assert(std::is_copy_assignable_v<instruction>);
+
+    [[maybe_unused]] std::size_t arg_size(const instruction &it);
+
+    operant arg_at(const instruction &it, std::size_t index);
+
+    void set_arg_at(instruction &it, std::size_t index, operant nArg);
+
     enum class gateway_type {
         branch = 1,
         jump,

@@ -71,6 +71,14 @@ SysYust::IR::operant::label_type SysYust::IR::operant::full() const {
     return *this | [](auto i) {return i.full();};
 }
 
+SysYust::IR::var_symbol SysYust::IR::operant::var() const {
+    return std::get<var_symbol>(symbol);
+}
+
+SysYust::IR::im_symbol SysYust::IR::operant::im() const {
+    return std::get<im_symbol>(symbol);
+}
+
 SysYust::IR::func_symbol::label_type SysYust::IR::func_symbol::full() const {
     return symbol;
 }

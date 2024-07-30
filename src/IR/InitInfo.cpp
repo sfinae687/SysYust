@@ -89,4 +89,10 @@ namespace SysYust::IR {
             }
         }
     }
+
+    InitInfo::InitInfo(var_symbol var)
+        : _data(var)
+    {
+
+    }
 } // IR

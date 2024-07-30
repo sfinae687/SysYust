@@ -44,4 +44,20 @@ namespace SysYust::IR {
     bool Code::is_global_var(var_symbol var) const {
         return context.isGlobal(var);
     }
+
+    void Code::var_init(var_symbol var, InitInfo &&initVal) {
+        global_var_value[var] = std::move(initVal);
+    }
+
+    void Code::var_init(var_symbol var, const InitInfo &initVal) {
+        global_var_value[var] = initVal;
+    }
+
+    InitInfo &Code::var_init(var_symbol var) {
+        return global_var_value[var];
+    }
+
+    const Code::global_var_value_type &Code::all_var_init_value() const {
+        return global_var_value;
+    }
 } // IR

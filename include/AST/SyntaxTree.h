@@ -98,6 +98,10 @@ namespace SysYust::AST {
          */
          void reset();
 
+         // 检测
+
+
+
          // 调试用函数
 
          /**

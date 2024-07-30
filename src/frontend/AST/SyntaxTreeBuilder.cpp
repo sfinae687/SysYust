@@ -25,73 +25,87 @@ namespace SysYust::AST {
     // 拷贝控制
 
     SyntaxTreeBuilder::SyntaxTreeBuilder(SysYParser::CompUnitContext *tree)
-    : rawTree(tree)
-    , v(*this) {
+        : rawTree(tree)
+        , v(*this)
+    {
         lib_funcs = {
             {
                 "getint",
                 &Function::create(Int_v, {&Void_v}),
                 std::numeric_limits<HNode>::max(),
+                true,
             },
             {
                 "getch",
                 &Function::create(Int_v, {&Void_v}),
                 std::numeric_limits<HNode>::max(),
+                true,
             },
             {
                 "getarray",
                 &Function::create(Int_v, {&Pointer::create(Int_v)}),
                 std::numeric_limits<HNode>::max(),
+                true,
             },
             {
                 "getfloat",
                 &Function::create(Float_v, {&Void_v}),
                 std::numeric_limits<HNode>::max(),
+                    true,
             },
             {
                 "getfarray",
                 &Function::create(Int_v, {&Pointer::create(Float_v)}),
                 std::numeric_limits<HNode>::max(),
+                    true,
             },
             {
                 "putint",
                 &Function::create(Void_v, {&Int_v}),
                 std::numeric_limits<HNode>::max(),
+                    true,
             },
             {
                 "putch",
                 &Function::create(Void_v, {&Int_v}),
                 std::numeric_limits<HNode>::max(),
+                    true,
             },
             {
                 "putarray",
                 &Function::create(Void_v, {&Int_v, &Pointer::create(Int_v)}),
                 std::numeric_limits<HNode>::max(),
+                    true,
             },
             {
                 "putfloat",
                         &Function::create(Void_v, {&Float_v}),
                         std::numeric_limits<HNode>::max(),
+                    true,
             },
             {
                 "putfarray",
                 &Function::create(Void_v, {&Int_v, &Pointer::create(Float_v)}),
                 std::numeric_limits<HNode>::max(),
+                    true,
             },
             {
                     "putf",
                     nullptr,
                     std::numeric_limits<HNode>::max(),
+                    true,
             },
             {
                 "_sysy_starttime",
                 &Function::create(Void_v, {&Int_v}),
                 std::numeric_limits<HNode>::max(),
+                    true,
             },
             {
                     "_sysy_stoptime",
                     &Function::create(Void_v, {&Int_v}),
                     std::numeric_limits<HNode>::max(),
+                    true,
             },
     };
         auto &funcTable = currentEnv->func_table;

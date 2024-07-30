@@ -48,6 +48,8 @@ namespace SysYust::IR {
          */
         void setHead(BasicBlock *);
 
+        const std::list<BasicBlock>& all_nodes() const;
+
     private:
         BasicBlock *_head = nullptr;
        std::list<BasicBlock> _nodes{};

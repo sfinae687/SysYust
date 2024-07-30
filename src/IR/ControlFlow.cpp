@@ -38,4 +38,8 @@ namespace SysYust::IR {
     void ControlFlow::setHead(BasicBlock *b) {
         this->_head = b;
     }
+
+    const std::list<BasicBlock> &ControlFlow::all_nodes() const {
+        return _nodes;
+    }
 } // IR

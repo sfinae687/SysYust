@@ -21,6 +21,7 @@ namespace SysYust::AST {
         HNode decl;
         bool isConstant;
         bool isParam;
+        bool isGlobal = false;
     };
 
 } // AST

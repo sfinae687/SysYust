@@ -8,6 +8,7 @@
 #include <functional>
 #include <variant>
 #include <string>
+#include <compare>
 
 #include "IR/TypeUtil.h"
 
@@ -62,7 +63,7 @@ namespace SysYust::IR {
 
         friend auto operator<=> (const func_symbol &lhs, const func_symbol &rhs) = default;
 
-        const label_type symbol;
+        label_type symbol;
     };
 
     /**
@@ -73,11 +74,11 @@ namespace SysYust::IR {
         static constexpr char seq = '@';
 
         [[nodiscard]] label_type full() const;
-        friend bool operator< (const var_symbol &lhs, const var_symbol &rhs) {
-            if (lhs.symbol != rhs.symbol) {
-                return lhs.symbol < rhs.symbol;
+        friend std::strong_ordering operator<=> (const var_symbol &lhs, const var_symbol &rhs) noexcept {
+            if (auto key1 = lhs.symbol <=> rhs.symbol; key1 == 0) {
+                return key1;
             } else {
-                return lhs.revision < rhs.revision;
+                return lhs.revision <=> rhs.revision;
             }
         }
         friend bool operator== (const var_symbol &lhs, const var_symbol &rhs) {
@@ -94,8 +95,11 @@ namespace SysYust::IR {
 
         label_type symbol{};
         std::size_t revision = 0;
-        const Type * type;
+        const Type * type = Type::get(Type::none);
     };
+
+    // 这里需要 <compare>
+    static_assert(std::three_way_comparable<var_symbol>);
 
     /**
      * @brief 常量标签
@@ -115,13 +119,15 @@ namespace SysYust::IR {
         im_symbol(flag f, const Type *type = Type::get(Type::i));
         ~im_symbol() = default;
 
+        friend auto operator<=> (const im_symbol &lhs, const im_symbol &rhs) = default;
+
         [[nodiscard]] label_type full() const;
         auto operator| (auto F) const {
             return std::visit(F, data);
         }
 
-        const Type * type;
         data_type data;
+        const Type * type = Type::get(Type::none);
     };
 
     struct operant {
@@ -130,10 +136,35 @@ namespace SysYust::IR {
 
         operant(var_symbol val);
         operant(im_symbol im_val);
-        operant(const operant &oth) {
-            this->_symbol = oth._symbol;
-            this->_type = oth._type;
-            this->_symbolType = oth._symbolType;
+        operant(const operant &oth)
+            : _symbolType(oth._symbolType)
+            , _type(oth._type)
+            , _symbol(oth._symbol)
+        {
+        }
+        operant& operator= (const operant &oth) {
+            if (this == &oth) {
+                return *this;
+            }
+            _symbolType = oth._symbolType;
+            _type = oth._type;
+            _symbol = oth._symbol;
+            return *this;
+        }
+
+        friend auto operator<=> (const operant &lhs, const operant &rhs) noexcept {
+            if (auto key1 = lhs._symbolType <=> rhs._symbolType; key1 != 0) {
+                return key1;
+            } else if (auto key2 = lhs._type <=> rhs._type; key2 != 0) {
+                return key2;
+            } else {
+                return lhs._type <=> rhs._type;
+            }
+        }
+        friend bool operator== (const operant &lhs, const operant &rhs) {
+            return lhs._symbolType == rhs._symbolType
+            && lhs._type == rhs._type
+            && lhs._symbol == rhs._symbol;
         }
 
         auto operator| (auto F) const {
@@ -141,6 +172,9 @@ namespace SysYust::IR {
         }
 
         [[nodiscard]] label_type full() const;
+
+        [[nodiscard]] var_symbol var() const;
+        [[nodiscard]] im_symbol im() const;
 
     private:
         symbol_type _symbolType;
@@ -159,24 +193,6 @@ namespace SysYust::IR {
     };
 
     compose_type operant_compose(const operant &lhs, const operant &rhs);
-
-    /**
-     * @brief 将标签类型转换
-     */
-     template <typename TargetType>
-     struct as_fn {
-         as_fn() = default;
-         TargetType operator() (auto &&i) {
-             if constexpr (std::is_constructible_v<TargetType, decltype(i)>) {
-                 return TargetType(i);
-             } else {
-                 return i | [](auto i) {return i;};
-             }
-         }
-     };
-
-     template <typename TargetType>
-     constinit as_fn<TargetType> as; ///< 便利调用对象
 
      /**
       * @brief 函数信息的描述是结构

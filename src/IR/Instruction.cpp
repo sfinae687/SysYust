@@ -51,7 +51,7 @@ namespace SysYust::IR {
     branch::branch(operant cond, std::vector<operant> true_a, std::vector<operant> false_a)
         : instruct(instruct_type::br)
         , cond(std::move(cond))
-        , ture_args(true_a)
+        , true_args(true_a)
         , false_args(false_a)
     {
 
@@ -118,6 +118,161 @@ namespace SysYust::IR {
         if constexpr (strict_check_flag) {
             assert(target.type->isPtr());
             assert(source.type->isBasic());
+        }
+    }
+
+    operant arg_at(const instruction &it, std::size_t index) {
+        switch (static_cast<instruct_cate>(it.index())) {
+            case instruct_cate::with_2: {
+                auto &inst_2 = std::get<compute_with_2>(it);
+                if (index) {
+                    return inst_2.opr2;
+                } else {
+                    return inst_2.opr1;
+                }
+            }
+            case instruct_cate::with_1: {
+                auto &inst_1 = std::get<compute_with_1>(it);
+                return inst_1.opr;
+            }
+            case instruct_cate::call: {
+                auto &call_inst = std::get<call_instruct>(it);
+                return call_inst.args[index];
+            }
+            case instruct_cate::branch: {
+                auto &br_inst = std::get<branch>(it);
+                if (index == 0) {
+                    return br_inst.cond;
+                }
+                auto true_size = br_inst.true_args.size();
+                if (index - 1 < true_size) {
+                    return br_inst.true_args[index - 1];
+                } else {
+                    return br_inst.false_args[index - 1 - true_size];
+                }
+            }
+            case instruct_cate::jump: {
+                auto &jp_inst = std::get<jump>(it);
+                return jp_inst.args[index];
+            }
+            case instruct_cate::ret: {
+                auto &ret_inst = std::get<ret>(it);
+                return *ret_inst.args;
+            }
+            case instruct_cate::load: {
+                auto &load_inst = std::get<load>(it);
+                return {load_inst.source};
+            }
+            case instruct_cate::store: {
+                auto &store_inst = std::get<store>(it);
+                return {store_inst.source};
+            }
+            case instruct_cate::index: {
+                auto &index_inst = std::get<indexOf>(it);
+                if (index == 0) {
+                    return index_inst.arr;
+                } else {
+                    return index_inst.ind[index - 1];
+                }
+            }
+            default:
+                __builtin_unreachable();
+        }
+    }
+
+    void set_arg_at(instruction &it, std::size_t index, operant nArg) {
+        switch (static_cast<instruct_cate>(it.index())) {
+            case instruct_cate::with_2: {
+                auto &inst_2 = std::get<compute_with_2>(it);
+                if (index == 1) {
+                    inst_2.opr2 = nArg;
+                } else {
+                    inst_2.opr1 = nArg;
+                }
+            }
+            case instruct_cate::with_1: {
+                auto &inst_1 = std::get<compute_with_1>(it);
+                inst_1.opr = nArg;
+            }
+            case instruct_cate::call: {
+                auto &call_inst = std::get<call_instruct>(it);
+                call_inst.args[index] = nArg;
+            }
+            case instruct_cate::branch: {
+                auto &br_inst = std::get<branch>(it);
+                if (index == 0) {
+                    br_inst.cond = nArg;
+                } else if (auto true_size = br_inst.true_args.size(); index - 1 < true_size) {
+                    br_inst.true_args[index-1] = nArg;
+                } else {
+                    br_inst.false_args[index-1-true_size] = nArg;
+                }
+            }
+            case instruct_cate::jump: {
+                auto &jump_inst = std::get<jump>(it);
+                jump_inst.args[index] = nArg;
+            }
+            case instruct_cate::ret: {
+                auto &ret_inst = std::get<ret>(it);
+                *ret_inst.args = nArg;
+            }
+            case instruct_cate::load: {
+                auto &load_inst = std::get<load>(it);
+                load_inst.source = nArg.var();
+            }
+            case instruct_cate::store: {
+                auto &store_inst = std::get<store>(it);
+                store_inst.source = nArg;
+            }
+            case instruct_cate::index: {
+                auto &ind_inst = std::get<indexOf>(it);
+                if (index == 0) {
+                    ind_inst.arr = nArg.var();
+                } else {
+                    ind_inst.ind[index - 1] = nArg;
+                }
+            }
+            default:
+                __builtin_unreachable();
+        }
+    }
+
+    std::size_t arg_size(const instruction &it) {
+        switch (static_cast<instruct_cate>(it.index())) {
+            case instruct_cate::with_2:
+                return 2;
+            case instruct_cate::with_1:
+            case instruct_cate::load:
+            case instruct_cate::store:
+                return 1;
+            case instruct_cate::alloc:
+                return 0;
+            case instruct_cate::ret:
+                if (auto &rt_inst = std::get<ret>(it); rt_inst.args) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            case instruct_cate::call: {
+                auto &call_inst = std::get<call_instruct>(it);
+                return call_inst.args.size();
+            }
+            case instruct_cate::branch: {
+                auto &br_inst = std::get<branch>(it);
+                auto true_size = br_inst.true_args.size();
+                auto false_size = br_inst.false_args.size();
+                return 1 + true_size + false_size;
+            }
+            case instruct_cate::jump: {
+                auto &jp_inst = std::get<jump>(it);
+                return jp_inst.args.size();
+            }
+            case instruct_cate::index: {
+                auto &id_inst = std::get<indexOf>(it);
+                return 1 + id_inst.ind.size();
+            }
+            default:
+                __builtin_unreachable();
         }
     }
 } // IR

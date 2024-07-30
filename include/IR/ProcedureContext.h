@@ -50,6 +50,7 @@ namespace SysYust::IR {
         param_var_list_type param_var_set; ///< 函数形参集合，开放成员变量，不应缓存相关内容
     private:
         revision_map _nxt_revision{};
+
     };
 
 } // IR

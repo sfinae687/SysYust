@@ -45,6 +45,12 @@ namespace SysYust::IR {
          */
         bool is_global_var(var_symbol var) const;
 
+        InitInfo& var_init(var_symbol var);
+        void var_init(var_symbol var, const InitInfo &initVal);
+        void var_init(var_symbol var, InitInfo &&initVal);
+
+        const global_var_value_type& all_var_init_value() const;
+
         CodeContext context{};
     private:
         std::list<Procedure> _all_procedure{};
