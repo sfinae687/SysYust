@@ -334,10 +334,10 @@ std::string format_as(const Procedure &proc) {
 std::string format_as(const Code &code) {
     std::string ret;
     ret += "// Global Variables:\n";
-    auto &inits = code.global_var_value;
+    auto &inits = const_cast<std::unordered_map<var_symbol, InitInfo> &>(code.global_var_value);
     for (auto gvar : code.context.global_vars()) {
-        auto init = inits.find(gvar);
-        ret += fmt::format("{} = {}", gvar, init->second) + '\n';
+        auto init = inits[gvar];
+        ret += fmt::format("{} = {}", gvar, init) + '\n';
     }
 
     ret += "// Functions:\n";

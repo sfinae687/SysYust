@@ -556,11 +556,13 @@ inline const IR::Type *corr_type(const Type *type) {
     else if (type->type() == TypeId::Void)
         return IR::Type::get(IR::Type::none);
     else if (type->type() == TypeId::Array) {
-        auto sub_arr = cast_unwrap<const Array *>(type);
+        auto arr_ty = cast_unwrap<const Array *>(type);
+        auto sub_arr = &arr_ty->index(1);
         return IR::Type::get(IRTypeId::arr, corr_type(sub_arr),
-                             sub_arr->getExtent(0));
+                             arr_ty->getExtent(0));
     } else if (type->type() == TypeId::Pointer) {
-        auto sub_ty = cast_unwrap<const Pointer *>(type);
+        auto ptr_ty = cast_unwrap<const Pointer *>(type);
+        auto sub_ty = &ptr_ty->index(1);
         return IR::Type::get(IRTypeId::ptr, corr_type(sub_ty));
     }
     assert(false && "none corr_type");

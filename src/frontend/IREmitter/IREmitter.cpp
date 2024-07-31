@@ -231,14 +231,18 @@ IR::im_symbol IREmitter::constevalExpr(Node &node) {
 
 IR::InitInfo IREmitter::parseInitList(const Type &init_type,
                                       std::vector<HNode> &inits) {
+    const std::vector<IR::InitInfo *> def_init{};
     if (init_type.isBasicType()) {
         assert(inits.size() <= 1);
         if (inits.size()) {  // int genshin = 1; or {1} in initlist
             auto val_node = inits[0];
-            auto val = constevalExpr(*_ast->getNode(val_node));
-            return val;
+            // if (_inGlobalScope) {
+                return constevalExpr(*_ast->getNode(val_node));
+            // } else {
+            //     return static_cast<cIR::im_symbol>(evalExpr(*_ast->getNode(val_node)));
+            // }
         } else {  // int genshin;
-            return {};
+            return def_init;
         }
     } else {  // list
         auto arr_type_ptr =
@@ -247,7 +251,7 @@ IR::InitInfo IREmitter::parseInitList(const Type &init_type,
         auto arr_type = *arr_type_ptr;
 
         if (!inits.size()) {  // = {};
-            return {};
+            return def_init;
         }
 
         auto &deref_type = const_cast<Type &>(arr_type.index(1));
@@ -363,7 +367,7 @@ void IREmitter::execute(const VarDecl &node) {
 
     if (_inGlobalScope) {
         auto &code = *ir_code();
-        auto val = newValue(corr_type(var_decl.type));
+        auto val = newValue(IR::Type::get(IR::Type::ptr, corr_type(var_decl.type)));
 
         if (node.init_expr.has_value()) {
             auto &init_node = *_ast->getNode(node.init_expr.value());
@@ -394,7 +398,7 @@ void IREmitter::execute(const VarDecl &node) {
             }
         } else {
             // value is zero
-            code.set_var(val, IR::im_symbol{0});
+            code.set_var(val, std::vector<IR::InitInfo *>{});
             _global_vars.setInfo(var_id, val);
         }
     } else {
