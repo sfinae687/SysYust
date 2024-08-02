@@ -170,4 +170,36 @@ namespace SysYust::IR {
         return procedure_context()->nextSymbol(sym);
     }
 
+    ProcedureDU &CodeBuildMixin::current_du() {
+        return procedure()->du_info();
+    }
+
+    bool CodeBuildMixin::is_block_param(var_symbol arg) {
+        return current_block()->is_arg(arg);
+    }
+
+    void CodeBuildMixin::remove_block_param(var_symbol arg) {
+        current_block()->remove_arg(arg);
+        current_du().remove_define(arg);
+    }
+
+    void CodeBuildMixin::add_block_param(var_symbol arg) {
+        current_block()->add_arg(arg);
+        current_du().add_block_param(current_block(), arg);
+    }
+
+    std::size_t CodeBuildMixin::block_param_index(var_symbol arg) {
+        return current_block()->arg_index(arg);
+    }
+
+    void CodeBuildMixin::remove_block_param(std::size_t index) {
+        auto &arg = current_block()->getArgs()[index];
+        current_block()->remove_arg(index);
+        current_du().remove_define(arg);
+    }
+
+    var_symbol CodeBuildMixin::block_arg(std::size_t index) {
+        return current_block()->getArgs()[index];
+    }
+
 }

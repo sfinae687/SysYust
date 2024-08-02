@@ -24,20 +24,6 @@ SysYust::IR::var_symbol::label_type SysYust::IR::var_symbol::full() const {
     return fmt::format("{}{}{}", symbol, seq, revision);
 }
 
-SysYust::IR::im_symbol::im_symbol(SysYust::IR::i32 val)
-    : type(Type::get(Type::i))
-    , data(val)
-{
-
-}
-
-SysYust::IR::im_symbol::im_symbol(SysYust::IR::f32 val)
-    : type(Type::get(Type::f))
-    , data(val)
-{
-
-}
-
 SysYust::IR::im_symbol::label_type SysYust::IR::im_symbol::full() const {
     return *this | [](auto i) {return std::to_string(i);};
 }

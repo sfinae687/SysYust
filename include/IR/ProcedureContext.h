@@ -47,7 +47,7 @@ namespace SysYust::IR {
          * @brief 弃用的变量符号，可以用于调用无法值函数的返回值接受符号
          */
         var_symbol depressed_symbol{"_", 0, Type::get(Type::none)};
-        param_var_list_type param_var_set; ///< 函数形参集合，开放成员变量，不应缓存相关内容
+        param_var_list_type param_var_set; ///< 函数形参集合，开放成员变量，不应缓存相关内容, 也不应直接操作该集合以添加形参
     private:
         revision_map _nxt_revision{};
 

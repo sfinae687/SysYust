@@ -199,6 +199,11 @@ namespace SysYust::IR {
         }
     }
 
+    template<typename T>
+    concept have_assigned = requires (std::remove_cvref_t<T> t) {
+        t.assigned;
+    };
+
     struct instruct_base {
 
         explicit instruct_base(instruct_type type)
@@ -237,6 +242,10 @@ namespace SysYust::IR {
 
         }
         instruct(const instruct&) = default;
+
+        constexpr friend bool operator== (const instruct &lhs, const instruct &rhs) {
+            return lhs.cateId == rhs.cateId;
+        }
     };
 
     /**
@@ -287,12 +296,15 @@ namespace SysYust::IR {
 
         indexOf& operator= (const indexOf &oth) = default;
 
+        friend bool operator== (const indexOf &lhs, const indexOf &rhs) = default;
+
         var_symbol assigned;
         var_symbol arr;
         std::vector<operant> ind;
     };
 
     static_assert(std::is_copy_assignable_v<indexOf>);
+    static_assert(std::equality_comparable<indexOf>);
 
     /**
      * @brief 读取操作
@@ -304,6 +316,14 @@ namespace SysYust::IR {
     struct load : instruct<load> {
 
         load(var_symbol t, var_symbol s);
+
+        load(const load &oth)
+            : instruct<load>(instruct_type::ld)
+            , source(oth.source)
+            , target(oth.target)
+        {
+
+        }
 
         load& operator= (const load &oth) {
             source = oth.source;
@@ -321,6 +341,11 @@ namespace SysYust::IR {
     /**
      * @brief 写入操作
      * @details
+     *
+     * 参数索引：
+     *  - 0，target，
+     *  - 1，source
+     *
      * # 类型传播操作
      *
      * 不自动生成符号，也不控制传播，但是检查类型匹配。
@@ -328,6 +353,12 @@ namespace SysYust::IR {
     struct store : instruct<store> {
 
         store(var_symbol t, operant s);
+
+        store(const store &oth)
+            : store(oth.target, oth.source)
+        {
+
+        }
 
         store& operator= (const store &oth) {
             source = oth.source;
@@ -337,7 +368,7 @@ namespace SysYust::IR {
 
         operant source;
         var_symbol target; ///< 写入的位置，必须为指针类型
-        var_symbol &assigned{target};
+//        var_symbol &assigned{target};
     };
 
     static_assert(std::is_copy_assignable_v<store>);
@@ -451,8 +482,9 @@ namespace SysYust::IR {
             alloc,
             indexOf
             >;
-    static_assert(std::copy_constructible<instruction>);
+    static_assert(std::is_copy_constructible_v<instruction>);
     static_assert(std::is_copy_assignable_v<instruction>);
+    static_assert(std::equality_comparable<instruction>);
 
     [[maybe_unused]] std::size_t arg_size(const instruction &it);
 

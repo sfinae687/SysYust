@@ -75,7 +75,7 @@ namespace SysYust::IR {
 
         [[nodiscard]] label_type full() const;
         friend std::strong_ordering operator<=> (const var_symbol &lhs, const var_symbol &rhs) noexcept {
-            if (auto key1 = lhs.symbol <=> rhs.symbol; key1 == 0) {
+            if (auto key1 = lhs.symbol <=> rhs.symbol; key1 != 0) {
                 return key1;
             } else {
                 return lhs.revision <=> rhs.revision;
@@ -114,9 +114,25 @@ namespace SysYust::IR {
         using data_type = std::variant<i32, f32, flag>;
         using label_type = std::string;
 
-        im_symbol(i32 val);
-        im_symbol(f32 val);
-        im_symbol(flag f, const Type *type = Type::get(Type::i));
+        template<typename IntType>
+        requires std::is_integral_v<IntType>
+        /*NOLINT*/ im_symbol(IntType val)
+            : data(static_cast<i32>(val))
+            , type(Type::get(Type::i))
+        {
+
+        }
+
+        template<typename FltType>
+        requires std::is_floating_point_v<FltType>
+        /*NOLINT*/ im_symbol(FltType val)
+            : data(static_cast<f32>(val))
+            , type(Type::get(Type::f))
+        {
+
+        }
+
+        /*NOLINT*/ im_symbol(flag f, const Type *type = Type::get(Type::i));
         ~im_symbol() = default;
 
         friend auto operator<=> (const im_symbol &lhs, const im_symbol &rhs) = default;
@@ -135,7 +151,7 @@ namespace SysYust::IR {
         using data_type = std::variant<var_symbol, im_symbol>;
 
         operant(var_symbol val);
-        operant(im_symbol im_val);
+        operant(im_symbol im_val = im_symbol::undef); // 可以作为默认构造函数使用
         operant(const operant &oth)
             : _symbolType(oth._symbolType)
             , _type(oth._type)
@@ -147,24 +163,18 @@ namespace SysYust::IR {
                 return *this;
             }
             _symbolType = oth._symbolType;
-            _type = oth._type;
+            if (oth._type != Type::get(Type::none)) {
+                _type = oth._type;
+            }
             _symbol = oth._symbol;
             return *this;
         }
 
         friend auto operator<=> (const operant &lhs, const operant &rhs) noexcept {
-            if (auto key1 = lhs._symbolType <=> rhs._symbolType; key1 != 0) {
-                return key1;
-            } else if (auto key2 = lhs._type <=> rhs._type; key2 != 0) {
-                return key2;
-            } else {
-                return lhs._type <=> rhs._type;
-            }
+            return lhs._symbol <=> rhs._symbol;
         }
         friend bool operator== (const operant &lhs, const operant &rhs) {
-            return lhs._symbolType == rhs._symbolType
-            && lhs._type == rhs._type
-            && lhs._symbol == rhs._symbol;
+            return lhs._symbol == rhs._symbol;
         }
 
         auto operator| (auto F) const {
@@ -183,7 +193,7 @@ namespace SysYust::IR {
     public:
         const symbol_type &symbolType{_symbolType};
         const Type * const &type{_type};
-        const std::variant<var_symbol, im_symbol> symbol{_symbol};
+        const std::variant<var_symbol, im_symbol> &symbol{_symbol};
     };
 
     enum class compose_type {

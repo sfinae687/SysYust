@@ -5,6 +5,7 @@
 #ifndef SYSYUST_PROCEDURE_H
 #define SYSYUST_PROCEDURE_H
 
+#include "IR/Def-Use/ProcedureDU.h"
 #include "IR/ControlFlow.h"
 #include "CodeContext.h"
 #include "ProcedureContext.h"
@@ -52,6 +53,8 @@ namespace SysYust::IR {
          */
         [[nodiscard]] const ProcedureContext* context() const;
 
+        // 形参信息
+
         /**
          * @brief 添加一个符号名字作为该函数的形参
          */
@@ -61,6 +64,15 @@ namespace SysYust::IR {
          * @return 当成功移除时返回 true。
          */
         bool remove_param(var_symbol name);
+        /**
+         * @brief 清楚所有的形参
+         */
+        void clear_param();
+        /**
+         * @brief 对集合内的形参重新添加到函数形参追踪中
+         * @details 这个操作不会删除之前添加的形参追踪
+         */
+        void resync_param();
         /**
          * @brief 检测当前变量符号名是否是形参
          * @return 当给定符号名是形参时，返回true
@@ -72,10 +84,50 @@ namespace SysYust::IR {
          */
         std::size_t param_index(var_symbol name);
 
+        // 定义用例追踪,以下方法只更改追踪信息，不修改基本块实际的存储内容。
+
+        /**
+         * @ 添加一条已经添加到基本块的语句的用例-定义追踪
+         */
+        void track_inst(BasicBlock *block, BasicBlock::iterator inst_ptr);
+        /**
+         * @brief 删除一条有语句的用例定义追踪
+         */
+        void untrack_inst(BasicBlock::iterator inst_ptr);
+        /**
+         * @brief 重新设置一条语句的追踪信息
+         * @details 该方法 **不会通过基本块** 访问旧的语句信息，并且会重新设置迭代器所指向的指令为给出的指令。
+         */
+        void retrack_inst(BasicBlock::iterator inst_ptr, const instruction &nInst);
+        /**
+         * @brief 添加一条基本块参数的追踪信息
+         * @details 不会实际上修改基本块的参数，只会更改追踪信息
+         */
+        void track_block_arg(BasicBlock *block, var_symbol arg);
+
+        /**
+         * @brief 删除一个变量的追踪信息
+         */
+        void untrack_symbol(IR::value_type sym);
+
+        /**
+         * @brief 将一个变量的追踪信息转移到另一个上
+         */
+        void retrack_symbol_as(IR::value_type sym, IR::value_type nSym);
+
+        /**
+         * @brief 获取定义-用例信息
+         */
+        const ProcedureDU& du_info() const;
+        ProcedureDU & du_info();
+
+
+
     private:
         func_symbol _name;
         struct ProcedureContext _context;
         ControlFlow _graph{};
+        ProcedureDU _du;
     };
 
 } // IR

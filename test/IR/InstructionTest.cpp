@@ -7,6 +7,25 @@
 
 using namespace SysYust::IR;
 
+TEST(IRTest, SymbolTest) {
+    var_symbol v1{"v", 1};
+    var_symbol v2{"v", 2};
+    operant op1{v1};
+    operant op2{v2};
+    EXPECT_NE(v1, v2);
+    EXPECT_NE(op1, op2);
+
+
+    im_symbol im32{32};
+    im_symbol im64{64};
+    im_symbol im32f{32.};
+    im_symbol im64f{64.};
+
+    EXPECT_NE(im32, im64);
+    EXPECT_NE(im32f, im32);
+    EXPECT_NE(operant(im32), operant(im64));
+}
+
 TEST(IRTest, InstructionCreate) {
 
     // 检测这些类型的构造是否正常以及类型传播是否正常

@@ -12,8 +12,6 @@
 #include <range/v3/view.hpp>
 #include <range/v3/action.hpp>
 
-#include "IR/Procedure.h"
-#include "IR/ContextualMixin.h"
 #include "IR/Def-Use/DU_Util.h"
 
 namespace SysYust::IR {
@@ -21,8 +19,9 @@ namespace SysYust::IR {
     namespace ranges = ::ranges;
     namespace views = ranges::views;
 
-    ///< 如果设置此符号，所有立即数符号都会被函数本地保存, nullptr被视为声明立即数的基本块，否则会被立即忽略
-    constexpr bool save_constant_flag = true;
+    class Code;
+    class CodeContext;
+    class Procedure;
 
     /**
      * @brief 保存了整个函数的用例信息，为保存用例信息的最顶层上下文(所有无法在本地找到的符号名,视为全局变量名)

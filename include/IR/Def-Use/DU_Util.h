@@ -12,7 +12,6 @@
 #include "IR/TypeUtil.h"
 #include "IR/Instruction.h"
 #include "IR/BasicBlock.h"
-#include "IR/ContextualMixin.h"
 
 namespace SysYust::IR {
 
@@ -45,13 +44,14 @@ namespace SysYust::IR {
 
     struct DefineEntry {
 
+        DefineEntry() = default;
         explicit DefineEntry(var_symbol var, DUInst *du = nullptr, SymbolDefineType type = SymbolDefineType::unknown);
         explicit DefineEntry(var_symbol var, BasicBlock *block);
         explicit DefineEntry(im_symbol im);
 
         // 数据成员
 
-        operant defined; ///< 被定义的符号的名字
+        operant defined = {}; ///< 被定义的符号的名字
         SymbolDefineType define_type = SymbolDefineType::meaningless; ///< 符号的定义种类, 被记录下来的符号只有立即数符号，块的参数和变量，函数的参数
         std::variant<std::monostate, DUInst*, BasicBlock*> inst_context = std::monostate{};
 
@@ -72,6 +72,11 @@ namespace SysYust::IR {
         }
 
     };
+
+    static_assert(std::is_default_constructible_v<DefineEntry>);
+    static_assert(std::is_copy_constructible_v<DefineEntry>);
+    static_assert(std::is_copy_assignable_v<DefineEntry>);
+
     struct UsageEntry {
 
         [[nodiscard]] operant opr() const;

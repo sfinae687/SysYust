@@ -4,16 +4,12 @@
 
 #include <range/v3/algorithm.hpp>
 
+#include "utility/Logger.h"
+#include "IR/Procedure.h"
 #include "IR/Def-Use/ProcedureDU.h"
 
 namespace SysYust::IR {
 
-    namespace  {
-        template<typename T>
-        concept have_assigned = requires (std::remove_cvref_t<T> t) {
-            t.assigned;
-        };
-    }
 
     ProcedureDU::ProcedureDU(Procedure &context)
         : global(context.context()->global)
@@ -52,6 +48,14 @@ namespace SysYust::IR {
 
         auto &du_inst = _inst_list[&*inst] = {block, inst, std::move(usages), nullptr};
         if (defined && *defined != procedure.context()->depressed_symbol) {
+
+#ifndef NEDEBUG
+            auto founded = _define_list.find(*defined);
+            if (founded != _define_list.end()) {
+                LOG_ERROR("define a symbol that has defined : defined {}, to define {}", founded->first.var().full(), defined->full());
+            }
+#endif
+
             auto [define_iter, _] = _define_list.emplace(std::piecewise_construct,
                                                       std::tuple{*defined}, std::tuple{*defined, &du_inst});
             du_inst.defineInfo = &define_iter->second;
@@ -243,8 +247,20 @@ namespace SysYust::IR {
     }
 
     void ProcedureDU::rename_define(const value_type &val, const value_type &nVal) {
+        if (val == nVal) {
+            return;
+        }
         auto define_entry = local_defined(val);
-        define_entry->defined = nVal;
+        auto new_define_entry = local_defined(nVal);
+        if (!new_define_entry) {
+            define_entry->defined = nVal;
+             _define_list[nVal] = std::move(*define_entry);
+             define_entry = &_define_list[nVal];
+             _define_list.erase(val);
+        } else {
+            define_entry = new_define_entry;
+            _define_list.erase(val);
+        }
 
         // 处理定义名
         auto define_inst = define_entry->inst();
@@ -261,6 +277,7 @@ namespace SysYust::IR {
         auto usages = usage_set(val);
         for (UsageEntry& i : usages) {
             i.setOpr(nVal);
+            i.defined = define_entry;
         }
         // 转移用例索引
         auto &nMap = _usage_list[nVal];

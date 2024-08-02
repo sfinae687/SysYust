@@ -95,3 +95,21 @@ TEST_F(TestCodeBuilder, InstTest) {
     EXPECT_EQ(rt->assigned.type, Type::get(SysYust::IR::Type::i));
 
 }
+
+TEST_F(TestCodeBuilder, GatewayTest) {
+    function_guard main_func(this, {"main"}, {Type::get(SysYust::IR::Type::i)});
+    entry_block();
+
+    auto cond1 = auto_inst<lt>(im_symbol(64), im_symbol(128));
+    auto condName = cond1->assigned;
+    cond1.push();
+
+    auto br1 = auto_inst<br>(condName, arg_list{}, arg_list{});
+    br1.push();
+
+    auto gateway = current_block()->gateway();
+
+    // gateway 访问
+    EXPECT_EQ(std::get<branch>(gateway), *br1);
+
+}

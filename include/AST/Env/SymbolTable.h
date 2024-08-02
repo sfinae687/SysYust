@@ -65,7 +65,9 @@ namespace SysYust::AST {
             }
             auto &i = seek(id) = e;
             if constexpr (std::is_same_v<entry_t, VarInfo>) {
-                i.isGlobal = true;
+                if (!_parent) {
+                    i.isGlobal = true;
+                }
             }
         }
 
@@ -78,7 +80,9 @@ namespace SysYust::AST {
             }
             auto &i = seek(id) = std::move(e);
             if constexpr (std::is_same_v<entry_t, VarInfo>) {
-                i.isGlobal = true;
+                if (!_parent) {
+                    i.isGlobal = true;
+                }
             }
         }
 

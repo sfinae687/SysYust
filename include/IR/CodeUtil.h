@@ -142,6 +142,40 @@ namespace SysYust::IR {
          */
         void setElse(BasicBlock *blk);
 
+        // block parameter
+
+        /**
+         * @brief 添加一个基本块参数到当前基本块的的形参列表
+         */
+        void add_block_param(var_symbol arg);
+
+        /**
+         * @brief 从当前基本块删除一个基本块参数
+         */
+        void remove_block_param(var_symbol arg);
+
+        /**
+         * @brief 从当前基本块按照索引删除一个基本块参数
+         */
+        void remove_block_param(std::size_t index);
+
+        /**
+         * @brief 检测一个符号名是不是当前基本块参数
+         */
+        bool is_block_param(var_symbol arg);
+
+        /**
+         * @brief 从当前基本块查找一个基本块参数的索引
+         */
+        std::size_t block_param_index(var_symbol arg);
+
+        /**
+         * @brief 从当前基本块按照索引查找一个基本块参数的符号名
+         */
+        var_symbol block_arg(std::size_t index);
+
+        // symbol
+
         /**
          * @brief 从当前函数上下文获取一个新的符号名字
          */
@@ -186,6 +220,32 @@ namespace SysYust::IR {
             {
 
             }
+            /**
+             * @brief 从已经添加到基本块的指令创建
+             */
+            ContextualInst(BasicBlock::iterator aInst, Code *global, Procedure *procedure, BasicBlock *block)
+                : inst(aInst)
+                , _global(global)
+                , _global_context(&global->context)
+                , _procedure(procedure)
+                , _procedure_context(procedure->context())
+                , _currentBlock(block)
+                , _pushed_inst(aInst)
+            {
+
+            }
+
+            ContextualInst(BasicBlock::iterator aInst, CodeBuildMixin *context)
+                : ContextualInst(aInst, context->_ir_code, context->current_procedure(), context->current_block())
+            {
+
+            }
+
+            ~ContextualInst() {
+                if (_pushed_inst.has_value() && inst != std::get<inst_t>(**_pushed_inst)) {
+                    LOG_WARN("destruct a contextual inst with synchronized context");
+                }
+            }
 
             // 带有上下文的操作
 
@@ -196,9 +256,33 @@ namespace SysYust::IR {
             void push() {
                 if (_currentBlock) {
                     _currentBlock->push(inst);
+
+                    // 添加追踪信息
+                    _pushed_inst = --_currentBlock->end();
+                    procedure()->track_inst(block(), *_pushed_inst);
                 } else {
                     LOG_WARN("Try push a inst into nullptr basic block");
                 }
+            }
+
+            [[nodiscard]] bool is_pushed() const {
+                return _pushed_inst.has_value();
+            }
+
+            void re_push() {
+                if (_pushed_inst.has_value() && **_pushed_inst != instruction{inst}) {
+                    procedure()->retrack_inst(*_pushed_inst, inst);
+                }
+            }
+
+            void pull() {
+                if (_pushed_inst) {
+                    inst = std::get<inst_t>(**_pushed_inst);
+                }
+            }
+
+            void drop() {
+                _pushed_inst = std::nullopt;
             }
 
             // 解引用运算
@@ -229,7 +313,13 @@ namespace SysYust::IR {
             BasicBlock* block() {
                 return _currentBlock;
             }
-
+            BasicBlock::iterator pushed_inst_handler() {
+                if (!_pushed_inst) {
+                    return _currentBlock->end();
+                } else {
+                    return *_pushed_inst;
+                }
+            }
 
         private:
             Code *_global;
@@ -237,6 +327,7 @@ namespace SysYust::IR {
             Procedure *_procedure;
             ProcedureContext *_procedure_context;
             BasicBlock* _currentBlock;
+            std::optional<BasicBlock::iterator> _pushed_inst{std::nullopt};
         };
         /**
          * @brief 构建一个新的指令，可以自动生成被赋值的
@@ -249,6 +340,7 @@ namespace SysYust::IR {
             || ct == instruct_cate::with_2
             || ct == instruct_cate::index
             || ct == instruct_cate::alloc
+            || ct == instruct_cate::load
             ) { // 上述几种类型需要自动生成符号
                 assert(_procedure_context);
                 if (_procedure_context)
@@ -277,12 +369,15 @@ namespace SysYust::IR {
             __builtin_unreachable();
         }
 
+        // def-usage
 
+        ProcedureDU& current_du();
 
     private:
 
         void reset();
         BasicBlock*& top_block();
+
 
     }; // CodeBuildMixin
 
