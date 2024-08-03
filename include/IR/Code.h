@@ -15,6 +15,9 @@ namespace SysYust::IR {
         using global_var_value_type = std::unordered_map<var_symbol, InitInfo>; ///< @todo 需要一个描述初始化列表的类型
     public:
 
+        Code() = default;
+        Code(Code &) = delete;
+
         /**
          * @brief 注册一个函数
          * @todo 用例与定义的维护：变量符号，函数
@@ -52,7 +55,7 @@ namespace SysYust::IR {
         const global_var_value_type& all_var_init_value() const;
 
         CodeContext context{};
-    // private:
+    private:
         std::list<Procedure> _all_procedure{};
         global_var_value_type global_var_value{};
     };

@@ -49,7 +49,7 @@ SysYust::IR::operant::operant(SysYust::IR::im_symbol im_val)
     , _symbol(im_val)
 {
     if constexpr (strict_check_flag) {
-        assert(type->isBasic());
+        assert(!type || type->isBasic());
     }
 }
 

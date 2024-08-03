@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     IREmitter::IREmitter iremmiter{};
     auto code = iremmiter.enter(ASTree.get());
 
-    std::cout << fmt::to_string(code) << std::endl;
+    std::cout << fmt::to_string(*code) << std::endl;
 
     return 0;
 }

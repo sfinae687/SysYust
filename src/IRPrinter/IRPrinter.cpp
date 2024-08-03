@@ -12,8 +12,10 @@
 #include "IR/InitInfo.h"
 #include "IR/Instruction.h"
 #include "IR/Procedure.h"
-#include "IR/SymbolUtil.h"
 #include "IR/ProcedureContext.h"
+#include "IR/SymbolUtil.h"
+#include "IdAllocator.h"
+#include "fmt/core.h"
 #include "fmt/format.h"
 
 namespace SysYust::IR {
@@ -176,21 +178,22 @@ std::string format_as(const instruction &inst) {
             if (ret_var.symbol == "_" && ret_var.revision == 0) {
                 return fmt::format("call {}({})", call_inst.func, arg_str);
             } else {
-                return fmt::format("{} = call {}({})", ret_var, call_inst.func, arg_str);
+                return fmt::format("{} = call {}({})", ret_var, call_inst.func,
+                                   arg_str);
             }
         }
         case 3: {  // br
             auto br_inst = std::get<3>(inst);
             std::string true_args_str;
-            for (auto arg : br_inst.ture_args) {  // typo: ture
+            for (auto arg : br_inst.true_args) {
                 true_args_str += fmt::to_string(arg);
             }
             std::string false_args_str;
-            for (auto arg : br_inst.ture_args) {
+            for (auto arg : br_inst.true_args) {
                 false_args_str += fmt::to_string(arg);
             }
-            return fmt::format("br .bb?({}), .bb?({})", true_args_str,
-                               false_args_str);
+            return fmt::format("br {} .bb?({}), .bb?({})", br_inst.cond,
+                               true_args_str, false_args_str);
         }
         case 4: {  // jump
             auto jp_inst = std::get<4>(inst);
@@ -244,7 +247,13 @@ std::string format_as(const instruction &inst) {
 std::string format_as(const BasicBlock &bb) {
     std::string ret;
 
-    ret += fmt::format(".{}: {{", (void *)&bb) + '\n';
+    std::string param_str;
+    for (auto param : bb.getArgs()) {
+        param_str += fmt::to_string(param);
+    }
+    if (!param_str.empty()) param_str = "(" + param_str + ")";
+
+    ret += fmt::format("{}{}: {{", (void *)&bb, param_str) + '\n';
 
     for (auto inst : bb) {
         ret += "    " + fmt::to_string(inst) + "\n";
@@ -261,20 +270,39 @@ std::string format_as(const ControlFlow &cfg) {
     std::string ret;
 
     std::map<BasicBlock *, std::size_t> deg;
+    std::map<BasicBlock *, size_t> blk_id;
     std::queue<BasicBlock *> topo;
     size_t cnt = 0;
-    for (auto &blk_ref : cfg._nodes) {
+    for (auto &blk_ref : cfg.all_nodes()) {
         auto blk = const_cast<BasicBlock *>(&blk_ref);
         int cur_deg = blk->prevBlocks().size();
         deg[blk] = cur_deg;
         if (cur_deg == 0) topo.push(blk);
         ++cnt;
+        blk_id[blk] = cnt;
     }
+
+    std::string dbg_str;
+    for (auto &blk_ref : cfg.all_nodes()) {
+        auto blk = const_cast<BasicBlock *>(&blk_ref);
+        dbg_str += "\n" + fmt::to_string(blk_id[blk]) + ":\n";
+        dbg_str += "prev: ";
+        for (auto prev : blk->prevBlocks()) {
+            dbg_str += ", " + fmt::to_string(blk_id[prev]);
+        }
+        dbg_str += "\n";
+        dbg_str += fmt::format("next: {}, else: {}",
+        blk_id[blk->nextBlock()],
+                               blk_id[blk->elseBlock()]) +
+                   "\n";
+    }
+    fmt::println("{}", dbg_str);
 
     while (!topo.empty()) {
         auto blk = topo.front();
         topo.pop();
-        ret += "\n" + fmt::to_string(*blk) + "\n";
+        ret += "\n.bb" + fmt::to_string(blk_id[blk]) + " " + fmt::to_string(*blk) +
+               "\n";
         if (auto next_blk = blk->nextBlock()) {
             auto it = deg.find(next_blk);
             assert(it != deg.end());
@@ -323,18 +351,24 @@ std::string format_as(const Procedure &proc) {
         params += fmt::to_string(param) + ", ";
     }
 
-    ret += fmt::format("{}({}) {{\n", proc.name(), params);
+    ret += fmt::format("{}({})", proc.name(), params);
 
-    ret += fmt::to_string(const_cast<Procedure &>(proc).getGraph()) + "\n";
+    if (!const_cast<Procedure &>(proc).getGraph().all_nodes().empty()) {
+        ret += " {\n";
 
-    ret += "}";
+        ret += fmt::to_string(const_cast<Procedure &>(proc).getGraph()) + "\n";
+
+        ret += "}";
+    }
+
     return ret;
 }
 
 std::string format_as(const Code &code) {
     std::string ret;
     ret += "// Global Variables:\n";
-    auto &inits = const_cast<std::unordered_map<var_symbol, InitInfo> &>(code.global_var_value);
+    auto &inits = const_cast<std::unordered_map<var_symbol, InitInfo> &>(
+        code.all_var_init_value());
     for (auto gvar : code.context.global_vars()) {
         auto init = inits[gvar];
         ret += fmt::format("{} = {}", gvar, init) + '\n';
@@ -342,7 +376,7 @@ std::string format_as(const Code &code) {
 
     ret += "// Functions:\n";
 
-    for (auto gfunc : code.procedures()) {
+    for (auto &gfunc : code.procedures()) {
         ret += fmt::to_string(gfunc) + "\n";
     }
 

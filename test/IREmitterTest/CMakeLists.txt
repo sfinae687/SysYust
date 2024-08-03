@@ -5,6 +5,21 @@
 add_executable(IREmitterTest IREmitterTest.cpp)
 target_link_libraries(IREmitterTest PRIVATE IREmitter)
 
+list(LENGTH sy_source_list sy_length)
+if (${EnableIREmitterBuildTest} AND NOT ${sy_length} EQUAL 0)
+    list(LENGTH sy_source_list sy_length)
+    MATH(EXPR sy_length "${sy_length}-1")
+    foreach(index RANGE ${sy_length})
+        list(GET sy_test_name_list ${index} current_name)
+        list(GET sy_source_list ${index} current_path)
+        list(GET sy_test_exe_list ${index} sy_executable)
+#        message(${current_name}:${current_path})
+        add_test(NAME IREmitter_Build_${current_name}
+            COMMAND IREmitterTest ${current_path}
+        )
+    endforeach ()
+endif()
+
 list(LENGTH sy_source_list test_case_number)
 if (${EnableIREmitterTest} AND NOT ${test_case_number} EQUAL 0)
     math(EXPR test_case_number "${test_case_number} - 1")

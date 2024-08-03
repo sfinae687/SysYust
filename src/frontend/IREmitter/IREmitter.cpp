@@ -15,6 +15,7 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -77,14 +78,31 @@ std::string IREmitter::Value::toString() const {
 IREmitter::Value IREmitter::readVar(VarId var_id, IR::BasicBlock *bb) {
     if (!bb) bb = current_block();
     auto [id, type] = var_id;
-    if (!curEnv().var_table.contains(id)) {
+    if (!type) type = curEnv().var_table.getInfo(id).type;
+    if (!isLive(id)) {
         assert(_global_vars.contains(id));
-        return _global_vars.getInfo(id);
-    } else if (auto &cache = getContext(bb).read_cache;
-               cache.contains(id)) {
+        auto var_info = curEnv().var_table.getInfo(id);
+        auto val = _global_vars.getInfo(id);
+        if (var_info.isConstant) {
+            println("Read global const var {}", id);
+            auto init =
+                const_cast<std::unordered_map<IR::var_symbol, IR::InitInfo> &>(
+                    ir_code()->all_var_init_value())[val.var()];
+            if (init.is_list()) {
+                assert(init.list().empty());
+                return IR::im_symbol{0};
+            } else {
+                return init.value();
+            }
+        } else {
+            println("Read global {}", id);
+            return val;
+        }
+    } else if (auto &cache = getContext(bb).read_cache; cache.contains(id)) {
+        println("hit {} in {}", id, (void *)bb);
         return cache.getInfo(id);
     } else {
-        return readVarRec(var_id, bb);
+        return readVarRec({id, type}, bb);
     }
 }
 
@@ -95,10 +113,12 @@ IREmitter::Value IREmitter::readVarRec(VarId var_id, IR::BasicBlock *bb) {
 
     auto val = [&]() {
         if (!ctx.seal) {  // for incomplete cfg pred
+            println("hit incomplete");
             auto val = newValue(corr_type(type));
             ctx.incomplete_args.emplace_back(var_id, val);
             return val;
         } else if (bb->prevBlocks().size() == 1) {
+            println("forward in {}", (void *)bb);
             return readVar(var_id, bb->prevBlocks()[0]);
         } else {
             assert(bb->prevBlocks().size() != 0);
@@ -106,6 +126,7 @@ IREmitter::Value IREmitter::readVarRec(VarId var_id, IR::BasicBlock *bb) {
             writeVar(id,
                      placeholder);  // for circular depend (v = phi(1, v))
             addArg(var_id, placeholder, bb);  // fill ba
+            println("collect {} in {}", placeholder.toString(), (void *)bb);
             return placeholder;
         }
     }();
@@ -118,6 +139,7 @@ void IREmitter::writeVar(NumId var_id, Value val) {
     auto bb = current_block();
     auto &ctx = getContext(bb);
     ctx.read_cache.setInfo(var_id, val);
+    println("Write {} = {} in {}", var_id, val.toString(), (void *)bb);
 }
 
 void IREmitter::sealBlock(IR::BasicBlock *bb) {
@@ -141,7 +163,7 @@ std::vector<IR::operant> IREmitter::getCallerArgs(IR::BasicBlock *cur,
         case 1: {  // branch
             auto br = std::get<IR::branch>(term);
             if (pred->nextBlock() == cur) {
-                return br.ture_args;
+                return br.true_args;
             } else if (pred->elseBlock() == cur) {
                 return br.false_args;
             } else {
@@ -180,9 +202,11 @@ void IREmitter::emitBlock(IR::BasicBlock *bb, std::function<void()> emitter) {
     assert(isTerm());
 
     pop_block();
+
+    sealBlock(bb);
 }
 
-IR::Code IREmitter::enter(SyntaxTree *ast) {
+IR::Code *IREmitter::enter(SyntaxTree *ast) {
     _ast = ast;
     setup_code();
 
@@ -206,9 +230,15 @@ IR::Code IREmitter::enter(SyntaxTree *ast) {
     }
 
     _inGlobalScope = false;
-    for (auto [gind, gfunc] : env->func_table) {
-        if (gfunc.node == std::numeric_limits<HNode>::max()) continue;
-        if (gfunc.name != "main") {
+    auto seq_func = env->func_table.getSequence();
+    for (auto gind : seq_func) {
+        auto gfunc = env->func_table.getInfo(gind);
+        if (gfunc.isBuiltin) {
+            const auto &ret_type =
+                gfunc.type ? gfunc.type->getResult() : Void_v;
+            auto func_sym = IR::func_symbol{gfunc.name};
+            ir_code()->setup_procedure(func_sym, {corr_type(&ret_type)});
+        } else if (gfunc.name != "main") {
             auto func_decl = gfunc.node;
             auto &func_node = *ast->getNode(func_decl);
             func_node.execute(this);
@@ -220,7 +250,7 @@ IR::Code IREmitter::enter(SyntaxTree *ast) {
 
     exitln("Exit TopLevel");
 
-    return *getCode();
+    return getCode();
 }
 
 /* -------------- Decl -------------- */
@@ -236,11 +266,12 @@ IR::InitInfo IREmitter::parseInitList(const Type &init_type,
         assert(inits.size() <= 1);
         if (inits.size()) {  // int genshin = 1; or {1} in initlist
             auto val_node = inits[0];
-            // if (_inGlobalScope) {
+            if (_inGlobalScope) {
                 return constevalExpr(*_ast->getNode(val_node));
-            // } else {
-            //     return static_cast<cIR::im_symbol>(evalExpr(*_ast->getNode(val_node)));
-            // }
+            } else {
+                auto val = evalExpr(*_ast->getNode(val_node));
+                return val.isIm() ? IR::InitInfo(val.im()) : val.var();
+            }
         } else {  // int genshin;
             return def_init;
         }
@@ -367,7 +398,8 @@ void IREmitter::execute(const VarDecl &node) {
 
     if (_inGlobalScope) {
         auto &code = *ir_code();
-        auto val = newValue(IR::Type::get(IR::Type::ptr, corr_type(var_decl.type)));
+        auto val =
+            newValue(IR::Type::get(IR::Type::ptr, corr_type(var_decl.type)));
 
         if (node.init_expr.has_value()) {
             auto &init_node = *_ast->getNode(node.init_expr.value());
@@ -399,8 +431,9 @@ void IREmitter::execute(const VarDecl &node) {
         } else {
             // value is zero
             code.set_var(val, std::vector<IR::InitInfo *>{});
-            _global_vars.setInfo(var_id, val);
         }
+        _global_vars.setInfo(var_id, val);
+        println("Write {} = {} in global", var_id, val.toString());
     } else {
         if (node.init_expr.has_value()) {
             auto &init_node = *_ast->getNode(node.init_expr.value());
@@ -432,6 +465,7 @@ void IREmitter::execute(const VarDecl &node) {
             // value is undef
             writeVar(var_id, undef);
         }
+        setLive(var_id);
     }
 
     exitln("~VarDecl {}", var_decl.name);
@@ -440,7 +474,9 @@ void IREmitter::execute(const VarDecl &node) {
 void IREmitter::execute(const FuncDecl &node) {
     enterln("FuncDecl");
 
-    StackWapper env(this, *_ast->seekEnv(&node));
+    auto cur_env = _ast->seekEnv(&node);
+    // cur_env->var_table._parent = nullptr;
+    StackWapper env(this, *cur_env);
 
     auto &func_info = env->func_table.getInfo(node.info_id);
 
@@ -456,9 +492,15 @@ void IREmitter::execute(const FuncDecl &node) {
     // Params
     assert(_isNone());
     size_t len = node.param.size();
+    auto proc = procedure();
     for (size_t i = 0; i < len; ++i) {
         auto param_node =
             cast_unwrap<ParamDecl *>(_ast->getNode(node.param[i]));
+        setLive(param_node->info_id);
+        auto var_info = env->var_table.getInfo(param_node->info_id);
+        auto val = newValue(corr_type(var_info.type));
+        proc->add_param(val);
+        writeVar(param_node->info_id, val);
     }
 
     bool is_main = func_info.name == "main";
@@ -565,8 +607,6 @@ void IREmitter::execute(const Call &node) {
 
     auto func_sym = IR::func_symbol{func_info.name};
 
-    entry_function(func_sym, {corr_type(&ret_type)});
-
     // Arguments evaluation
     std::vector<Value> arg_vals;
     for (auto arg : node.argumentExpr) {
@@ -574,8 +614,12 @@ void IREmitter::execute(const Call &node) {
         auto arg_val = evalExpr(arg_node);
         arg_vals.push_back(arg_val);
     }
-    auto &func_decl = *cast_unwrap<FuncDecl *>(_ast->getNode(func_info.node));
-    assert(func_decl.param.size() == node.argumentExpr.size());
+
+    if (!func_info.isBuiltin) {
+        auto &func_decl =
+            *cast_unwrap<FuncDecl *>(_ast->getNode(func_info.node));
+        assert(func_decl.param.size() == node.argumentExpr.size());
+    }
 
     if (ret_type.type() == TypeId::Void) {
         createInst<IR::call>(func_sym, arg_vals);
@@ -588,9 +632,20 @@ void IREmitter::execute(const Call &node) {
 
 void IREmitter::execute(const DeclRef &node) {
     auto &env = curEnv();
-    VarInfo var_info = env.var_table.getInfo(node.var_id);
 
-    _return(readVar({node.var_id, var_info.type}));
+    printEnv();
+
+    auto var_info = env.var_table.getInfo(node.var_id);
+    bool _isGlobal = !isLive(node.var_id);
+
+    auto val = readVar({node.var_id, nullptr});
+
+    if (_isGlobal && val.type().isPtr()) {
+        auto ret = newValue(val.type().subtype());
+        _return(createInst<IR::ld>(ret, val));
+    } else {
+        _return(val);
+    }
 
     println("DeclRef {} -> {} ({})", var_info.name, _return_value.toString(),
             toString(var_info));
@@ -616,15 +671,22 @@ void IREmitter::execute(const ArrayRef &node) {
     }
     assert(val_scripts.size() == node.subscripts.size());
 
-    _return(createInst<IR::indexof>(arr, val_scripts));
+    auto val = createInst<IR::indexof>(arr, val_scripts);
+
+    if (val.type().subtype()->isBasic()) {
+        auto ret = newValue(val.type().subtype());
+        _return(createInst<IR::ld>(ret, val));
+    } else {
+        _return(val);
+    }
 
     std::string ind_str;
     for (auto val : val_scripts) {
         ind_str += fmt::format("{}, ", val.toString());
     }
 
-    println("ArrayRef {}[{}] -> {} ({})", var_info.name,
-            _return_value.toString(), ind_str, toString(var_info));
+    println("ArrayRef {}[{}] -> {} ({})", var_info.name, ind_str,
+            _return_value.toString(), toString(var_info));
 }
 
 /* ------------ CondExpr ------------ */
@@ -664,6 +726,7 @@ void IREmitter::execute(const And &node) {
         cont_block->getArgs());
     cont_args.emplace_back(val.var());
 
+    sealBlock(current_basic_block());
     entry_block(cont_block);
 
     _return(val);
@@ -695,6 +758,7 @@ void IREmitter::execute(const Or &node) {
         cont_block->getArgs());
     cont_args.emplace_back(val.var());
 
+    sealBlock(current_basic_block());
     entry_block(cont_block);
 
     _return(val);
@@ -771,6 +835,7 @@ void IREmitter::execute(const If &node) {
         createInst<IR::br>(cond, then_block, cont_block);
     }
 
+    sealBlock(current_basic_block());
     entry_block(cont_block);
 
     exitln("~If");
@@ -799,7 +864,9 @@ void IREmitter::execute(const While &node) {
         createInst<IR::br>(cond, body_block, cont_block);
     });
 
-    entry_block(cond_block);
+    createInst<IR::jp>(cond_block);
+    sealBlock(current_basic_block());
+    entry_block(cont_block);
 
     exitln("~While");
 }
@@ -807,12 +874,14 @@ void IREmitter::execute(const While &node) {
 void IREmitter::execute(const Break &node) {
     auto [_, cont_block] = curCFD();
     createInst<IR::jp>(cont_block);
+    sealBlock(current_block());
     println("Break");
 }
 
 void IREmitter::execute(const Continue &node) {
     auto [cond_block, _] = curCFD();
     createInst<IR::jp>(cond_block);
+    sealBlock(current_block());
     println("Continue");
 }
 
@@ -863,9 +932,9 @@ void IREmitter::execute(const Assign &node) {
                    dynamic_cast<DeclRef *>(_ast->getNode(node.l_val))) {
         auto var_id = decl_ref->var_id;
         auto var_info = curEnv().var_table.getInfo(var_id);
-        if (_ast->topEnv()->var_table.contains(var_id)) {
+        if (!isLive(var_id)) {
             // is global var!
-            auto lv = evalExpr(*_ast->getNode(node.l_val));
+            auto lv = _global_vars.getInfo(var_id);
             createInst<IR::st>(lv, rv);
         } else {
             // assign SSA Value

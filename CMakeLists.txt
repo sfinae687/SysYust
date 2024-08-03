@@ -8,7 +8,8 @@ option(SELF_CONTAINS "let all dependency store in lib/" OFF)
 option(GeneratedDocument "add a target to generate document by doxygen form code comments" OFF)
 option(EnableASTBuildTest "enable the tests of AST Build" OFF)
 option(EnableInterpreterTest "enable the tests of Interpreter" OFF)
-option(EnableIREmitterTest "enable the tests of IREmitter" ON)
+option(EnableIREmitterBuildTest "enable the build tests of IREmitter" ON)
+option(EnableIREmitterTest "enable the tests of IREmitter" OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 

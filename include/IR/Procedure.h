@@ -28,6 +28,8 @@ namespace SysYust::IR {
          */
         Procedure(CodeContext &code, func_symbol name, func_info info, std::vector<var_symbol> params = {});
 
+        Procedure(Procedure &) = delete;
+
         // 控制流
         ControlFlow& getGraph();
 

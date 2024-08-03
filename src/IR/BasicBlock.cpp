@@ -59,7 +59,7 @@ namespace SysYust::IR {
     void BasicBlock::setElse(BasicBlock *t) {
         assert(t);
         // 删除下一个节点的前驱
-        if (trueTarget != nullptr) { // 原先有子节点
+        if (falseTarget != nullptr) { // 原先有子节点
             auto target = ranges::find(falseTarget->_prevBlock, this);
             if (target != falseTarget->_prevBlock.end()) {
                 falseTarget->_prevBlock.erase(target);

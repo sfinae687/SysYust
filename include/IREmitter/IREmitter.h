@@ -100,8 +100,15 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
        public:
         Value() : val(undef) {};
         Value(IR::im_symbol im) : val(im) {};
-        Value(IR::var_symbol var) : val(std::make_shared<IR::var_symbol>(var)) {};
-        // Value(IR::operant val) : val(val) {};
+        Value(IR::var_symbol var)
+            : val(std::make_shared<IR::var_symbol>(var)) {};
+        Value(IR::operant op) {
+            if (op.symbol.index() == 0) {
+                std::construct_at(this, std::move(op.var()));
+            } else {
+                std::construct_at(this, op.im());
+            }
+        };
 
         std::variant<std::shared_ptr<IR::var_symbol>, IR::im_symbol> val;
 
@@ -200,8 +207,7 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
     template <typename T, typename... Args>
     void reconstruct(T &v, Args... args) {
         std::destroy_at(std::addressof(v));
-        std::construct_at(std::addressof(v),
-                          std::forward<Args>(args)...);
+        std::construct_at(std::addressof(v), std::forward<Args>(args)...);
     }
 
     [[nodiscard]] IR::im_symbol constevalExpr(Node &node);
@@ -218,7 +224,7 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
         return val;
     }
 
-    IR::Code enter(SyntaxTree *ast);
+    IR::Code *enter(SyntaxTree *ast);
 
     using BreakContinue = std::pair<IR::BasicBlock *, IR::BasicBlock *>;
 
@@ -228,6 +234,7 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
     ContextTable _ctx_tab;
     SymbolTable<Value> _global_vars;
     std::stack<Env> _env_stack;
+    std::stack<SymbolTable<std::monostate>> _lives_stack;
     std::stack<BreakContinue> _cfd_stack;
     SyntaxTree *_ast;
 
@@ -248,6 +255,13 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
         StackWapper(IREmitter *emitter, ElemParam elem) : emitter(emitter) {
             if constexpr (std::is_same_v<Elem, Env>) {
                 stack = &emitter->_env_stack;
+                if (!emitter->_inGlobalScope) {
+                    if (!emitter->_lives_stack.empty())
+                        emitter->_lives_stack.push(SymbolTable<std::monostate>(
+                            emitter->_lives_stack.top()));
+                    else
+                        emitter->_lives_stack.push({});
+                }
             } else if constexpr (std::is_same_v<Elem, BreakContinue>) {
                 stack = &emitter->_cfd_stack;
             }
@@ -257,6 +271,12 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
         ~StackWapper() {
             assert(!stack->empty());
             stack->pop();
+            if constexpr (std::is_same_v<Elem, Env>) {
+                if (!emitter->_inGlobalScope &&
+                    !emitter->_lives_stack.empty()) {
+                    emitter->_lives_stack.pop();
+                }
+            }
         }
 
         Elem *operator->() {
@@ -273,6 +293,19 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
     auto &curCFD() {
         assert(!_cfd_stack.empty());
         return _cfd_stack.top();
+    }
+
+    void setLive(NumId var_id) {
+        assert(!_lives_stack.empty());
+        _lives_stack.top().setInfo(var_id, std::monostate{});
+    }
+
+    bool isLive(NumId var_id) {
+        if (_lives_stack.empty()) {
+            return false;
+        } else {
+            return _lives_stack.top().contains(var_id);
+        }
     }
 
     bool isTerm() {
@@ -332,9 +365,11 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
         auto type = var_info.type;
         auto isConstant = var_info.isConstant;
         auto isParam = var_info.isParam;
-        return fmt::format("{} \t: {} \t({}decl_id: {}, const? {}, param? {})",
-                           name, type->toString(), id_str, decl, isConstant,
-                           isParam);
+        auto isGlobal = var_info.isGlobal;
+        return fmt::format(
+            "{} \t: {} \t({}decl_id: {}, const? {}, param? {}, global? {})",
+            name, type->toString(), id_str, decl, isConstant, isParam,
+            isGlobal);
     }
 
     void printEnv() {
@@ -430,11 +465,21 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
         if constexpr (ct == IR::instruct_cate::with_1 ||
                       ct == IR::instruct_cate::with_2 ||
                       ct == IR::instruct_cate::index ||
-                      ct == IR::instruct_cate::alloc) {
-            auto inst = *auto_inst<T>(
+                      ct == IR::instruct_cate::alloc ||
+                      ct == IR::instruct_cate::load ||
+                      ct == IR::instruct_cate::call) {
+            auto inst_ctx = auto_inst<T>(
                 try_cast<IR::operant, Value>(std::forward<Args>(args))...);
-            current_block()->push(inst);
-            return Value(inst.assigned);
+            current_block()->push(*inst_ctx);
+            if constexpr (T == IR::ld) {
+                auto ld = dynamic_cast<IR::load *>(&*inst_ctx);
+                return Value(ld->target);
+            } else if constexpr (T == IR::call) {
+                auto call = dynamic_cast<IR::call_instruct *>(&*inst_ctx);
+                return Value(call->assigned);
+            } else {
+                return Value(inst_ctx->assigned);
+            }
         } else {
             // no assigned
             auto inst = *auto_inst<T>(

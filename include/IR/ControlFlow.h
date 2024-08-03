@@ -50,6 +50,10 @@ namespace SysYust::IR {
 
         const std::list<BasicBlock>& all_nodes() const;
 
+        ControlFlow() = default;
+        ControlFlow(ControlFlow &) = delete;
+        ControlFlow &operator=(ControlFlow &) = delete;
+
     private:
         BasicBlock *_head = nullptr;
        std::list<BasicBlock> _nodes{};
