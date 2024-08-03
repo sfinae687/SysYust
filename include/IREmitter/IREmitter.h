@@ -557,7 +557,7 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
         static long long global_conter = 0;
         if (_inGlobalScope) {
             auto global_ctx = global_context();
-            auto val = IR::var_symbol("@", ++global_conter, type);
+            auto val = IR::var_symbol{"@", static_cast<size_t>(++global_conter), type};
             Value ret(val);
             return ret;
         } else {

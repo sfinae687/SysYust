@@ -111,10 +111,13 @@ IREmitter::Value IREmitter::readVarRec(VarId var_id, IR::BasicBlock *bb) {
     auto &cache = ctx.read_cache;
     auto [id, type] = var_id;
 
+    auto &&idCaptured = id;
+    auto &&typeCaptured = type;
+
     auto val = [&]() {
         if (!ctx.seal) {  // for incomplete cfg pred
             println("hit incomplete");
-            auto val = newValue(corr_type(type));
+            auto val = newValue(corr_type(typeCaptured));
             ctx.incomplete_args.emplace_back(var_id, val);
             return val;
         } else if (bb->prevBlocks().size() == 1) {
@@ -123,7 +126,7 @@ IREmitter::Value IREmitter::readVarRec(VarId var_id, IR::BasicBlock *bb) {
         } else {
             assert(bb->prevBlocks().size() != 0);
             auto placeholder = Value();
-            writeVar(id,
+            writeVar(idCaptured,
                      placeholder);  // for circular depend (v = phi(1, v))
             addArg(var_id, placeholder, bb);  // fill ba
             println("collect {} in {}", placeholder.toString(), (void *)bb);
