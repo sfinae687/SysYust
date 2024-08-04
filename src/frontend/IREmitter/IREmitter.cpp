@@ -83,7 +83,7 @@ IREmitter::Value IREmitter::readVar(VarId var_id, IR::BasicBlock *bb) {
         assert(_global_vars.contains(id));
         auto var_info = curEnv().var_table.getInfo(id);
         auto val = _global_vars.getInfo(id);
-        if (var_info.isConstant) {
+        if (var_info.isConstant && var_info.type->isBasicType()) {
             println("Read global const var {}", id);
             auto init =
                 const_cast<std::unordered_map<IR::var_symbol, IR::InitInfo> &>(
@@ -125,7 +125,7 @@ IREmitter::Value IREmitter::readVarRec(VarId var_id, IR::BasicBlock *bb) {
             return readVar(var_id, bb->prevBlocks()[0]);
         } else {
             assert(bb->prevBlocks().size() != 0);
-            auto placeholder = Value();
+            auto placeholder = newValue(corr_type(typeCaptured));
             writeVar(idCaptured,
                      placeholder);  // for circular depend (v = phi(1, v))
             addArg(var_id, placeholder, bb);  // fill ba
@@ -676,7 +676,9 @@ void IREmitter::execute(const ArrayRef &node) {
 
     auto val = createInst<IR::indexof>(arr, val_scripts);
 
-    if (val.type().subtype()->isBasic()) {
+    if (_inAssign) {
+        _return(val);
+    } else if (val.type().subtype()->isBasic()) {
         auto ret = newValue(val.type().subtype());
         _return(createInst<IR::ld>(ret, val));
     } else {
@@ -929,7 +931,9 @@ void IREmitter::execute(const Assign &node) {
 
     auto rv = evalExpr(*_ast->getNode(node.r_val));
     if (auto arr_ref = dynamic_cast<ArrayRef *>(_ast->getNode(node.l_val))) {
+        _inAssign = true;
         auto lv = evalExpr(*_ast->getNode(node.l_val));
+        _inAssign = false;
         createInst<IR::st>(lv, rv);
     } else if (auto decl_ref =
                    dynamic_cast<DeclRef *>(_ast->getNode(node.l_val))) {

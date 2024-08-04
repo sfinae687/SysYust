@@ -230,6 +230,7 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
 
    private:
     bool _inGlobalScope = true;
+    bool _inAssign = false;
     Value _return_value = undef;
     ContextTable _ctx_tab;
     SymbolTable<Value> _global_vars;
