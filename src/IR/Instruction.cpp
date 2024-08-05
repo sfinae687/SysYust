@@ -76,7 +76,7 @@ namespace SysYust::IR {
         , assigned({assigned.symbol, assigned.revision, [&]{
             // 计算结果类型
             auto curT = arr_like.type;
-            for (int i=0; i<index.size(); ++i) {
+            for (int i=1; i<index.size(); ++i) {
                 curT = curT->subtype();
             }
             return Type::get(Type::ptr, curT);
