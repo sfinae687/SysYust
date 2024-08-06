@@ -4,7 +4,6 @@
 
 #include <utility>
 #include <cassert>
-#include "IR/TypeUtil.h"
 
 #include "IR/Instruction.h"
 
@@ -164,11 +163,16 @@ namespace SysYust::IR {
             }
             case instruct_cate::load: {
                 auto &load_inst = std::get<load>(it);
-                return {load_inst.source};
+                return load_inst.source;
             }
             case instruct_cate::store: {
                 auto &store_inst = std::get<store>(it);
-                return {store_inst.source};
+                switch (index) {
+                    case 0:
+                        return store_inst.target;
+                    case 1:
+                        return store_inst.source;
+                }
             }
             case instruct_cate::index: {
                 auto &index_inst = std::get<indexOf>(it);
@@ -192,14 +196,17 @@ namespace SysYust::IR {
                 } else {
                     inst_2.opr1 = nArg;
                 }
+                break;
             }
             case instruct_cate::with_1: {
                 auto &inst_1 = std::get<compute_with_1>(it);
                 inst_1.opr = nArg;
+                break;
             }
             case instruct_cate::call: {
                 auto &call_inst = std::get<call_instruct>(it);
                 call_inst.args[index] = nArg;
+                break;
             }
             case instruct_cate::branch: {
                 auto &br_inst = std::get<branch>(it);
@@ -210,22 +217,34 @@ namespace SysYust::IR {
                 } else {
                     br_inst.false_args[index-1-true_size] = nArg;
                 }
+                break;
             }
             case instruct_cate::jump: {
                 auto &jump_inst = std::get<jump>(it);
                 jump_inst.args[index] = nArg;
+                break;
             }
             case instruct_cate::ret: {
                 auto &ret_inst = std::get<ret>(it);
                 *ret_inst.args = nArg;
+                break;
             }
             case instruct_cate::load: {
                 auto &load_inst = std::get<load>(it);
-                load_inst.source = nArg.var();
+                load_inst.target = nArg.var();
+                break;
             }
             case instruct_cate::store: {
                 auto &store_inst = std::get<store>(it);
-                store_inst.source = nArg;
+                switch (index) {
+                    case 0:
+                        store_inst.target = nArg.var();
+                        break;
+                    case 1:
+                        store_inst.source = nArg;
+                        break;
+                }
+                break;
             }
             case instruct_cate::index: {
                 auto &ind_inst = std::get<indexOf>(it);
@@ -234,6 +253,7 @@ namespace SysYust::IR {
                 } else {
                     ind_inst.ind[index - 1] = nArg;
                 }
+                break;
             }
             default:
                 __builtin_unreachable();
@@ -243,9 +263,9 @@ namespace SysYust::IR {
     std::size_t arg_size(const instruction &it) {
         switch (static_cast<instruct_cate>(it.index())) {
             case instruct_cate::with_2:
+            case instruct_cate::load:
                 return 2;
             case instruct_cate::with_1:
-            case instruct_cate::load:
             case instruct_cate::store:
                 return 1;
             case instruct_cate::alloc:
