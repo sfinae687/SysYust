@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <functional>
 #include <limits>
+#include <map>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -23,6 +24,8 @@
 #include "AST/Env/SymbolTable.h"
 #include "AST/Env/VarInfo.h"
 #include "AST/Node/ArrayRef.h"
+#include "AST/Node/BinaryOp.h"
+#include "AST/Node/Compare.h"
 #include "AST/Node/Continue.h"
 #include "AST/Node/DeclRef.h"
 #include "AST/Node/Expr.h"
@@ -76,10 +79,16 @@ std::string IREmitter::Value::toString() const {
 /* ------- Algorithm required ------- */
 
 IREmitter::Value IREmitter::readVar(VarId var_id, IR::BasicBlock *bb) {
-    if (!bb) bb = current_block();
     auto [id, type] = var_id;
+    bool _isGlobal = false;
+    if (!bb) {
+        bb = current_block();
+        // auto &env = 
+        // _isGlobal = env.var_table.getInfo(id).isGlobal;
+        _isGlobal = !isLive(id);
+    } else _isGlobal = !isLive(id);
     if (!type) type = curEnv().var_table.getInfo(id).type;
-    if (!isLive(id)) {
+    if (_isGlobal) {
         assert(_global_vars.contains(id));
         auto var_info = curEnv().var_table.getInfo(id);
         auto val = _global_vars.getInfo(id);
@@ -117,7 +126,7 @@ IREmitter::Value IREmitter::readVarRec(VarId var_id, IR::BasicBlock *bb) {
     auto val = [&]() {
         if (!ctx.seal) {  // for incomplete cfg pred
             println("hit incomplete");
-            auto val = newValue(corr_type(typeCaptured));
+            auto val = newValue(ptr_arr(corr_type(typeCaptured)));
             ctx.incomplete_args.emplace_back(var_id, val);
             return val;
         } else if (bb->prevBlocks().size() == 1) {
@@ -125,7 +134,7 @@ IREmitter::Value IREmitter::readVarRec(VarId var_id, IR::BasicBlock *bb) {
             return readVar(var_id, bb->prevBlocks()[0]);
         } else {
             assert(bb->prevBlocks().size() != 0);
-            auto placeholder = newValue(corr_type(typeCaptured));
+            auto placeholder = newValue(ptr_arr(corr_type(typeCaptured)));
             writeVar(idCaptured,
                      placeholder);  // for circular depend (v = phi(1, v))
             addArg(var_id, placeholder, bb);  // fill ba
@@ -197,7 +206,8 @@ void IREmitter::addArg(VarId var_id, Value val, IR::BasicBlock *bb) {
 
 /* -------------- Enter -------------- */
 
-void IREmitter::emitBlock(IR::BasicBlock *bb, std::function<void()> emitter) {
+void IREmitter::emitBlock(IR::BasicBlock *bb, std::function<void()> emitter,
+                          bool seal) {
     save_and_entry(bb);
 
     emitter();
@@ -206,7 +216,7 @@ void IREmitter::emitBlock(IR::BasicBlock *bb, std::function<void()> emitter) {
 
     pop_block();
 
-    sealBlock(bb);
+    if (seal) sealBlock(bb);
 }
 
 IR::Code *IREmitter::enter(SyntaxTree *ast) {
@@ -259,7 +269,10 @@ IR::Code *IREmitter::enter(SyntaxTree *ast) {
 /* -------------- Decl -------------- */
 
 IR::im_symbol IREmitter::constevalExpr(Node &node) {
-    return evalExpr(node).im();
+    _inConstCtx = true;
+    auto ret = evalExpr(node).im();
+    _inConstCtx = false;
+    return ret;
 }
 
 IR::InitInfo IREmitter::parseInitList(const Type &init_type,
@@ -401,8 +414,8 @@ void IREmitter::execute(const VarDecl &node) {
 
     if (_inGlobalScope) {
         auto &code = *ir_code();
-        auto val =
-            newValue(IR::Type::get(IR::Type::ptr, corr_type(var_decl.type)));
+        Value val;
+        val = newValue(IR::Type::get(IR::Type::ptr, corr_type(var_decl.type)));
 
         if (node.init_expr.has_value()) {
             auto &init_node = *_ast->getNode(node.init_expr.value());
@@ -418,15 +431,8 @@ void IREmitter::execute(const VarDecl &node) {
 
                 code.set_var(val, init_list);
             } else if (auto expr_node = dynamic_cast<Expr *>(&init_node)) {
-                if (auto i32_im = dynamic_cast<IntLiteral *>(expr_node)) {
-                    code.set_var(val, IR::im_symbol{i32_im->value});
-                } else if (auto f32_im =
-                               dynamic_cast<FloatLiteral *>(expr_node)) {
-                    code.set_var(val, IR::im_symbol{f32_im->value});
-                } else {
-                    assert(false && "Global var should be constant!");
-                    __builtin_unreachable();
-                }
+                auto init_val = constevalExpr(*expr_node);
+                code.set_var(val, init_val);
             } else {
                 assert(false && "Wrong init list");
                 __builtin_unreachable();
@@ -464,9 +470,14 @@ void IREmitter::execute(const VarDecl &node) {
             } else {
                 assert(false && "Wrong init list");
             }
-        } else {
-            // value is undef
-            writeVar(var_id, undef);
+        } else { // int a[2]; / int a;
+            if (var_decl.type->isBasicType()) {
+                // value is undef
+                writeVar(var_id, undef);
+            } else {
+                auto val = createInst<IR::alc>(corr_type(var_decl.type));
+                writeVar(var_id, val);
+            }
         }
         setLive(var_id);
     }
@@ -501,7 +512,8 @@ void IREmitter::execute(const FuncDecl &node) {
             cast_unwrap<ParamDecl *>(_ast->getNode(node.param[i]));
         setLive(param_node->info_id);
         auto var_info = env->var_table.getInfo(param_node->info_id);
-        auto val = newValue(corr_type(var_info.type));
+        auto corr_ty = ptr_arr(corr_type(var_info.type));
+        auto val = newValue(corr_ty);
         proc->add_param(val);
         writeVar(param_node->info_id, val);
     }
@@ -547,6 +559,13 @@ void IREmitter::execute(const ToInt &node) {
     auto val = evalExpr(op_node);
     assert(val.type().isFlt());
 
+    if (_inConstCtx || val.isIm()) {
+        assert(val.isIm());
+        _return(IR::im_symbol(static_cast<int>(val.imf())));
+        exitln("~ToInt");
+        return;
+    }
+
     _return(createInst<IR::f2i>(val));
 
     exitln("~ToInt");
@@ -559,23 +578,82 @@ void IREmitter::execute(const ToFloat &node) {
     auto val = evalExpr(op_node);
     assert(val.type().isInt());
 
+    if (_inConstCtx || val.isIm()) {
+        assert(val.isIm());
+        _return(IR::im_symbol(static_cast<float>(val.imi())));
+        exitln("~ToFloat");
+        return;
+    }
+
     _return(createInst<IR::i2f>(val));
 
     exitln("~ToFloat");
 }
 
+template <typename T>
+T constevalUnaryOp(UnaryOp::OpType type, T val) {
+    if (type == UnaryOp::Positive) {
+        return val;
+    } else {
+        return -val;
+    }
+}
+
 void IREmitter::execute(const UnaryOp &node) {
     enterln("UnaryOp type: {}", toString(node.type));
 
-    Value operand = evalExpr(*_ast->getNode(node.subexpr));
+    Value val = evalExpr(*_ast->getNode(node.subexpr));
 
-    if (node.type == UnaryOp::Positive) {
-        _return(operand);
-    } else {
-        _return(createInst<IR::neg>(operand));
+    if (_inConstCtx || val.isIm()) {
+        assert(val.isIm());
+        _return([&]() -> IR::im_symbol {
+            if (val.isImI()) {
+                return constevalUnaryOp<int>(node.type, val.imi());
+            } else {
+                return constevalUnaryOp<float>(node.type, val.imf());
+            }
+        }());
+
+        exitln("~UnaryOp {} {}", toString(node.type), val.toString());
+        return;
     }
 
-    exitln("~UnaryOp {} {}", toString(node.type), operand.toString());
+    if (node.type == UnaryOp::Positive) {
+        _return(val);
+    } else {
+        _return(createInst<IR::neg>(val));
+    }
+
+    exitln("~UnaryOp {} {}", toString(node.type), val.toString());
+}
+
+template <typename T>
+T constevalBinaryOp(BinaryOp::OpType type, T op1, T op2) {
+    switch (type) {
+        case BinaryOp::Add:
+            return op1 + op2;
+            break;
+        case BinaryOp::Sub:
+            return op1 - op2;
+            break;
+        case BinaryOp::Mul:
+            return op1 * op2;
+            break;
+        case BinaryOp::Div:
+            assert(op2 != 0);
+            return op1 / op2;
+            break;
+        case BinaryOp::Mod:
+            if constexpr (std::is_same_v<T, int>) {
+                assert(op2 != 0);
+                return op1 % op2;
+            } else {
+                assert(false && "float mod!");
+            }
+            break;
+        default:
+            assert(false && "Bug");
+    }
 }
 
 void IREmitter::execute(const BinaryOp &node) {
@@ -586,6 +664,22 @@ void IREmitter::execute(const BinaryOp &node) {
     assert(lhs.type() == rhs.type());
     assert(!(lhs.type().isFlt() && node.type == BinaryOp::OpType::Mod) &&
            "Mod float occurs!");
+
+    if (_inConstCtx || lhs.isIm() && rhs.isIm()) {
+        assert(lhs.isIm() && rhs.isIm());
+        _return([&]() -> IR::im_symbol {
+            if (lhs.isImI()) {
+                return constevalBinaryOp<int>(node.type, lhs.imi(), rhs.imi());
+            } else {
+                return constevalBinaryOp<float>(node.type, lhs.imf(),
+                                                rhs.imf());
+            }
+        }());
+
+        exitln("~BinaryOp {} {} {}", lhs.toString(), toString(node.type),
+               rhs.toString());
+        return;
+    }
 
     const IR::instruct_type op_tab[] = {
         IR::add,   // Add
@@ -643,7 +737,11 @@ void IREmitter::execute(const DeclRef &node) {
 
     auto val = readVar({node.var_id, nullptr});
 
-    if (_isGlobal && val.type().isPtr()) {
+    if (val.isIm()) {
+        _return(val);
+    }
+
+    if (_isGlobal && val.type().isPtr() && val.type().subtype()->isBasic()) {
         auto ret = newValue(val.type().subtype());
         _return(createInst<IR::ld>(ret, val));
     } else {
@@ -654,11 +752,29 @@ void IREmitter::execute(const DeclRef &node) {
             toString(var_info));
 }
 
+IR::im_symbol constevalArrayRef(IR::InitInfo &info,
+                                std::vector<IREmitter::Value> &index,
+                                size_t layer) {
+    assert(layer <= index.size());
+    if (info.is_list()) {
+        auto cur_ind = index[layer].imi();
+        if (info.list().size() - 1 >= cur_ind) {
+            return constevalArrayRef(*info.list()[cur_ind], index, layer + 1);
+        } else
+            return 0;
+    } else {
+        return info.value().im();
+    }
+}
+
 void IREmitter::execute(const ArrayRef &node) {
     // println("! ArrayRef pre seek");
+    auto _in_direct_assign = _toLValue;
+    _toLValue = false;
     auto &env = curEnv();
     auto &var_info = env.var_table.getInfo(node.var_id);
     auto var_type = var_info.type;
+    bool _isGlobalConstArr = var_info.isConstant && !isLive(node.var_id);
 
     // getInfoTrace(node.var_id);
     auto arr = readVar({node.var_id, var_info.type});
@@ -666,17 +782,39 @@ void IREmitter::execute(const ArrayRef &node) {
     println("! ArrayRef indexes");
 
     std::vector<Value> val_scripts;
+    bool _isConstIndex = true;
     for (auto i : node.subscripts) {
         auto &val_node = *_ast->getNode(i);
         auto val = evalExpr(val_node);
         assert(val.type().isInt());
         val_scripts.push_back(val);
+
+        _isConstIndex &= val.isIm();
     }
     assert(val_scripts.size() == node.subscripts.size());
 
+    assert(!(_isGlobalConstArr && _in_direct_assign) &&
+           "You can not assign a const-qualified array!");
+
+    if (_isGlobalConstArr && _isConstIndex) {
+        auto init_val =
+            const_cast<std::unordered_map<IR::var_symbol, IR::InitInfo> &>(
+                ir_code()->all_var_init_value())[arr];
+        _return(constevalArrayRef(init_val, val_scripts, 0));
+
+        std::string ind_str;
+        for (auto val : val_scripts) {
+            ind_str += fmt::format("{}, ", val.toString());
+        }
+
+        println("ArrayRef constGlobal {}[{}] -> {} ({})", var_info.name,
+                ind_str, _return_value.toString(), toString(var_info));
+        return;
+    }
+
     auto val = createInst<IR::indexof>(arr, val_scripts);
 
-    if (_inAssign) {
+    if (_in_direct_assign) {
         _return(val);
     } else if (val.type().subtype()->isBasic()) {
         auto ret = newValue(val.type().subtype());
@@ -689,7 +827,6 @@ void IREmitter::execute(const ArrayRef &node) {
     for (auto val : val_scripts) {
         ind_str += fmt::format("{}, ", val.toString());
     }
-
     println("ArrayRef {}[{}] -> {} ({})", var_info.name, ind_str,
             _return_value.toString(), toString(var_info));
 }
@@ -702,6 +839,14 @@ void IREmitter::execute(const Not &node) {
     auto val = evalExpr(*_ast->getNode(node.subexpr));
     assert(val.type().isInt());
 
+    if (_inConstCtx || val.isIm()) {
+        assert(val.isIm());
+        _return(IR::im_symbol(val.imi() == 0));
+
+        exitln("~Not !{}", val.toString());
+        return;
+    }
+
     _return(createInst<IR::eq>(val, Value(0)));
 
     exitln("~Not !{}", val.toString());
@@ -712,10 +857,29 @@ void IREmitter::execute(const And &node) {
 
     // lv ? rv : 0
 
+    auto lv = evalExpr(*_ast->getNode(node.lhs));
+
+    if (_inConstCtx) {
+        auto rv = evalExpr(*_ast->getNode(node.rhs));
+        assert(lv.isIm() && rv.isIm());
+        _return(IR::im_symbol(lv.imi() && rv.imi()));
+        exitln("~And {} && {}", lv.toString(), rv.toString());
+        return;
+    }
+
+    if (lv.isIm()) {
+        if (lv.imi()) {
+            _return(evalExpr(*_ast->getNode(node.rhs)));
+            exitln("~And const true && {}", _return_value.toString());
+        } else {
+            _return(IR::im_symbol(0));
+            exitln("~And const false && -");
+        }
+        return;
+    }
+
     auto cont_block = newBasicBlock();
     auto true_block = newBasicBlock();
-
-    auto lv = evalExpr(*_ast->getNode(node.lhs));
 
     std::string rv_str;
     emitBlock(true_block, [&]() {
@@ -744,10 +908,29 @@ void IREmitter::execute(const Or &node) {
 
     // lv ? 1 : rv
 
+    auto lv = evalExpr(*_ast->getNode(node.lhs));
+
+    if (_inConstCtx) {
+        auto rv = evalExpr(*_ast->getNode(node.rhs));
+        assert(lv.isIm() || rv.isIm());
+        _return(IR::im_symbol(lv.imi() || rv.imi()));
+        exitln("~Or {} || {}", lv.toString(), rv.toString());
+        return;
+    }
+
+    if (lv.isIm()) {
+        if (!lv.imi()) {
+            _return(evalExpr(*_ast->getNode(node.rhs)));
+            exitln("~Or const false || {}", _return_value.toString());
+        } else {
+            _return(IR::im_symbol(1));
+            exitln("~Or const true || -");
+        }
+        return;
+    }
+
     auto cont_block = newBasicBlock();
     auto false_block = newBasicBlock();
-
-    auto lv = evalExpr(*_ast->getNode(node.lhs));
 
     std::string rv_str;
     emitBlock(false_block, [&]() {
@@ -771,12 +954,53 @@ void IREmitter::execute(const Or &node) {
     exitln("~Or {} || {}", lv.toString(), rv_str);
 }
 
+template <typename T>
+T constevalCompare(Compare::CompareType type, T op1, T op2) {
+    switch (type) {
+        case Compare::EQ:
+            return op1 == op2;
+            break;
+        case Compare::NE:
+            return op1 != op2;
+            break;
+        case Compare::GT:
+            return op1 > op2;
+            break;
+        case Compare::GE:
+            return op1 >= op2;
+            break;
+        case Compare::LT:
+            return op1 < op2;
+            break;
+        case Compare::LE:
+            return op1 <= op2;
+            break;
+        default:
+            assert(false && "Bug");
+            __builtin_unreachable();
+    }
+}
+
 void IREmitter::execute(const Compare &node) {
     enterln("Compare type: {}", toString(node.type));
 
     auto lhs = evalExpr(*_ast->getNode(node.lhs)),
          rhs = evalExpr(*_ast->getNode(node.rhs));
     assert(lhs.type() == rhs.type());
+
+    if (_inConstCtx || lhs.isIm() && rhs.isIm()) {
+        assert(lhs.isIm() && rhs.isIm());
+        if (lhs.isImI()) {
+            _return(IR::im_symbol(
+                constevalCompare<int>(node.type, lhs.imi(), rhs.imi())));
+        } else {
+            _return(IR::im_symbol(
+                constevalCompare<float>(node.type, lhs.imf(), rhs.imf())));
+        }
+        exitln("~Compare {} {} {}", lhs.toString(), toString(node.type),
+               rhs.toString());
+        return;
+    }
 
     IR::instruct_type op_tab[] = {
         IR::eq,  // EQ
@@ -798,6 +1022,16 @@ void IREmitter::execute(const ToCond &node) {
 
     auto val = evalExpr(*_ast->getNode(node.operant));
 
+    if (_inConstCtx || val.isIm()) {
+        assert(val.isIm());
+        if (val.isImI()) {
+            _return(IR::im_symbol(val.imi() != 0));
+        } else {
+            _return(IR::im_symbol(val.imf() != 0));
+        }
+        exitln("~ToCond {}", val.toString());
+    }
+
     _return(createInst<IR::ne>(val, Value(0)));
 
     exitln("~ToCond {}", val.toString());
@@ -809,8 +1043,43 @@ void IREmitter::execute(const If &node) {
     enterln("If");
 
     auto cond = evalExpr(*_ast->getNode(node.cond));
+
+    if (cond.type().isFlt()) {
+        enterln("FIXME: ToInt");
+
+        auto val = cond;
+        assert(val.type().isFlt());
+
+        if (_inConstCtx || val.isIm()) {
+            assert(val.isIm());
+            cond = IR::im_symbol(static_cast<int>(val.imf()));
+            exitln("FIXME: ~ToInt");
+            return;
+        }
+
+        cond = createInst<IR::f2i>(val);
+
+        exitln("FIXME: ~ToInt");
+    }
+
     assert(cond.type().isInt());
-    // assert(0 <= cond && cond <= 1);
+
+    if (cond.isIm()) {
+        assert(0 <= cond.imi() && cond.imi() <= 1);
+        if (cond.imi()) {
+            println("! Iftrue:");
+            auto &iftrue = *_ast->getNode(node.stmts);
+            iftrue.execute(this);
+        } else if (node.else_stmt != -1) {
+            println("! Iffalse:");
+            auto &iffalse = *_ast->getNode(node.else_stmt);
+            iffalse.execute(this);
+        } else {
+            println("! No else_stmt");
+        }
+        exitln("~If");
+        return;
+    }
 
     auto cont_block = newBasicBlock();
 
@@ -858,18 +1127,21 @@ void IREmitter::execute(const While &node) {
 
     StackWapper<BreakContinue> cfd(this, {cond_block, cont_block});
 
+    emitBlock(
+        cond_block,
+        [&]() {
+            auto cond = evalExpr(cond_node);
+            createInst<IR::br>(cond, body_block, cont_block);
+        },
+        false);
+
     emitBlock(body_block, [&]() {
         body.execute(this);
         createInst<IR::jp>(BlockCall(cont_block));
     });
 
-    // ensure all preds are connected
-    emitBlock(cond_block, [&]() {
-        auto cond = evalExpr(cond_node);
-        createInst<IR::br>(cond, body_block, cont_block);
-    });
-
     createInst<IR::jp>(cond_block);
+    sealBlock(cond_block);
     sealBlock(current_basic_block());
     entry_block(cont_block);
 
@@ -931,9 +1203,8 @@ void IREmitter::execute(const Assign &node) {
 
     auto rv = evalExpr(*_ast->getNode(node.r_val));
     if (auto arr_ref = dynamic_cast<ArrayRef *>(_ast->getNode(node.l_val))) {
-        _inAssign = true;
+        _toLValue = true;
         auto lv = evalExpr(*_ast->getNode(node.l_val));
-        _inAssign = false;
         createInst<IR::st>(lv, rv);
     } else if (auto decl_ref =
                    dynamic_cast<DeclRef *>(_ast->getNode(node.l_val))) {

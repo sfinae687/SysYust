@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <climits>
+#include <functional>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -130,6 +131,21 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
             return std::get<1>(val);
         }
 
+        auto isImI() {
+            assert(isIm());
+            return im().data.index() == 0;
+        }
+
+        auto imf() {
+            assert(isIm());
+            return std::get<float>(im().data);
+        }
+
+        auto imi() {
+            assert(isIm());
+            return std::get<int>(im().data);
+        }
+
         bool isUndef() const {
             return isIm() && im().data.index() == 2;
         }
@@ -202,7 +218,7 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
     void execute(const Block &) override;
     void execute(const Empty &) override;
 
-    void emitBlock(IR::BasicBlock *bb, std::function<void()> emitter);
+    void emitBlock(IR::BasicBlock *bb, std::function<void()> emitter, bool seal = true);
 
     template <typename T, typename... Args>
     void reconstruct(T &v, Args... args) {
@@ -230,7 +246,8 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
 
    private:
     bool _inGlobalScope = true;
-    bool _inAssign = false;
+    bool _toLValue = false;
+    bool _inConstCtx = false;
     Value _return_value = undef;
     ContextTable _ctx_tab;
     SymbolTable<Value> _global_vars;
@@ -575,6 +592,13 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
     std::vector<IR::operant> getCallerArgs(IR::BasicBlock *cur,
                                            IR::BasicBlock *pred);
     void addArg(VarId var_id, Value val, IR::BasicBlock *bb);
+
+    /// wrap arr by ptr (ptr [3 x [2 x i32]])
+    const IR::Type* ptr_arr(const IR::Type *ty) {
+        assert(!ty->isPtr());
+        if (ty->isArr()) ty = IR::Type::get(IR::Type::ptr, ty);
+        return ty;
+    }
 };
 
 template <>
@@ -609,7 +633,7 @@ inline const IR::Type *corr_type(const Type *type) {
     } else if (type->type() == TypeId::Pointer) {
         auto ptr_ty = cast_unwrap<const Pointer *>(type);
         auto sub_ty = &ptr_ty->index(1);
-        return IR::Type::get(IRTypeId::ptr, corr_type(sub_ty));
+        return IR::Type::get(IRTypeId::arr, corr_type(sub_ty), 0);
     }
     assert(false && "none corr_type");
 }

@@ -28,9 +28,9 @@ namespace SysYust::IR {
                 LOG_WARN("The initial value isn't match the variable type for variable {}", var.full());
             }
         } else {
-            if (!init.is_list()) {
-                var.type = init.value().type;
-            }
+            // if (!init.is_list()) {
+            //     var.type = init.value().type;
+            // }
             context.addGlobal(var);
             global_var_value[var] = init;
         }

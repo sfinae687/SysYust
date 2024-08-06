@@ -23,6 +23,11 @@ namespace SysYust::IR {
 /* ------------ TypeUtil ------------ */
 
 std::string format_as(const Type &type) {
+    volatile auto t = &type;
+    if (!t) {
+        return fmt::format("!empty");
+    }
+
     using namespace std::string_literals;
     using Id = Type::TypeId;
     switch (type.id()) {
@@ -31,7 +36,7 @@ std::string format_as(const Type &type) {
         case Id::f:
             return "f32"s;
         case Id::arr:
-            return fmt::format("[{} x {}]", type.data(), *type.subtype());
+            return fmt::format("[{} x {}]", (type.data() == 0 ? "?" : fmt::to_string(type.data())), *type.subtype());
         case Id::ptr:
             return fmt::format("ptr {}", *type.subtype());
         case Id::dyn:
@@ -46,6 +51,8 @@ std::string format_as(const Type &type) {
 std::string format_as(const IR::var_symbol &var) {
     if (var.symbol == "" && var.revision == 0 && var.type == 0) {
         return fmt::format("(Dummy)");
+    } else if (!var.type) {
+        return fmt::format("(err {}{}: {})", var.symbol, var.revision, (void *)var.type);
     }
     return fmt::format("({}{}: {})", var.symbol, var.revision, *var.type);
 }
@@ -231,7 +238,7 @@ std::string format_as(const instruction &inst) {
             auto indexOf_inst = std::get<9>(inst);
             std::string ind_str;
             for (auto ind : indexOf_inst.ind) {
-                ind_str += fmt::to_string(ind);
+                ind_str += fmt::to_string(ind) + ", ";
             }
             return fmt::format("{} = index {}, {}", indexOf_inst.assigned,
                                indexOf_inst.arr, ind_str);

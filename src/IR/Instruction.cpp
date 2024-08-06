@@ -4,6 +4,7 @@
 
 #include <utility>
 #include <cassert>
+#include "IR/TypeUtil.h"
 
 #include "IR/Instruction.h"
 
