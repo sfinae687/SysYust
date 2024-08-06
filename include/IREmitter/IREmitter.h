@@ -588,6 +588,7 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
 
     void writeVar(NumId var_id, Value val);
     Value readVar(VarId var_id, IR::BasicBlock *bb = nullptr);
+    Value readVarInner(VarId var_id, IR::BasicBlock *bb);
     Value readVarRec(VarId var_id, IR::BasicBlock *bb);
     void sealBlock(IR::BasicBlock *bb);
     std::vector<IR::operant> getCallerArgs(IR::BasicBlock *cur,

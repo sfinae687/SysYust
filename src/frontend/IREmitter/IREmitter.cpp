@@ -80,15 +80,8 @@ std::string IREmitter::Value::toString() const {
 
 IREmitter::Value IREmitter::readVar(VarId var_id, IR::BasicBlock *bb) {
     auto [id, type] = var_id;
-    bool _isGlobal = false;
-    if (!bb) {
-        bb = current_block();
-        // auto &env = 
-        // _isGlobal = env.var_table.getInfo(id).isGlobal;
-        _isGlobal = !isLive(id);
-    } else _isGlobal = !isLive(id);
     if (!type) type = curEnv().var_table.getInfo(id).type;
-    if (_isGlobal) {
+    if (!isLive(id)) {
         assert(_global_vars.contains(id));
         auto var_info = curEnv().var_table.getInfo(id);
         auto val = _global_vars.getInfo(id);
@@ -107,7 +100,16 @@ IREmitter::Value IREmitter::readVar(VarId var_id, IR::BasicBlock *bb) {
             println("Read global {}", id);
             return val;
         }
-    } else if (auto &cache = getContext(bb).read_cache; cache.contains(id)) {
+    } else {
+        return readVarInner(var_id, bb);
+    }
+}
+
+IREmitter::Value IREmitter::readVarInner(VarId var_id, IR::BasicBlock *bb) {
+    auto [id, type] = var_id;
+    if (!type) type = curEnv().var_table.getInfo(id).type;
+    if (!bb) bb = current_block();
+    if (auto &cache = getContext(bb).read_cache; cache.contains(id)) {
         println("hit {} in {}", id, (void *)bb);
         return cache.getInfo(id);
     } else {
@@ -131,7 +133,7 @@ IREmitter::Value IREmitter::readVarRec(VarId var_id, IR::BasicBlock *bb) {
             return val;
         } else if (bb->prevBlocks().size() == 1) {
             println("forward in {}", (void *)bb);
-            return readVar(var_id, bb->prevBlocks()[0]);
+            return readVarInner(var_id, bb->prevBlocks()[0]);
         } else {
             assert(bb->prevBlocks().size() != 0);
             auto placeholder = newValue(ptr_arr(corr_type(typeCaptured)));
@@ -200,7 +202,7 @@ void IREmitter::addArg(VarId var_id, Value val, IR::BasicBlock *bb) {
     bb->add_arg(val);
     for (auto pred : bb->prevBlocks()) {
         getCallerArgs(bb, pred).emplace_back(
-            static_cast<const IR::operant &>(readVar(var_id, pred)));
+            static_cast<const IR::operant &>(readVarInner(var_id, pred)));
     }
 }
 
