@@ -24,7 +24,7 @@
 #include "AST/SyntaxTreeString.h"
 
 namespace fs = std::filesystem;
-namespace ranges = std::ranges;
+// namespace ranges = std::ranges;
 namespace views = std::views;
 namespace IREmitter = SysYust::AST::IREmitter;
 

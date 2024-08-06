@@ -742,8 +742,7 @@ void IREmitter::execute(const DeclRef &node) {
     }
 
     if (_isGlobal && val.type().isPtr() && val.type().subtype()->isBasic()) {
-        auto ret = newValue(val.type().subtype());
-        _return(createInst<IR::ld>(ret, val));
+        _return(createInst<IR::ld>(val));
     } else {
         _return(val);
     }
@@ -817,8 +816,7 @@ void IREmitter::execute(const ArrayRef &node) {
     if (_in_direct_assign) {
         _return(val);
     } else if (val.type().subtype()->isBasic()) {
-        auto ret = newValue(val.type().subtype());
-        _return(createInst<IR::ld>(ret, val));
+        _return(createInst<IR::ld>(val));
     } else {
         _return(val);
     }

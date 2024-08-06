@@ -100,6 +100,7 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
     class Value {
        public:
         Value() : val(undef) {};
+        Value(IR::im_symbol::flag f) : val(f) {};
         Value(IR::im_symbol im) : val(im) {};
         Value(IR::var_symbol var)
             : val(std::make_shared<IR::var_symbol>(var)) {};
@@ -164,7 +165,7 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
 
         std::string toString() const;
     };
-    inline static IR::im_symbol undef = IR::im_symbol::undef;
+    using IR::im_symbol::undef;
 
     class BlockCall {
        public:
