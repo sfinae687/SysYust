@@ -304,7 +304,6 @@ namespace SysYust::IR {
     };
 
     static_assert(std::is_copy_assignable_v<indexOf>);
-    static_assert(std::equality_comparable<indexOf>);
 
     /**
      * @brief 读取操作
@@ -484,7 +483,6 @@ namespace SysYust::IR {
             >;
     static_assert(std::is_copy_constructible_v<instruction>);
     static_assert(std::is_copy_assignable_v<instruction>);
-    static_assert(std::equality_comparable<instruction>);
 
     [[maybe_unused]] std::size_t arg_size(const instruction &it);
 

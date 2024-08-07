@@ -4,7 +4,7 @@
 
 #include <utility>
 #include <filesystem>
-#include <ranges>
+//#include <ranges>
 #include <exception>
 #include <stdexcept>
 #include <iostream>
@@ -12,6 +12,9 @@
 
 #include <ANTLRInputStream.h>
 #include <CommonTokenStream.h>
+
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
 
 #include "SysYLexer.h"
 #include "SysYParser.h"
@@ -23,8 +26,8 @@
 #include "AST/SyntaxTreeString.h"
 
 namespace fs = std::filesystem;
-namespace ranges = std::ranges;
-namespace views = std::views;
+//namespace ranges = std::ranges;
+namespace views = ranges::views;
 namespace Interpreter = SysYust::AST::Interpreter;
 
 using namespace std::literals::string_literals;

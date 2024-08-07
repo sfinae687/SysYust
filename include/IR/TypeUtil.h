@@ -40,7 +40,25 @@ namespace SysYust::IR {
         Type(const Type&) = default;
         ~Type() = default;
 
-        friend auto operator<=> (const Type &, const Type &) = default;
+        friend bool operator< (const Type &lhs, const Type &rhs) {
+            if (lhs._id != rhs._id) {
+                return lhs._id < rhs._id;
+            } else if (lhs._data != rhs._data) {
+                return lhs._data < rhs._data;
+            } else if (lhs._subType && rhs._subType) {
+                return *lhs._subType < *rhs._subType;
+            } else {
+                if (lhs.subtype()) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
+
+        friend bool operator== (const Type &lhs, const Type &rhs) {
+            return lhs._id == rhs._id && lhs._data == rhs._data && lhs._subType == rhs._subType;
+        }
 
         [[nodiscard]] bool isInt() const {
             return _id == i;

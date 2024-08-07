@@ -5,7 +5,7 @@
 #include <fmt/ranges.h>
 
 #include <cassert>
-#include <compare>
+//#include <compare>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>

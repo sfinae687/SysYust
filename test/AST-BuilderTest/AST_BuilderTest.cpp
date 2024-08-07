@@ -3,11 +3,13 @@
 //
 #include <utility>
 #include <filesystem>
-#include <ranges>
 #include <exception>
 #include <stdexcept>
 #include <iostream>
 #include <fstream>
+
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
 
 #include <ANTLRInputStream.h>
 #include <CommonTokenStream.h>
@@ -21,8 +23,8 @@
 #include "utility/StreamLogger.h"
 
 namespace fs = std::filesystem;
-namespace ranges = std::ranges;
-namespace views = std::views;
+//namespace ranges = std::ranges;
+namespace views = ranges::views;
 
 using namespace std::literals::string_literals;
 
