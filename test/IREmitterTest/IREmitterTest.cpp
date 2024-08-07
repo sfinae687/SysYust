@@ -4,7 +4,6 @@
 
 #include <utility>
 #include <filesystem>
-#include <ranges>
 #include <exception>
 #include <stdexcept>
 #include <iostream>
@@ -12,6 +11,9 @@
 
 #include <ANTLRInputStream.h>
 #include <CommonTokenStream.h>
+
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
 
 #include "SysYLexer.h"
 #include "SysYParser.h"
@@ -25,7 +27,7 @@
 
 namespace fs = std::filesystem;
 // namespace ranges = std::ranges;
-namespace views = std::views;
+namespace views = ranges::views;
 namespace IREmitter = SysYust::AST::IREmitter;
 
 using namespace std::literals::string_literals;

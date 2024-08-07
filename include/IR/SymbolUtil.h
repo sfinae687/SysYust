@@ -8,7 +8,6 @@
 #include <functional>
 #include <variant>
 #include <string>
-#include <compare>
 
 #include "IR/TypeUtil.h"
 
@@ -61,7 +60,12 @@ namespace SysYust::IR {
 
         [[nodiscard]] label_type full() const;
 
-        friend auto operator<=> (const func_symbol &lhs, const func_symbol &rhs) = default;
+        friend bool operator< (const func_symbol &lhs, const func_symbol &rhs) {
+            return lhs.symbol < rhs.symbol;
+        }
+        friend bool operator== (const func_symbol &lhs, const func_symbol &rhs) {
+            return lhs.symbol == rhs.symbol;
+        }
 
         label_type symbol;
     };
@@ -74,11 +78,11 @@ namespace SysYust::IR {
         static constexpr char seq = '@';
 
         [[nodiscard]] label_type full() const;
-        friend std::strong_ordering operator<=> (const var_symbol &lhs, const var_symbol &rhs) noexcept {
-            if (auto key1 = lhs.symbol <=> rhs.symbol; key1 != 0) {
+        friend bool operator< (const var_symbol &lhs, const var_symbol &rhs) {
+            if (auto key1 = lhs.symbol < rhs.symbol; key1 != 0) {
                 return key1;
             } else {
-                return lhs.revision <=> rhs.revision;
+                return lhs.revision < rhs.revision;
             }
         }
         friend bool operator== (const var_symbol &lhs, const var_symbol &rhs) {
@@ -98,8 +102,6 @@ namespace SysYust::IR {
         const Type * type = Type::get(Type::none);
     };
 
-    // 这里需要 <compare>
-    static_assert(std::three_way_comparable<var_symbol>);
 
     /**
      * @brief 常量标签
@@ -135,7 +137,13 @@ namespace SysYust::IR {
         /*NOLINT*/ im_symbol(flag f, const Type *type = Type::get(Type::i));
         ~im_symbol() = default;
 
-        friend auto operator<=> (const im_symbol &lhs, const im_symbol &rhs) = default;
+        friend bool operator< (const im_symbol &lhs, const im_symbol &rhs) {
+            return lhs.data < rhs.data;
+        }
+
+        friend bool operator== (const im_symbol &lhs, const im_symbol &rhs) {
+            return lhs.data == rhs.data;
+        }
 
         [[nodiscard]] label_type full() const;
         auto operator| (auto F) const {
@@ -170,9 +178,10 @@ namespace SysYust::IR {
             return *this;
         }
 
-        friend auto operator<=> (const operant &lhs, const operant &rhs) noexcept {
-            return lhs._symbol <=> rhs._symbol;
+        friend bool operator< (const operant &lhs, const operant &rhs) {
+            return lhs._symbol < rhs._symbol;
         }
+
         friend bool operator== (const operant &lhs, const operant &rhs) {
             return lhs._symbol == rhs._symbol;
         }

@@ -106,9 +106,9 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
             : val(std::make_shared<IR::var_symbol>(var)) {};
         Value(IR::operant op) {
             if (op.symbol.index() == 0) {
-                std::construct_at(this, std::move(op.var()));
+                new(this) Value(std::move(op.var()));
             } else {
-                std::construct_at(this, op.im());
+                new(this) Value( op.im());
             }
         };
 
@@ -165,7 +165,7 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
 
         std::string toString() const;
     };
-    using IR::im_symbol::undef;
+    inline static constexpr auto undef =  IR::im_symbol::undef;
 
     class BlockCall {
        public:
@@ -224,7 +224,7 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
     template <typename T, typename... Args>
     void reconstruct(T &v, Args... args) {
         std::destroy_at(std::addressof(v));
-        std::construct_at(std::addressof(v), std::forward<Args>(args)...);
+        new(std::addressof(v)) T(std::forward<Args>(args)...);
     }
 
     [[nodiscard]] IR::im_symbol constevalExpr(Node &node);

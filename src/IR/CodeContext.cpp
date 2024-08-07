@@ -30,7 +30,8 @@ namespace SysYust::IR {
 
     void CodeContext::set_func(const func_symbol& sym, func_info func) {
         LOG_INFO("IR:: Set function {}", sym.full());
-        func_set[sym] = func;
+        auto &&ent = func_set[sym];
+        ent = func;
     }
 
     bool CodeContext::isGlobal(const var_symbol& sym) const {
