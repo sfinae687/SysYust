@@ -21,6 +21,7 @@ namespace SysYust::AST {
         std::string name;
         const Function *type;
         HNode node; ///< 声明它的节点的索引编号
+        bool isBuiltin = false;
 
         bool operator< (const FuncInfo &oth) const;
     };

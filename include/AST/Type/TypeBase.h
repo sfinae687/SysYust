@@ -130,7 +130,6 @@ namespace SysYust::AST {
     /**
      * @brief Type的CRTP基类，为归类和类型获取提供默认实现
      * @tparam D 使用TypeBase的派生类
-     * @todo 序列化和调试的字符串化
      */
     template<typename D>
     class TypeBase : public Type {

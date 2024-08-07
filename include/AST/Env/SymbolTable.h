@@ -11,6 +11,7 @@
 #include <memory>
 #include <cassert>
 
+#include "AST/Env/VarInfo.h"
 #include "utility/IdAllocator.h"
 #include "utility/Logger.h"
 
@@ -62,7 +63,12 @@ namespace SysYust::AST {
             if (!contains(id)) {
                 _seq.push_back(id);
             }
-            seek(id) = e;
+            auto &i = seek(id) = e;
+            if constexpr (std::is_same_v<entry_t, VarInfo>) {
+                if (!_parent) {
+                    i.isGlobal = true;
+                }
+            }
         }
 
         /**
@@ -72,7 +78,12 @@ namespace SysYust::AST {
             if (!contains(id)) {
                 _seq.push_back(id);
             }
-            seek(id) = std::move(e);
+            auto &i = seek(id) = std::move(e);
+            if constexpr (std::is_same_v<entry_t, VarInfo>) {
+                if (!_parent) {
+                    i.isGlobal = true;
+                }
+            }
         }
 
         /**

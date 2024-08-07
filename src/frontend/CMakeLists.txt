@@ -49,3 +49,9 @@ target_link_libraries(AST PUBLIC Antlr4_SysY)
 add_subdirectory(Interpreter)
 
 target_link_libraries(Interpreter PUBLIC AST)
+
+# IREmitter
+
+add_subdirectory(IREmitter)
+
+target_link_libraries(IREmitter PUBLIC AST IR IRPrinter)

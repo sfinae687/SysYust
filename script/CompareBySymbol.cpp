@@ -9,13 +9,15 @@
 #include <filesystem>
 #include <algorithm>
 #include <vector>
-#include <ranges>
+
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
 
 #include <fmt/core.h>
 
 namespace fs = std::filesystem;
-namespace ranges = std::ranges;
-namespace views = std::views;
+//namespace ranges = std::ranges;
+namespace views = ranges::views;
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {

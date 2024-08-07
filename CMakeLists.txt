@@ -1,13 +1,15 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.16)
 project(SysYust VERSION 0.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 option(SELF_CONTAINS "let all dependency store in lib/" OFF)
-option(GeneratedDocument "add a target to generate document by doxygen form code comments" ON)
+option(GeneratedDocument "add a target to generate document by doxygen form code comments" OFF)
 option(EnableASTBuildTest "enable the tests of AST Build" OFF)
-option(EnableInterpreterTest "enable the tests of Interpreter" ON)
+option(EnableInterpreterTest "enable the tests of Interpreter" OFF)
+option(EnableIREmitterBuildTest "enable the build tests of IREmitter" ON)
+option(EnableIREmitterTest "enable the tests of IREmitter" OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
@@ -18,7 +20,7 @@ include(FetchContent)
 set(DOXYGEN_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile)
 set(SYSYUST_PUBLIC_HEADER_DIR ${CMAKE_SOURCE_DIR}/include)
 
-set(sy_source_root ${CMAKE_SOURCE_DIR}/compiler2023/TestCase/hidden_functional)
+set(sy_source_root ${CMAKE_SOURCE_DIR}/compiler2023/TestCase/functional)
 set(sy_lib ${CMAKE_SOURCE_DIR}/compiler2023/TestCase/sylib.c)
 set(sy_header ${CMAKE_SOURCE_DIR}/compiler2023/TestCase/sylib.h)
 file(GLOB_RECURSE sy_source_list  ${sy_source_root}/*.sy)
@@ -35,6 +37,8 @@ find_package(Doxygen)
 
 if (NOT DEFINED DOXYGEN_FOUND)
     message("Doxygen is not found")
+else()
+    message(Doxygen:${DOXYGEN_EXECUTABLE})
 endif ()
 
 # 启用第三方库
