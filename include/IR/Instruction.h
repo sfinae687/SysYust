@@ -9,7 +9,8 @@
 #include <optional>
 #include <cassert>
 
-#include "SymbolUtil.h"
+#include "IR/RISCV_inst.h"
+#include "IR/SymbolUtil.h"
 
 namespace SysYust::IR {
 
@@ -65,7 +66,10 @@ namespace SysYust::IR {
         br, jp, rt,
 
         // 内存
-        alc, ld, st
+        alc, ld, st,
+
+        // 其他
+        rv,
     };
 
     /**
@@ -116,6 +120,7 @@ namespace SysYust::IR {
         store,
         alloc,
         index,
+        rv_inst,
     };
 
     /**
@@ -143,6 +148,8 @@ namespace SysYust::IR {
     inline constexpr instruct_cate inst_cate<alloc> = instruct_cate::alloc;
     template<>
     inline constexpr instruct_cate inst_cate<indexOf> = instruct_cate::index;
+    template<>
+    inline constexpr instruct_cate inst_cate<RiscVInstruction> = instruct_cate::rv_inst;
 
     constexpr bool is_gateway(instruct_cate c) {
         if (c == instruct_cate::jump
@@ -162,6 +169,9 @@ namespace SysYust::IR {
         switch (t) {
             case instruct_type::INT:
                 return instruct_cate::out_of_instruct;
+
+            case instruct_type::rv:
+                return instruct_cate::rv_inst;
 
             // 一元操作的实现
             case instruct_type::neg:
@@ -464,6 +474,8 @@ namespace SysYust::IR {
             return alloc(std::forward<Args>(args)...);
         } else if constexpr (ct == instruct_cate::index /*always true*/ ) {
             return indexOf(std::forward<Args>(args)...);
+        } else if constexpr (ct == instruct_cate::rv_inst) {
+            return RiscVInstruction(std::forward<Args>(args)...);
         } else {
             __builtin_unreachable();
         }
@@ -479,7 +491,8 @@ namespace SysYust::IR {
             load,
             store,
             alloc,
-            indexOf
+            indexOf,
+            RiscVInstruction
             >;
     static_assert(std::is_copy_constructible_v<instruction>);
     static_assert(std::is_copy_assignable_v<instruction>);

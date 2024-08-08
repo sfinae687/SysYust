@@ -21,6 +21,11 @@ namespace SysYust::IR {
     }
 
     void ProcedureDU::add_inst(BasicBlock *block, BasicBlock::iterator inst) {
+
+        if (static_cast<instruct_cate>(inst->index()) == instruct_cate::rv_inst) {
+            return;
+        }
+
         // 一条语句对定义-依赖的影响：
         //  添加一条你定义符号
         //  添加若干条依赖使用
@@ -64,6 +69,11 @@ namespace SysYust::IR {
     }
 
     bool ProcedureDU::remove_inst(BasicBlock::iterator inst) {
+
+        if (static_cast<instruct_cate>(inst->index()) == instruct_cate::rv_inst) {
+            return true;
+        }
+
         std::optional<value_type> defined;
         defined = std::visit([&](auto &i) -> std::remove_cvref_t<decltype(defined)> {
             if constexpr (have_assigned<decltype(i)>) {
@@ -94,6 +104,11 @@ namespace SysYust::IR {
     }
 
     void ProcedureDU::set_inst(BasicBlock::iterator inst, const instruction &nInst) {
+
+        if (static_cast<instruct_cate>(inst->index()) == instruct_cate::rv_inst) {
+            return;
+        }
+
         auto &raw_du_inst = instDUInfo(inst);
 
         std::optional<operant> defined_symbol{std::nullopt};
@@ -140,6 +155,9 @@ namespace SysYust::IR {
     }
 
     DUInst & ProcedureDU::instDUInfo(BasicBlock::iterator inst) {
+        if (static_cast<instruct_cate>(inst->index()) == instruct_cate::rv_inst) {
+            throw std::logic_error("Acquire a RiscV instruction's def-usage information");
+        }
         return _inst_list.at(&*inst);
     }
 
@@ -235,6 +253,9 @@ namespace SysYust::IR {
 
     usage_pointer
     ProcedureDU::add_usage(BasicBlock *block, BasicBlock::iterator inst, value_type var, std::size_t ind) {
+        if (static_cast<instruct_cate>(inst->index()) == instruct_cate::rv_inst) {
+            throw std::logic_error("Try to trace RiscV Instruction");
+        }
         UsageEntry ue{local_defined(var), block, inst, ind};
         auto [list, pos] = usage_insert_pos(var, block, inst);
         return list.insert(pos, ue);
