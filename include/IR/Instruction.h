@@ -25,6 +25,7 @@ namespace SysYust::IR {
     struct branch;
     struct jump;
     struct ret;
+    struct RiscVInstruction;
 
     using arg_list = std::vector<operant>;
 
@@ -480,6 +481,29 @@ namespace SysYust::IR {
             __builtin_unreachable();
         }
     }
+
+    /**
+     * @brief RiscV 指令的存储类型，目前支持一个返回值和追多两个参数值
+     */
+    struct RiscVInstruction : public instruct<RiscVInstruction> {
+        RiscVInst id;
+        RV_Returned_Value _returned{};
+        std::array<RV_Argument_Value, 2> _args{};
+
+        template<RiscVInst inst>
+        auto returned() {
+            using return_type = typename RV_Type<inst>::return_type;
+            return std::get<return_type>(_returned);
+        };
+
+        template<RiscVInst inst, std::size_t N>
+        auto arg() {
+            using arg_type = std::tuple_element_t<N, typename RV_Type<inst>::args>();
+            return std::any_cast<arg_type>(_args[N]);
+        }
+
+    };
+
 
     using instruction = std::variant<
             compute_with_2,

@@ -272,7 +272,7 @@ namespace SysYust::IR {
      * @brief 用于 **访问** 指令的类型信息的别名模板
      */
     template <RiscVInst rv_inst>
-    using RV_Type = _rv_inst_type<rv_inst>::type;
+    using RV_Type = typename _rv_inst_type<rv_inst>::type;
 
     namespace {
         template <typename RT, RiscVInst inst, typename... args>
@@ -403,28 +403,6 @@ struct _rv_inst_type<_details_select_inst<__VA_ARGS__>> { \
 #pragma pop_macro("DECL1F")
 #pragma pop_macro("DECLRF")
 
-
-    /**
-     * @brief RiscV 指令的存储类型，目前支持一个返回值和追多两个参数值
-     */
-    struct RiscVInstruction {
-        RiscVInst id;
-        RV_Returned_Value _returned{};
-        std::array<RV_Argument_Value, 2> _args{};
-
-        template<RiscVInst inst>
-        auto returned() {
-            using return_type = typename RV_Type<inst>::return_type;
-            return std::get<return_type>(_returned);
-        };
-
-        template<RiscVInst inst, std::size_t N>
-        auto arg() {
-            using arg_type = std::tuple_element_t<N, typename RV_Type<inst>::args>();
-            return std::any_cast<arg_type>(_args[N]);
-        }
-
-    };
 
 }
 
