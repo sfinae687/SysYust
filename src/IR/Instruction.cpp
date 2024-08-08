@@ -5,6 +5,11 @@
 #include <utility>
 #include <cassert>
 
+#include <range/v3/range.hpp>
+#include <range/v3/view.hpp>
+#include <range/v3/action.hpp>
+#include <range/v3/algorithm.hpp>
+
 #include "IR/Instruction.h"
 
 
@@ -182,6 +187,11 @@ namespace SysYust::IR {
                     return index_inst.ind[index - 1];
                 }
             }
+            case instruct_cate::rv_inst: {
+                auto &rvi = std::get<RiscVInstruction>(it);
+                assert(!rvi.register_arg);
+                return std::get<operant>(rvi._args[index]);
+            }
             default:
                 __builtin_unreachable();
         }
@@ -255,6 +265,11 @@ namespace SysYust::IR {
                 }
                 break;
             }
+            case instruct_cate::rv_inst: {
+                auto &rvi = std::get<RiscVInstruction>(it);
+                rvi._args[index] = nArg;
+                break;
+            }
             default:
                 __builtin_unreachable();
         }
@@ -294,8 +309,70 @@ namespace SysYust::IR {
                 auto &id_inst = std::get<indexOf>(it);
                 return 1 + id_inst.ind.size();
             }
+            case instruct_cate::rv_inst: {
+                auto &rvi = std::get<RiscVInstruction>(it);
+                std::size_t arg_count = 0;
+                if (rvi.register_arg && rvi._returned.index() != 0) {
+                    ++arg_count;
+                }
+                for (auto &i : rvi._args) {
+                    if (i.index() != 0) {
+                        ++arg_count;
+                    }
+                }
+                return arg_count;
+            }
             default:
                 __builtin_unreachable();
         }
+    }
+
+    var_symbol RiscVInstruction::assigned() const {
+        if (_returned.index() != 1) {
+            return {"_", 0};
+        } else {
+            return std::get<var_symbol>(_returned);
+        }
+    }
+
+    RiscVInstruction
+    RiscVInstruction::assign_register(std::optional<RV_Returned_Value> rt, const std::vector<RV_Argument_Value> &args) {
+        assert(!register_arg);
+        if (rt.has_value()) {
+            return {id, *rt, args};
+        }
+        else {
+            return {id, {}, args};
+        }
+    }
+
+    RiscVInstruction::RiscVInstruction(RiscVInst id, RV_Returned_Value rt, const std::vector<RV_Argument_Value> &arg)
+        : instruct<RiscVInstruction>(rv)
+        , register_arg(true)
+        , id(id)
+        , _returned(rt)
+    {
+        assert(arg.size() <= 2);
+        ranges::copy(arg, _args.begin());
+    }
+
+    RiscVInstruction::RiscVInstruction(RiscVInst id, const std::vector<operant> &arg)
+        : instruct<RiscVInstruction>(rv)
+        , register_arg(false)
+        , id(id)
+        , _returned()
+    {
+        assert(arg.size() <= 2);
+        ranges::copy(arg, _args.begin());
+    }
+
+    RiscVInstruction::RiscVInstruction(RiscVInst id, var_symbol assigned, const std::vector<operant> &arg)
+        : instruct<RiscVInstruction>(rv)
+        , register_arg(false)
+        , id(id)
+        , _returned(assigned)
+    {
+        assert(arg.size() <= 2);
+        ranges::copy(arg, _args.begin());
     }
 } // IR

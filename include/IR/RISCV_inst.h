@@ -14,6 +14,7 @@
 #include <array>
 #include <any>
 
+#include "IR/SymbolUtil.h"
 
 namespace SysYust::IR {
 
@@ -74,17 +75,52 @@ namespace SysYust::IR {
      */
     template <std::size_t N>
     struct i_bits_im {
+        i_bits_im() = default;
+        /*NOLINT*/ i_bits_im(im_symbol im)
+            : value(get<i32>(im.data))
+        {
+
+        }
         struct is_riscv_arg{};
         int value : N;
     };
+
+    using bit20_i = i_bits_im<20>;
+    using bit12_i = i_bits_im<12>;
+
+    i_bits_im<20> operator "" _20bit_i (unsigned long long val) {
+        return {static_cast<int>(val)};
+    }
+
+    i_bits_im<12> operator "" _12bit_i (unsigned long long val) {
+        return {static_cast<int>(val)};
+    }
+
     /**
      * @brief 指定位宽的无符号整数类型
      */
      template <std::size_t N>
      struct u_bits_im {
+         u_bits_im() = default;
+         /*NOLINT*/ u_bits_im(im_symbol im)
+                 : value(get<i32>(im.data))
+         {
+
+         }
          struct is_riscv_arg{};
          unsigned value : N;
      };
+
+    using bit20_u = u_bits_im<20>;
+    using bit12_u = u_bits_im<12>;
+
+    u_bits_im<20> operator "" _20bit_u (unsigned long long val) {
+        return {static_cast<unsigned>(val)};
+    }
+
+    u_bits_im<12> operator "" _12bit_u (unsigned long long val) {
+        return {static_cast<unsigned>(val)};
+    }
 
     template <typename T>
     concept RiscVInstRt = std::is_same_v<T, i_reg> || std::is_same_v<T, f_reg> || std::is_same_v<T, void>;
@@ -97,7 +133,7 @@ namespace SysYust::IR {
     || std::is_same_v<T, symbol_arg>
     || requires {typename T::is_riscv_arg;};
 
-    using RV_Argument_Value = std::any;
+    using RV_Argument_Value = std::variant<i_reg, f_reg, bit12_i, bit20_i, bit12_u, bit20_u>;
 
     enum RiscVInst {
         BEGIN_RV64IM,

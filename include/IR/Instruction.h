@@ -213,7 +213,33 @@ namespace SysYust::IR {
     template<typename T>
     concept have_assigned = requires (std::remove_cvref_t<T> t) {
         t.assigned;
+        requires not std::is_same_v<T, RiscVInstruction>; // 为啥有 concept 没有 <concepts>
     };
+
+    struct get_assigned_fn {
+        template<typename T>
+        std::optional<var_symbol> operator() (const T &i) const {
+            if constexpr (have_assigned<T>) {
+                return i.assigned;
+            } else if constexpr (std::is_same_v<T, RiscVInstruction>) {
+                return i.assigned();
+            }
+            return std::nullopt;
+        };
+    };
+    inline constexpr get_assigned_fn get_assigned{};
+
+    struct set_assigned_fn {
+        template<typename T>
+        void operator() (T &i, var_symbol nVar) const {
+            if constexpr (have_assigned<T>) {
+                i.assigned = nVar;
+            } else if constexpr (std::is_same_v<T, RiscVInstruction>) {
+                i._returned = nVar;
+            }
+        }
+    };
+    inline constexpr set_assigned_fn set_assigned;
 
     struct instruct_base {
 
@@ -484,22 +510,49 @@ namespace SysYust::IR {
 
     /**
      * @brief RiscV 指令的存储类型，目前支持一个返回值和追多两个参数值
+     * @details 具有 var_symbol 参数模式和寄存器参数模式，两种模式下 arg_size 均工作正常，不过在寄存器参数模式下返回值会被视为参数。
+     * 仅在 var_symbol 参数模式下arg_at和set_arg_at工作正常。
      */
     struct RiscVInstruction : public instruct<RiscVInstruction> {
-        RiscVInst id;
-        RV_Returned_Value _returned{};
-        std::array<RV_Argument_Value, 2> _args{};
 
+        RiscVInstruction(RiscVInst id, var_symbol assigned, const std::vector<operant> &arg);
+        RiscVInstruction(RiscVInst id, const std::vector<operant> &arg);
+        RiscVInstruction(RiscVInst id, RV_Returned_Value rt, const std::vector<RV_Argument_Value> &arg);
+
+        RiscVInstruction(const RiscVInstruction &) = default;
+        RiscVInstruction(RiscVInstruction &&) = default;
+
+        RiscVInstruction& operator= (const RiscVInstruction &) = default;
+        RiscVInstruction& operator= (RiscVInstruction &&) = default;
+
+        RiscVInstruction assign_register(std::optional<RV_Returned_Value> rt, const std::vector<RV_Argument_Value> &args);
+
+        bool register_arg = false;
+
+        RiscVInst id;
+        std::variant<std::monostate, var_symbol, RV_Returned_Value> _returned{};
+        std::array<std::variant<std::monostate, operant, RV_Argument_Value>, 2> _args{};
+
+        [[nodiscard]] var_symbol assigned() const;
+
+        /**
+         * @brief 获取寄存器返回值的方法
+         */
         template<RiscVInst inst>
-        auto returned() {
+        auto& returned() {
+            assert(register_arg);
             using return_type = typename RV_Type<inst>::return_type;
             return std::get<return_type>(_returned);
         };
 
+        /**
+         * @brief 获取寄存器参数的方法
+         */
         template<RiscVInst inst, std::size_t N>
-        auto arg() {
+        auto& arg() {
+            assert(register_arg);
             using arg_type = std::tuple_element_t<N, typename RV_Type<inst>::args>();
-            return std::any_cast<arg_type>(_args[N]);
+            return std::get<arg_type>(std::get<RV_Argument_Value>(_args[N]));
         }
 
     };

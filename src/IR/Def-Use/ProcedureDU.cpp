@@ -35,13 +35,7 @@ namespace SysYust::IR {
 
         // 获取定义符号名和用例符号名
 
-        defined = std::visit([&] (auto &i) -> std::remove_cvref_t<decltype(defined)> {
-            if constexpr (have_assigned<decltype(i)>) {
-                return i.assigned;
-            } else {
-                return std::nullopt;
-            }
-        }, *inst);
+        defined = std::visit(get_assigned, *inst);
 
         auto arg_c = arg_size(*inst);
 
@@ -75,13 +69,7 @@ namespace SysYust::IR {
         }
 
         std::optional<value_type> defined;
-        defined = std::visit([&](auto &i) -> std::remove_cvref_t<decltype(defined)> {
-            if constexpr (have_assigned<decltype(i)>) {
-                return i.assigned;
-            } else {
-                return std::nullopt;
-            }
-        }, *inst);
+        defined = std::visit(get_assigned, *inst);
 
         // 移除定义条目
         if (defined && *defined != procedure.context()->depressed_symbol) {
@@ -112,24 +100,12 @@ namespace SysYust::IR {
         auto &raw_du_inst = instDUInfo(inst);
 
         std::optional<operant> defined_symbol{std::nullopt};
-        defined_symbol = std::visit([&](auto &i) -> std::optional<operant> {
-            if constexpr (have_assigned<decltype(i)>) {
-                return i.assigned;
-            } else {
-                return std::nullopt;
-            }
-        }, *inst);
+        defined_symbol = std::visit(get_assigned, *inst);
         *inst = nInst;
 
         if (defined_symbol) {
 
-            std::optional<operant> new_symbol = std::visit([&](auto &i) -> std::optional<operant> {
-                if constexpr (have_assigned<decltype(i)>) {
-                    return i.assigned;
-                } else {
-                    return std::nullopt;
-                }
-            }, nInst);
+            std::optional<operant> new_symbol = std::visit(get_assigned, nInst);
 
             if (new_symbol) {
 
@@ -286,11 +262,7 @@ namespace SysYust::IR {
         // 处理定义名
         auto define_inst = define_entry->inst();
         if (define_inst) {
-            std::visit([&](auto &i) {
-                if constexpr (have_assigned<decltype(i)>) {
-                    i.assigned = nVal.var();
-                }
-            }, **define_inst);
+            std::visit([nVal](auto && PH1) { set_assigned(std::forward<decltype(PH1)>(PH1), nVal.var()); }, **define_inst);
         }
 
         // 处理用例名
