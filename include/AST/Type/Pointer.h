@@ -1,4 +1,5 @@
-/// @file Pointer 类型标识的定义
+/// @file
+/// Pointer 类型标识的定义
 
 #ifndef SYSYUST_AST_POINTER_H
 #define SYSYUST_AST_POINTER_H

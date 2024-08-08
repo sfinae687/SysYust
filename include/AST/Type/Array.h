@@ -1,4 +1,5 @@
-/// @file 类型标识 Array 类的实现
+/// @file
+/// 类型标识 Array 类的实现
 
 #ifndef SYSYUST_AST_ARRAY_H
 #define SYSYUST_AST_ARRAY_H

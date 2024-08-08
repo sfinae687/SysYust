@@ -1,4 +1,5 @@
-/// @file 类型标识 Array 类的定义。
+/// @file
+/// 类型标识 Array 类的定义。
 
 #include <version>
 

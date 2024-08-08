@@ -1,4 +1,5 @@
-/// @file FileLogger 定义
+/// @file
+/// FileLogger 定义
 
 #ifndef SYSYUST_UTILITY_FILELOGGER_H
 #define SYSYUST_UTILITY_FILELOGGER_H

@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 option(SELF_CONTAINS "let all dependency store in lib/" OFF)
-option(GeneratedDocument "add a target to generate document by doxygen form code comments" OFF)
+option(GeneratedDocument "add a target to generate document by doxygen form code comments" ON)
 option(EnableASTBuildTest "enable the tests of AST Build" OFF)
 option(EnableInterpreterTest "enable the tests of Interpreter" OFF)
 option(EnableIREmitterBuildTest "enable the build tests of IREmitter" ON)

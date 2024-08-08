@@ -1,4 +1,5 @@
-/// @file Float 类型标识定义
+/// @file
+/// Float 类型标识定义
 
 #ifndef SYSYUST_AST_FLOAT_H
 #define SYSYUST_AST_FLOAT_H

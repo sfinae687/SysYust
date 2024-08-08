@@ -1,4 +1,5 @@
-/// @file 变量的符号信息条目
+/// @file
+/// 变量的符号信息条目
 
 #ifndef SYSYUST_AST_VARINFO_H
 #define SYSYUST_AST_VARINFO_H

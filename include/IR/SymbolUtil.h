@@ -1,4 +1,5 @@
-///@file Instruction 的辅助工具，主要为符号的实现
+///@file
+/// Instruction 的辅助工具，主要为符号的实现
 
 #ifndef SYSYUST_SYMBOLUTIL_H
 #define SYSYUST_SYMBOLUTIL_H

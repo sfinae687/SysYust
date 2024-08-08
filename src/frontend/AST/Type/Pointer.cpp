@@ -1,4 +1,5 @@
-/// @file Pointer 类型标识的实现
+/// @file
+/// Pointer 类型标识的实现
 
 #include <cassert>
 

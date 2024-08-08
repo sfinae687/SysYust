@@ -1,4 +1,5 @@
-/// @file Int 类型标识定义
+/// @file
+/// Int 类型标识定义
 
 #ifndef SYSYUST_AST_INT_H
 #define SYSYUST_AST_INT_H

@@ -1,4 +1,5 @@
-/// @file 节点相关设施
+/// @file
+/// 节点相关设施
 
 #ifndef SYSYUST_AST_NODEBASE_H
 #define SYSYUST_AST_NODEBASE_H

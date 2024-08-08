@@ -1,4 +1,5 @@
-/// @file Void 类型标识的实现
+/// @file
+/// Void 类型标识的实现
 
 #include "AST/Type/Void.h"
 

@@ -1,4 +1,5 @@
-/// @file 声明语法树类型标识的基类和 CRTP 基类，并创建相关的变量模板
+/// @file
+/// 声明语法树类型标识的基类和 CRTP 基类，并创建相关的变量模板
 /// 所有类型标识通过 const T& 或 const T*的形式引用。
 
 #ifndef SYSYUST_AST_TYPEBASE_H
