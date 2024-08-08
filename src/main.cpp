@@ -48,6 +48,7 @@ std::unique_ptr<SysYust::IR::Code> IR_Code(fs::path input_file);
 std::string IR_Print(fs::path input_file);
 
 int main(int argc, char *argv[]) {
+    SysYust::Logger::setLogger(new SysYust::StreamLogger(std::clog));
     argparse::ArgumentParser program("SysYCompiler");
 
     // arguments
@@ -135,7 +136,12 @@ int main(int argc, char *argv[]) {
         output_stream = &std::cout;
     } else {
         if (!fs::exists(output_file)) {
-            fs::create_directories(output_file.parent_path());
+            try {
+                fs::create_directories(output_file.parent_path());
+            } catch (const std::exception &e) {
+                LOG_FATAL("Unable to create:{}", output_file.parent_path().string());
+                throw ;
+            }
         }
         output_file_stream.open(output_file, std::ios::trunc);
         output_stream = &output_file_stream;
@@ -145,7 +151,13 @@ int main(int argc, char *argv[]) {
         log_stream = &std::clog;
     } else {
         if (!fs::exists(log_file)) {
-            fs::create_directories(log_file.parent_path());
+            try {
+                fs::create_directories(log_file.parent_path());
+            } catch (const std::exception &e) {
+                LOG_FATAL("Unable to create:{}", log_file.parent_path().string());
+                LOG_INFO("log file is:{}", log_file.string());
+                throw;
+            }
         }
         log_file_stream.open(log_file, std::ios::out | std::ios::ate);
         log_stream = &log_file_stream;
@@ -213,7 +225,8 @@ std::string AST_Print(const fs::path& input_file) {
 void AST_Interpreter(const fs::path& input_file) {
     auto ast = AST_Tree(input_file);
     SysYust::AST::Interpreter::Interpreter interpreter{};
-    interpreter.enter(ast.get());
+    auto rt = interpreter.enter(ast.get());
+    std::exit(rt);
 }
 
 std::unique_ptr<SysYust::IR::Code> IR_Code(fs::path input_file) {
