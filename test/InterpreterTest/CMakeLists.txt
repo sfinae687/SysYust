@@ -18,6 +18,7 @@ if (${EnableInterpreterTest} AND NOT ${test_case_number} EQUAL 0)
         list(GET sy_test_exe_list ${ind} sy_executable)
         string(REGEX REPLACE "(.*)\.sy" "\\1" sy_source_stem ${sy_source})
         set(sy_program_output ${sy_name}.out)
+        set(sy_program_log ${sy_name}.interpreter.log)
         set(sy_program_ret ${sy_name}.ret)
         if (NOT EXISTS ${sy_input} AND NOT EXISTS ${sy_output})
             message("missing test case for ${sy_source}")
@@ -33,7 +34,7 @@ if (${EnableInterpreterTest} AND NOT ${test_case_number} EQUAL 0)
                     ${CMAKE_CXX_COMPILER} -std=c++17 -include ${sy_header} -o ${sy_executable} ${CMAKE_CURRENT_BINARY_DIR}/${sy_name}.cpp ${sy_lib}
                     ${sy_executable} ${rd_input} >${sy_output}
                     echo $? >${sy_ret}
-                    $<TARGET_FILE:InterpreterTest> ${sy_source} ${rd_input} >${sy_program_output}
+                    $<TARGET_FILE:SysYCompiler> --Interpreter --log ./${sy_program_log} ${sy_source} ${rd_input} >${sy_program_output}
                     echo $? >${sy_program_ret} && {
                         $<TARGET_FILE:CompareBySymbol> ${sy_output} ${sy_program_output}
                         if [  $? -ne 0 ];

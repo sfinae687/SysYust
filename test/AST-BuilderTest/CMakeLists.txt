@@ -12,7 +12,7 @@ if (${EnableASTBuildTest} AND NOT ${sy_length} EQUAL 0)
         list(GET sy_source_list ${index} current_path)
 #        message(${current_name}:${current_path})
         add_test(NAME AST_Build_${current_name}
-            COMMAND AST_Builder ${current_path}
+            COMMAND SysYCompiler -o - --AST ${current_path}
         )
     endforeach ()
 endif()
