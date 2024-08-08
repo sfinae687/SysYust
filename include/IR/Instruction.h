@@ -515,8 +515,18 @@ namespace SysYust::IR {
      */
     struct RiscVInstruction : public instruct<RiscVInstruction> {
 
+        /**
+         * @brief 变量模式的构造函数,带有返回符号
+         */
         RiscVInstruction(RiscVInst id, var_symbol assigned, const std::vector<operant> &arg);
+        /**
+         * @brief 符号模式的构造函数,带有返回符号
+         */
         RiscVInstruction(RiscVInst id, const std::vector<operant> &arg);
+        /**
+         * @brief 寄存器模式的构造函数
+         * @param rt 返回寄存器,如果没有传默认构造 `{}`
+         */
         RiscVInstruction(RiscVInst id, RV_Returned_Value rt, const std::vector<RV_Argument_Value> &arg);
 
         RiscVInstruction(const RiscVInstruction &) = default;
@@ -525,6 +535,10 @@ namespace SysYust::IR {
         RiscVInstruction& operator= (const RiscVInstruction &) = default;
         RiscVInstruction& operator= (RiscVInstruction &&) = default;
 
+        /**
+         * @brief 获取一个分配了寄存器的版本的RiscVInstruction
+         * @detials 这个函数的预期用法是获取一个新的对象,并用它通过带有上下文(比如定义-用例追踪)的方式重设原有的对象.
+         */
         RiscVInstruction assign_register(std::optional<RV_Returned_Value> rt, const std::vector<RV_Argument_Value> &args);
 
         bool register_arg = false;
@@ -533,6 +547,10 @@ namespace SysYust::IR {
         std::variant<std::monostate, var_symbol, RV_Returned_Value> _returned{};
         std::array<std::variant<std::monostate, operant, RV_Argument_Value>, 2> _args{};
 
+        /**
+         * @brief 获取符号模式的返回符号
+         * @note 符号模式的参数通过 arg_size, arg_at, set_arg_at 处理
+         */
         [[nodiscard]] var_symbol assigned() const;
 
         /**

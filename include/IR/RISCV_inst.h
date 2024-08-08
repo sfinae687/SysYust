@@ -88,11 +88,11 @@ namespace SysYust::IR {
     using bit20_i = i_bits_im<20>;
     using bit12_i = i_bits_im<12>;
 
-    i_bits_im<20> operator "" _20bit_i (unsigned long long val) {
+    inline i_bits_im<20> operator "" _20bit_i (unsigned long long val) {
         return {static_cast<int>(val)};
     }
 
-    i_bits_im<12> operator "" _12bit_i (unsigned long long val) {
+    inline i_bits_im<12> operator "" _12bit_i (unsigned long long val) {
         return {static_cast<int>(val)};
     }
 
@@ -114,11 +114,11 @@ namespace SysYust::IR {
     using bit20_u = u_bits_im<20>;
     using bit12_u = u_bits_im<12>;
 
-    u_bits_im<20> operator "" _20bit_u (unsigned long long val) {
+    inline u_bits_im<20> operator "" _20bit_u (unsigned long long val) {
         return {static_cast<unsigned>(val)};
     }
 
-    u_bits_im<12> operator "" _12bit_u (unsigned long long val) {
+    inline u_bits_im<12> operator "" _12bit_u (unsigned long long val) {
         return {static_cast<unsigned>(val)};
     }
 
