@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
         .default_value("./a.out"s)
         .help("Specify the output file");
     program.add_argument("--log")
-        .default_value("./log.txt")
+        .default_value("-")
         .help("Specify the file used to receive log");
     program.add_argument("files")
         .required()
@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
         log_stream = &std::clog;
     } else {
         if (!fs::exists(log_file)) {
-            fs::create_directories(output_file.parent_path());
+            fs::create_directories(log_file.parent_path());
         }
         log_file_stream.open(log_file, std::ios::out | std::ios::ate);
         log_stream = &log_file_stream;
