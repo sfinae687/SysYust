@@ -183,6 +183,8 @@ namespace SysYust::IR {
         // CMP
         // 无符号比较跟有符号一样
         // 没有 SEQ, 它等价于 XOR A, A, B; SEQZ DST, A
+        SEQZ,
+        SNEZ,
         SLT,
         SLTI,
 
@@ -302,7 +304,7 @@ namespace SysYust::IR {
      * @brief 用来记录指令指令对应类型的模板(的主模版)
      */
     template <RiscVInst rv_inst>
-    struct _rv_inst_type {using type = void;};
+    struct _rv_inst_type {using type = RiscVInstType<void>;};
 
     /**
      * @brief 用于 **访问** 指令的类型信息的别名模板
@@ -340,6 +342,8 @@ struct _rv_inst_type<_details_select_inst<__VA_ARGS__>> { \
     DECL1(NEG)
     DECL1(NEGW)
     DECL1(NOT)
+    DECL1(SEQZ)
+    DECL1(SNEZ)
 
 // (i, i) -> i
 #define DECLR(name) DECL(i_reg, name, i_reg, i_reg) RV_CATE(name, rv_inst_cate::R)
@@ -439,6 +443,7 @@ struct _rv_inst_type<_details_select_inst<__VA_ARGS__>> { \
 #pragma pop_macro("DECL1F")
 #pragma pop_macro("DECLRF")
 
+    const Type * returned_type_for_ir(RiscVInst inst);
 
 }
 

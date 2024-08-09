@@ -490,6 +490,7 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
             auto inst_ctx = auto_inst<T>(
                 try_cast<IR::operant, Value>(std::forward<Args>(args))...);
             current_block()->push(*inst_ctx);
+            current_procedure()->track_inst(current_block(), --current_block()->end());
             if constexpr (T == IR::ld) {
                 auto ld = dynamic_cast<IR::load *>(&*inst_ctx);
                 return Value(ld->target);
@@ -504,6 +505,7 @@ class IREmitter : public NodeExecutorBase, public IR::CodeBuildMixin {
             auto inst = *auto_inst<T>(
                 try_cast<IR::operant, Value>(std::forward<Args>(args))...);
             current_block()->push(inst);
+            current_procedure()->track_inst(current_block(), --current_block()->end());
             return undef;
         }
     }

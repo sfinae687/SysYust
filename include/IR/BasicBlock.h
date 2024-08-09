@@ -31,6 +31,9 @@ namespace SysYust::IR {
         using const_reference = instruction_list_t::const_reference;
         using const_pointer = instruction_list_t::const_pointer;
 
+        BasicBlock() = default;
+        BasicBlock(BasicBlock &bb) = delete;
+
         // 密封和出口操作
 
         /**
@@ -157,6 +160,10 @@ namespace SysYust::IR {
         }
         [[nodiscard]] std::size_t id() const {
             return _id;
+        }
+
+        [[nodiscard]] std::size_t block_num() const {
+            return _last_id;
         }
 
     private:

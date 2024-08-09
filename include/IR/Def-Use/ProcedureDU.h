@@ -11,8 +11,10 @@
 #include <range/v3/range.hpp>
 #include <range/v3/view.hpp>
 #include <range/v3/action.hpp>
+#include <string>
 
 #include "IR/Def-Use/DU_Util.h"
+#include "fmt/format.h"
 
 namespace SysYust::IR {
 
@@ -165,6 +167,10 @@ namespace SysYust::IR {
          */
         usage_ref_list_type usage_set(const value_type& var);
 
+        DUInst_list_type &getInstList() {
+            return _inst_list;
+        }
+
     private:
         std::pair<usage_list_type &, usage_list_type::iterator>
         usage_insert_pos(const value_type& var, BasicBlock *block, BasicBlock::iterator inst);
@@ -179,8 +185,13 @@ namespace SysYust::IR {
         mutable define_list_type _define_list{};
         indexed_usage_list_type _usage_list{};
         DUInst_list_type _inst_list{};
+
+        friend std::string format_as(const ProcedureDU &du);
     };
 
+    // std::string format_as(const DefineEntry &ent) {
+    //     ent.
+    // }
 } // IR
 
 #endif //SYSYUST_PROCEDUREDU_H

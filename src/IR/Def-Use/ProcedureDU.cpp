@@ -110,7 +110,6 @@ namespace SysYust::IR {
 
         std::optional<operant> defined_symbol{std::nullopt};
         defined_symbol = std::visit(get_assigned, *inst);
-        *inst = nInst;
 
         if (defined_symbol) {
 
@@ -130,6 +129,9 @@ namespace SysYust::IR {
         for (auto i : raw_du_inst.args) {
             erase_usage(i);
         }
+
+        *inst = nInst;
+        
         // 添加新的用例
         auto arg_len = arg_size(nInst);
         std::vector<usage_pointer> arg_arr;

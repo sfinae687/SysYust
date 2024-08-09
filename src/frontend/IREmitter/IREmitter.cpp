@@ -44,7 +44,6 @@
 #include "IR/TypeUtil.h"
 #include "IRPrinter/IRPrinter.h"
 #include "IdAllocator.h"
-#include "Trace.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
 
@@ -200,6 +199,7 @@ std::vector<IR::operant> IREmitter::getCallerArgs(IR::BasicBlock *cur,
 void IREmitter::addArg(VarId var_id, Value val, IR::BasicBlock *bb) {
     assert(bb);
     bb->add_arg(val);
+    current_procedure()->track_block_arg(bb, val);
     for (auto pred : bb->prevBlocks()) {
         getCallerArgs(bb, pred).emplace_back(
             static_cast<const IR::operant &>(readVarInner(var_id, pred)));
@@ -444,6 +444,7 @@ void IREmitter::execute(const VarDecl &node) {
             code.set_var(val, std::vector<IR::InitInfo *>{});
         }
         _global_vars.setInfo(var_id, val);
+        // current_procedure()->du_info().defined_entry(val);
         println("Write {} = {} in global", var_id, val.toString());
     } else {
         if (node.init_expr.has_value()) {
@@ -534,7 +535,6 @@ void IREmitter::execute(const FuncDecl &node) {
     //     auto after_main_sym = IR::func_symbol{"after_main"};
     //     createInst<IR::call>(after_main_sym, std::vector<Value>{});
     // }
-
     exitln("~FuncDecl");
 }
 
@@ -1030,6 +1030,7 @@ void IREmitter::execute(const ToCond &node) {
             _return(IR::im_symbol(val.imf() != 0));
         }
         exitln("~ToCond {}", val.toString());
+        return;
     }
 
     _return(createInst<IR::ne>(val, Value(0)));

@@ -3,22 +3,31 @@
 #include <cstddef>
 #include <map>
 #include <queue>
+#include <sstream>
 #include <string>
 #include <vector>
 
 #include "IR/BasicBlock.h"
 #include "IR/Code.h"
 #include "IR/ControlFlow.h"
+#include "IR/Def-Use/ProcedureDU.h"
 #include "IR/InitInfo.h"
 #include "IR/Instruction.h"
 #include "IR/Procedure.h"
 #include "IR/ProcedureContext.h"
+#include "IR/RISCV_inst.h"
 #include "IR/SymbolUtil.h"
 #include "IdAllocator.h"
+#include "Interpreter/Interpreter.h"
 #include "fmt/core.h"
 #include "fmt/format.h"
 
 namespace SysYust::IR {
+
+std::stringstream &operator<<(std::stringstream &os, sp_t &sp) {
+    os << (std::string)sp;
+    return os;
+}
 
 /* ------------ TypeUtil ------------ */
 
@@ -36,7 +45,10 @@ std::string format_as(const Type &type) {
         case Id::f:
             return "f32"s;
         case Id::arr:
-            return fmt::format("[{} x {}]", (type.data() == 0 ? "?" : fmt::to_string(type.data())), *type.subtype());
+            return fmt::format(
+                "[{} x {}]",
+                (type.data() == 0 ? "?" : fmt::to_string(type.data())),
+                *type.subtype());
         case Id::ptr:
             return fmt::format("ptr {}", *type.subtype());
         case Id::dyn:
@@ -52,7 +64,8 @@ std::string format_as(const IR::var_symbol &var) {
     if (var.symbol == "" && var.revision == 0 && var.type == 0) {
         return fmt::format("(Dummy)");
     } else if (!var.type) {
-        return fmt::format("(err {}{}: {})", var.symbol, var.revision, (void *)var.type);
+        return fmt::format("(err {}{}: {})", var.symbol, var.revision,
+                           (void *)var.type);
     }
     return fmt::format("({}{}: {})", var.symbol, var.revision, *var.type);
 }
@@ -162,6 +175,77 @@ std::string format_as(instruct_cate type) {
 #undef c
 }
 
+std::string format_as(RiscVInst type) {
+#define c(x)           \
+    case RiscVInst::x: \
+        return #x;
+    switch (type) {
+        c(MV);
+        c(NOP);
+        c(NEG);
+        c(ADD);
+        c(ADDI);
+        c(SUB);
+        c(MUL);
+        c(DIV);
+        c(REM);
+
+        c(NEGW);
+
+        c(AND);
+        c(ANDI);
+        c(XOR);
+        c(XORI);
+        c(NOT);
+        c(OR);
+        c(ORI);
+        c(SLL);
+        c(SLLI);
+        c(SRL);
+        c(SRLI);
+        c(SRA);
+        c(SRAI);
+        c(BEQ);
+        c(BNE);
+
+        c(SEQZ);
+        c(SNEZ);
+        c(SLT);
+        c(SLTI);
+        c(AUIPC);
+        c(J);
+        c(CALL);
+        c(TAIL);
+        c(RET);
+        c(LA);
+        c(LW);
+        c(SW);
+        c(LI);
+        c(LUI);
+
+        c(FNEG_S);
+        c(FADD_S);
+        c(FSUB_S);
+        c(FMUL_S);
+        c(FDIV_S);
+
+        c(FCVT_S_W);
+        c(FCVT_W_S);
+        c(FLW);
+        c(FSW);
+
+        c(FEQ_S);
+        c(FLE_S);
+        c(FLT_S);
+
+        c(FMV_S);
+        c(FMV_W_X);
+        c(FMV_X_W);
+        default:
+            return "bad RISC-V instruction category!";
+    }
+}
+
 std::string format_as(const instruction &inst) {
     switch (inst.index()) {
         case 0: {  // with_2
@@ -243,6 +327,22 @@ std::string format_as(const instruction &inst) {
             return fmt::format("{} = index {}, {}", indexOf_inst.assigned,
                                indexOf_inst.arr, ind_str);
         }
+        case 10: {  // rv
+            auto rv_inst = std::get<10>(inst);
+            auto sz = arg_size(inst);
+            std::string args;
+            for (int i = 0; i < sz; ++i) {
+                if (i) args += ", ";
+                args += fmt::to_string(arg_at(inst, i));
+            }
+
+            std::string ret;
+            if (rv_inst.assigned() != var_symbol{})
+                ret = fmt::to_string(rv_inst.assigned()) + " = ";
+
+            return fmt::format("{}{} {}", ret, fmt::to_string(rv_inst.id),
+                               args);
+        }
         default:
             assert(false && "Unknown inst type");
             __builtin_unreachable();
@@ -252,7 +352,7 @@ std::string format_as(const instruction &inst) {
 /* ----------- BasicBlock ----------- */
 
 std::string format_as(const BasicBlock &bb) {
-    std::string ret;
+    std::stringstream ret;
 
     std::string param_str;
     for (auto param : bb.getArgs()) {
@@ -260,15 +360,17 @@ std::string format_as(const BasicBlock &bb) {
     }
     if (!param_str.empty()) param_str = "(" + param_str + ")";
 
-    ret += fmt::format("{}{}: {{", (void *)&bb, param_str) + '\n';
+    ret << sp << fmt::format(".bb{}{}: {{", bb.id(), param_str) << std::endl;
 
+    sp.push();
     for (auto inst : bb) {
-        ret += "    " + fmt::to_string(inst) + "\n";
+        ret << sp << fmt::to_string(inst) << std::endl;
     }
+    sp.pop();
 
-    ret += "}";
+    ret << sp << "}";
 
-    return ret;
+    return ret.str();
 }
 
 /* ----------- ControlFlow ---------- */
@@ -289,27 +391,26 @@ std::string format_as(const ControlFlow &cfg) {
         blk_id[blk] = cnt;
     }
 
-    std::string dbg_str;
-    for (auto &blk_ref : cfg.all_nodes()) {
-        auto blk = const_cast<BasicBlock *>(&blk_ref);
-        dbg_str += "\n" + fmt::to_string(blk_id[blk]) + ":\n";
-        dbg_str += "prev: ";
-        for (auto prev : blk->prevBlocks()) {
-            dbg_str += ", " + fmt::to_string(blk_id[prev]);
-        }
-        dbg_str += "\n";
-        dbg_str += fmt::format("next: {}, else: {}",
-        blk_id[blk->nextBlock()],
-                               blk_id[blk->elseBlock()]) +
-                   "\n";
-    }
-    fmt::println("{}", dbg_str);
+    // std::string dbg_str;
+    // for (auto &blk_ref : cfg.all_nodes()) {
+    //     auto blk = const_cast<BasicBlock *>(&blk_ref);
+    //     dbg_str += "\n" + fmt::to_string(blk_id[blk]) + ":\n";
+    //     dbg_str += "prev: ";
+    //     for (auto prev : blk->prevBlocks()) {
+    //         dbg_str += ", " + fmt::to_string(blk_id[prev]);
+    //     }
+    //     dbg_str += "\n";
+    //     dbg_str += fmt::format("next: {}, else: {}",
+    //     blk_id[blk->nextBlock()],
+    //                            blk_id[blk->elseBlock()]) +
+    //                "\n";
+    // }
+    // fmt::println("{}", dbg_str);
 
     while (!topo.empty()) {
         auto blk = topo.front();
         topo.pop();
-        ret += "\n.bb" + fmt::to_string(blk_id[blk]) + " " + fmt::to_string(*blk) +
-               "\n";
+        ret += fmt::to_string(*blk) + "\n";
         if (auto next_blk = blk->nextBlock()) {
             auto it = deg.find(next_blk);
             assert(it != deg.end());
@@ -350,8 +451,35 @@ std::string format_as(const func_symbol &func) {
     return func.symbol;
 }
 
+std::string format_as(const ProcedureDU &du) {
+    std::string ret;
+
+    ret += "defined list:\n";
+    for (auto &ent : du._define_list) {
+        ret += "o " + fmt::to_string(ent.first) + "\n";
+    }
+    ret += '\n';
+
+    ret += "usage list:\n";
+    for (auto &ent : du._usage_list) {
+        ret += "o " + fmt::to_string(ent.first) + "\n";
+    }
+    ret += '\n';
+
+    ret += "inst list:\n";
+    for (auto &ent : du._inst_list) {
+        ret += "inst: " + fmt::to_string(*ent.first) + "\n";
+        // ret += "duinst: " + fmt::to_string(ent.second) + "\n";
+    }
+    ret += '\n';
+
+    return ret;
+}
+
 std::string format_as(const Procedure &proc) {
     std::string ret;
+
+    ret += "du: \n" + fmt::to_string(proc.du_info()) + "\n";
 
     std::string params;
     for (auto param : proc.context()->param_var_set) {
@@ -362,9 +490,11 @@ std::string format_as(const Procedure &proc) {
 
     if (!const_cast<Procedure &>(proc).getGraph().all_nodes().empty()) {
         ret += " {\n";
+        sp.push();
 
         ret += fmt::to_string(const_cast<Procedure &>(proc).getGraph()) + "\n";
 
+        sp.pop();
         ret += "}";
     }
 
@@ -372,7 +502,9 @@ std::string format_as(const Procedure &proc) {
 }
 
 std::string format_as(const Code &code) {
+    sp.clear();
     std::string ret;
+
     ret += "// Global Variables:\n";
     auto &inits = const_cast<std::unordered_map<var_symbol, InitInfo> &>(
         code.all_var_init_value());
