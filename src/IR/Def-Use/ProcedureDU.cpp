@@ -21,6 +21,14 @@ namespace SysYust::IR {
     }
 
     void ProcedureDU::add_inst(BasicBlock *block, BasicBlock::iterator inst) {
+
+        if (static_cast<instruct_cate>(inst->index()) == instruct_cate::rv_inst) {
+            auto &&rvi = std::get<RiscVInstruction>(*inst);
+            if (rvi.register_arg) {
+                return;
+            }
+        }
+
         // 一条语句对定义-依赖的影响：
         //  添加一条你定义符号
         //  添加若干条依赖使用
@@ -30,13 +38,7 @@ namespace SysYust::IR {
 
         // 获取定义符号名和用例符号名
 
-        defined = std::visit([&] (auto &i) -> std::remove_cvref_t<decltype(defined)> {
-            if constexpr (have_assigned<decltype(i)>) {
-                return i.assigned;
-            } else {
-                return std::nullopt;
-            }
-        }, *inst);
+        defined = std::visit(get_assigned, *inst);
 
         auto arg_c = arg_size(*inst);
 
@@ -64,14 +66,16 @@ namespace SysYust::IR {
     }
 
     bool ProcedureDU::remove_inst(BasicBlock::iterator inst) {
-        std::optional<value_type> defined;
-        defined = std::visit([&](auto &i) -> std::remove_cvref_t<decltype(defined)> {
-            if constexpr (have_assigned<decltype(i)>) {
-                return i.assigned;
-            } else {
-                return std::nullopt;
+
+        if (static_cast<instruct_cate>(inst->index()) == instruct_cate::rv_inst) {
+            auto &&rvi = std::get<RiscVInstruction>(*inst);
+            if (rvi.register_arg) {
+                return true;
             }
-        }, *inst);
+        }
+
+        std::optional<value_type> defined;
+        defined = std::visit(get_assigned, *inst);
 
         // 移除定义条目
         if (defined && *defined != procedure.context()->depressed_symbol) {
@@ -94,27 +98,23 @@ namespace SysYust::IR {
     }
 
     void ProcedureDU::set_inst(BasicBlock::iterator inst, const instruction &nInst) {
+
+        if (static_cast<instruct_cate>(inst->index()) == instruct_cate::rv_inst) {
+            auto &&rvi = std::get<RiscVInstruction>(nInst);
+            if (rvi.register_arg) {
+                return;
+            }
+        }
+
         auto &raw_du_inst = instDUInfo(inst);
 
         std::optional<operant> defined_symbol{std::nullopt};
-        defined_symbol = std::visit([&](auto &i) -> std::optional<operant> {
-            if constexpr (have_assigned<decltype(i)>) {
-                return i.assigned;
-            } else {
-                return std::nullopt;
-            }
-        }, *inst);
+        defined_symbol = std::visit(get_assigned, *inst);
         *inst = nInst;
 
         if (defined_symbol) {
 
-            std::optional<operant> new_symbol = std::visit([&](auto &i) -> std::optional<operant> {
-                if constexpr (have_assigned<decltype(i)>) {
-                    return i.assigned;
-                } else {
-                    return std::nullopt;
-                }
-            }, nInst);
+            std::optional<operant> new_symbol = std::visit(get_assigned, nInst);
 
             if (new_symbol) {
 
@@ -140,6 +140,12 @@ namespace SysYust::IR {
     }
 
     DUInst & ProcedureDU::instDUInfo(BasicBlock::iterator inst) {
+        if (static_cast<instruct_cate>(inst->index()) == instruct_cate::rv_inst) {
+            auto &&rvi = std::get<RiscVInstruction>(*inst);
+            if (rvi.register_arg) {
+                throw std::logic_error("Acquire a RiscV instruction's def-usage information");
+            }
+        }
         return _inst_list.at(&*inst);
     }
 
@@ -235,6 +241,12 @@ namespace SysYust::IR {
 
     usage_pointer
     ProcedureDU::add_usage(BasicBlock *block, BasicBlock::iterator inst, value_type var, std::size_t ind) {
+        if (static_cast<instruct_cate>(inst->index()) == instruct_cate::rv_inst) {
+            auto &&rvi = std::get<RiscVInstruction>(*inst);
+            if (rvi.register_arg) {
+                throw std::logic_error("Try to trace RiscV Instruction");
+            }
+        }
         UsageEntry ue{local_defined(var), block, inst, ind};
         auto [list, pos] = usage_insert_pos(var, block, inst);
         return list.insert(pos, ue);
@@ -265,11 +277,7 @@ namespace SysYust::IR {
         // 处理定义名
         auto define_inst = define_entry->inst();
         if (define_inst) {
-            std::visit([&](auto &i) {
-                if constexpr (have_assigned<decltype(i)>) {
-                    i.assigned = nVal.var();
-                }
-            }, **define_inst);
+            std::visit([nVal](auto && PH1) { set_assigned(std::forward<decltype(PH1)>(PH1), nVal.var()); }, **define_inst);
         }
 
         // 处理用例名

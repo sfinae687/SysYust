@@ -150,6 +150,15 @@ namespace SysYust::IR {
             return instruction_list.cend();
         };
 
+        // 标识id访问
+
+        [[nodiscard]] std::string full() const {
+            return "L" + std::to_string(_id);
+        }
+        [[nodiscard]] std::size_t id() const {
+            return _id;
+        }
+
     private:
 
         bool sealed = false;
@@ -158,6 +167,10 @@ namespace SysYust::IR {
         BasicBlock *falseTarget = nullptr;
         block_arg_list_type _block_parm{};
         instruction_list_t instruction_list{};
+
+        std::size_t _id = _last_id++;
+
+        static std::size_t _last_id;
 
         /// @todo 用例维护
     };

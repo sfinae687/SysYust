@@ -16,6 +16,8 @@ namespace SysYust::IR {
     namespace ranges = ::ranges;
     namespace views = ::ranges::views;
 
+    std::size_t BasicBlock::_last_id = 0;
+
     void BasicBlock::seal() {
         if (!std::visit(&instruct_base::is_gateway, back())) {
             LOG_WARN("Unable to seal a basic block without gateway");

@@ -14,6 +14,7 @@ set(IR_source
         InitInfo.cpp
         Def-Use/ProcedureDU.cpp
         Def-Use/DU_Util.cpp
+        RISCV_inst.cpp
 )
 add_library(IR ${IR_source})
 target_link_libraries(IR utility)

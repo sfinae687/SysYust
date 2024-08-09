@@ -9,7 +9,8 @@
 #include <optional>
 #include <cassert>
 
-#include "SymbolUtil.h"
+#include "IR/RISCV_inst.h"
+#include "IR/SymbolUtil.h"
 
 namespace SysYust::IR {
 
@@ -24,6 +25,7 @@ namespace SysYust::IR {
     struct branch;
     struct jump;
     struct ret;
+    struct RiscVInstruction;
 
     using arg_list = std::vector<operant>;
 
@@ -65,7 +67,10 @@ namespace SysYust::IR {
         br, jp, rt,
 
         // 内存
-        alc, ld, st
+        alc, ld, st,
+
+        // 其他
+        rv,
     };
 
     /**
@@ -116,6 +121,7 @@ namespace SysYust::IR {
         store,
         alloc,
         index,
+        rv_inst,
     };
 
     /**
@@ -143,6 +149,8 @@ namespace SysYust::IR {
     inline constexpr instruct_cate inst_cate<alloc> = instruct_cate::alloc;
     template<>
     inline constexpr instruct_cate inst_cate<indexOf> = instruct_cate::index;
+    template<>
+    inline constexpr instruct_cate inst_cate<RiscVInstruction> = instruct_cate::rv_inst;
 
     constexpr bool is_gateway(instruct_cate c) {
         if (c == instruct_cate::jump
@@ -162,6 +170,9 @@ namespace SysYust::IR {
         switch (t) {
             case instruct_type::INT:
                 return instruct_cate::out_of_instruct;
+
+            case instruct_type::rv:
+                return instruct_cate::rv_inst;
 
             // 一元操作的实现
             case instruct_type::neg:
@@ -202,7 +213,33 @@ namespace SysYust::IR {
     template<typename T>
     concept have_assigned = requires (std::remove_cvref_t<T> t) {
         t.assigned;
+        requires not std::is_same_v<T, RiscVInstruction>; // 为啥有 concept 没有 <concepts>
     };
+
+    struct get_assigned_fn {
+        template<typename T>
+        std::optional<var_symbol> operator() (const T &i) const {
+            if constexpr (have_assigned<T>) {
+                return i.assigned;
+            } else if constexpr (std::is_same_v<T, RiscVInstruction>) {
+                return i.assigned();
+            }
+            return std::nullopt;
+        };
+    };
+    inline constexpr get_assigned_fn get_assigned{};
+
+    struct set_assigned_fn {
+        template<typename T>
+        void operator() (T &i, var_symbol nVar) const {
+            if constexpr (have_assigned<T>) {
+                i.assigned = nVar;
+            } else if constexpr (std::is_same_v<T, RiscVInstruction>) {
+                i._returned = nVar;
+            }
+        }
+    };
+    inline constexpr set_assigned_fn set_assigned;
 
     struct instruct_base {
 
@@ -464,10 +501,80 @@ namespace SysYust::IR {
             return alloc(std::forward<Args>(args)...);
         } else if constexpr (ct == instruct_cate::index /*always true*/ ) {
             return indexOf(std::forward<Args>(args)...);
+        } else if constexpr (ct == instruct_cate::rv_inst) {
+            return RiscVInstruction(std::forward<Args>(args)...);
         } else {
             __builtin_unreachable();
         }
     }
+
+    /**
+     * @brief RiscV 指令的存储类型，目前支持一个返回值和追多两个参数值
+     * @details 具有 var_symbol 参数模式和寄存器参数模式，两种模式下 arg_size 均工作正常，不过在寄存器参数模式下返回值会被视为参数。
+     * 仅在 var_symbol 参数模式下arg_at和set_arg_at工作正常。
+     */
+    struct RiscVInstruction : public instruct<RiscVInstruction> {
+
+        /**
+         * @brief 变量模式的构造函数,带有返回符号
+         */
+        RiscVInstruction(RiscVInst id, var_symbol assigned, const std::vector<operant> &arg);
+        /**
+         * @brief 符号模式的构造函数,带有返回符号
+         */
+        RiscVInstruction(RiscVInst id, const std::vector<operant> &arg);
+        /**
+         * @brief 寄存器模式的构造函数
+         * @param rt 返回寄存器,如果没有传默认构造 `{}`
+         */
+        RiscVInstruction(RiscVInst id, RV_Returned_Value rt, const std::vector<RV_Argument_Value> &arg);
+
+        RiscVInstruction(const RiscVInstruction &) = default;
+        RiscVInstruction(RiscVInstruction &&) = default;
+
+        RiscVInstruction& operator= (const RiscVInstruction &) = default;
+        RiscVInstruction& operator= (RiscVInstruction &&) = default;
+
+        /**
+         * @brief 获取一个分配了寄存器的版本的RiscVInstruction
+         * @detials 这个函数的预期用法是获取一个新的对象,并用它通过带有上下文(比如定义-用例追踪)的方式重设原有的对象.
+         */
+        RiscVInstruction assign_register(std::optional<RV_Returned_Value> rt, const std::vector<RV_Argument_Value> &args);
+
+        bool register_arg = false;
+
+        RiscVInst id;
+        std::variant<std::monostate, var_symbol, RV_Returned_Value> _returned{};
+        std::array<std::variant<std::monostate, operant, RV_Argument_Value>, 2> _args{};
+
+        /**
+         * @brief 获取符号模式的返回符号
+         * @note 符号模式的参数通过 arg_size, arg_at, set_arg_at 处理
+         */
+        [[nodiscard]] var_symbol assigned() const;
+
+        /**
+         * @brief 获取寄存器返回值的方法
+         */
+        template<RiscVInst inst>
+        auto& returned() {
+            assert(register_arg);
+            using return_type = typename RV_Type<inst>::return_type;
+            return std::get<return_type>(_returned);
+        };
+
+        /**
+         * @brief 获取寄存器参数的方法
+         */
+        template<RiscVInst inst, std::size_t N>
+        auto& arg() {
+            assert(register_arg);
+            using arg_type = std::tuple_element_t<N, typename RV_Type<inst>::args>();
+            return std::get<arg_type>(std::get<RV_Argument_Value>(_args[N]));
+        }
+
+    };
+
 
     using instruction = std::variant<
             compute_with_2,
@@ -479,7 +586,8 @@ namespace SysYust::IR {
             load,
             store,
             alloc,
-            indexOf
+            indexOf,
+            RiscVInstruction
             >;
     static_assert(std::is_copy_constructible_v<instruction>);
     static_assert(std::is_copy_assignable_v<instruction>);
