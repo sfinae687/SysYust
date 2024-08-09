@@ -1,6 +1,7 @@
 #ifndef SYSYUST_InstSel_H
 #define SYSYUST_InstSel_H
 
+#include <iostream>
 #include <type_traits>
 #include <vector>
 
@@ -11,23 +12,25 @@
 #include "IR/Procedure.h"
 #include "IR/RISCV_inst.h"
 #include "IR/SymbolUtil.h"
+#include "fmt/format.h"
+#include "IRPrinter/IRPrinter.h"
 namespace SysYust::IR {
 
 class InstSel {
    public:
-    instruction sel_with_1(compute_with_1 inst);
+    instruction sel_with_1(compute_with_1 &inst);
 
     instruction emitADDI(var_symbol op1, int op2);
 
     var_symbol ldfimm(operant op);
 
-    instruction sel_with_2(compute_with_2 inst);
+    instruction sel_with_2(compute_with_2 &inst);
 
-    instruction sel_load(load inst);
+    instruction sel_load(load &inst);
 
-    instruction sel_store(store inst);
+    instruction sel_store(store &inst);
 
-    instruction sel_index(indexOf inst);
+    instruction sel_index(indexOf &inst);
 
     Code *run(Code *code);
 
@@ -60,6 +63,7 @@ class InstSel {
         auto inst =
             IR::inst<rv>(T, _cur_proc->context()->nextSymbol(), std::move(ops));
         insert(inst);
+        std::cout << "createInst " << fmt::to_string(instruction{inst}) << std::endl;
         return inst.assigned();
     }
 

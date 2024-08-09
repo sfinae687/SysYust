@@ -33,9 +33,7 @@
 #include "fmt/core.h"
 
 std::ostream &operator<<(std::ostream &os, sp_t &sp) {
-    for (int i = 1; i <= sp.counter; ++i) {
-        os << "  ";
-    }
+    os << (std::string)sp;
     return os;
 }
 

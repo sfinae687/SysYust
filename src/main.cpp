@@ -24,6 +24,7 @@
 #include "IREmitter/IREmitter.h"
 #include "InstSel/InstSel.h"
 
+#include "fmt/format.h"
 #include "utility/StreamLogger.h"
 
 //namespace ranges = ::ranges

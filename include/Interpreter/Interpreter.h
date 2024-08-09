@@ -43,6 +43,14 @@ class sp_t {
     void pop() {
         counter--;
     }
+    void clear() {
+        counter = 0;
+    }
+    operator std::string () {
+        std::string ret;
+        for (int i = 1; i <= counter; ++i) ret += "    ";
+        return ret;
+    }
 };
 
 static sp_t sp;

@@ -41,7 +41,7 @@ auto imf = [](const auto &op) {
         return .0f;
 };
 
-instruction InstSel::sel_with_1(compute_with_1 inst) {
+instruction InstSel::sel_with_1(compute_with_1 &inst) {
     auto op = inst.opr;
     switch (inst.type) {
         case neg:
@@ -78,9 +78,9 @@ var_symbol InstSel::ldfimm(operant op) {
     return createInst<FMV_X_W>(imm1);
 }
 
-instruction InstSel::sel_with_2(compute_with_2 inst) {
+instruction InstSel::sel_with_2(compute_with_2 &inst) {
     auto op1 = inst.opr1, op2 = inst.opr2;
-    assert(op1 | isVar || op2 | isVar);
+    assert(op1.symbolType == symbol_type::v || op2.symbolType == symbol_type::v);
     switch (inst.type) {
         // i arith
         case add:
@@ -229,15 +229,15 @@ instruction InstSel::sel_with_2(compute_with_2 inst) {
     }
 }
 
-instruction InstSel::sel_load(load inst) {
+instruction InstSel::sel_load(load &inst) {
     return Inst<LW>(inst.source);
 }
 
-instruction InstSel::sel_store(store inst) {
+instruction InstSel::sel_store(store &inst) {
     return Inst<SW>(inst.target, inst.source);
 }
 
-instruction InstSel::sel_index(indexOf inst) {
+instruction InstSel::sel_index(indexOf &inst) {
     auto val = inst.arr;
     auto type = val.type->subtype();  // deref
 
@@ -260,11 +260,12 @@ instruction InstSel::sel_index(indexOf inst) {
 Code *InstSel::run(Code *code) {
     for (auto &proc : code->procedures()) {
         _cur_proc = &proc;
-        for (auto bb : proc.getGraph().all_nodes()) {
+        for (auto &cbb : proc.getGraph().all_nodes()) {
+            auto &bb = const_cast<BasicBlock &>(cbb);
             _curBB = &bb;
             for (auto inst_iter = bb.begin(); inst_iter != bb.end();
                  ++inst_iter) {
-                auto inst = *inst_iter;
+                auto &inst = *inst_iter;
                 set_insert_point(inst_iter);
                 auto nInst = std::visit(
                     [&](auto &&inst) -> std::optional<instruction> {
