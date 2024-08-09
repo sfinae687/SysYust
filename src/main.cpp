@@ -22,6 +22,7 @@
 #include "Interpreter/Interpreter.h"
 
 #include "IREmitter/IREmitter.h"
+#include "InstSel/InstSel.h"
 
 #include "utility/StreamLogger.h"
 
@@ -238,5 +239,7 @@ std::unique_ptr<SysYust::IR::Code> IR_Code(fs::path input_file) {
 
 std::string IR_Print(fs::path input_file) {
     auto code = IR_Code(input_file);
+    SysYust::IR::InstSel sel;
+    auto code2 = sel.run(&*code);
     return fmt::to_string(*code);
 }

@@ -165,6 +165,10 @@ namespace SysYust::IR {
          */
         usage_ref_list_type usage_set(const value_type& var);
 
+        DUInst_list_type &getInstList() {
+            return _inst_list;
+        }
+
     private:
         std::pair<usage_list_type &, usage_list_type::iterator>
         usage_insert_pos(const value_type& var, BasicBlock *block, BasicBlock::iterator inst);

@@ -183,6 +183,8 @@ namespace SysYust::IR {
         // CMP
         // 无符号比较跟有符号一样
         // 没有 SEQ, 它等价于 XOR A, A, B; SEQZ DST, A
+        SEQZ,
+        SNEZ,
         SLT,
         SLTI,
 
@@ -340,6 +342,8 @@ struct _rv_inst_type<_details_select_inst<__VA_ARGS__>> { \
     DECL1(NEG)
     DECL1(NEGW)
     DECL1(NOT)
+    DECL1(SEQZ)
+    DECL1(SNEZ)
 
 // (i, i) -> i
 #define DECLR(name) DECL(i_reg, name, i_reg, i_reg) RV_CATE(name, rv_inst_cate::R)

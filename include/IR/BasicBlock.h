@@ -159,6 +159,10 @@ namespace SysYust::IR {
             return _id;
         }
 
+        [[nodiscard]] std::size_t block_num() const {
+            return _last_id;
+        }
+
     private:
 
         bool sealed = false;
