@@ -124,7 +124,7 @@ instruction InstSel::sel_with_2(compute_with_2 &inst) {
             if (op1 | isIm) op1 = createInst<LI>(op1);
             if (op2 | isIm) op2 = createInst<LI>(op2);
             return Inst<DIV>(op1, op2);
-        case rem:
+        case mod:
             // todo Strength reduction
             if (op1 | isIm) op1 = createInst<LI>(op1);
             if (op2 | isIm) op2 = createInst<LI>(op2);

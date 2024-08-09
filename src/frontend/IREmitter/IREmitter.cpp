@@ -444,6 +444,7 @@ void IREmitter::execute(const VarDecl &node) {
             code.set_var(val, std::vector<IR::InitInfo *>{});
         }
         _global_vars.setInfo(var_id, val);
+        // current_procedure()->du_info().defined_entry(val);
         println("Write {} = {} in global", var_id, val.toString());
     } else {
         if (node.init_expr.has_value()) {
