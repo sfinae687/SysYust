@@ -73,7 +73,7 @@ instruction InstSel::emitADDI(var_symbol op1, int op2) {
 var_symbol InstSel::ldfimm(operant op) {
     auto imm = op.im();
     auto val = imm | imf;
-    int equ_imm = std::bit_cast<int>(val);
+    int equ_imm = __builtin_bit_cast(int, val);
     auto imm1 = createInst<LW>(equ_imm);
     return createInst<FMV_X_W>(imm1);
 }
