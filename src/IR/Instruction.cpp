@@ -370,9 +370,10 @@ namespace SysYust::IR {
         : instruct<RiscVInstruction>(rv)
         , register_arg(false)
         , id(id)
-        , _returned(assigned)
+        , _returned(var_symbol{assigned.symbol, assigned.revision, returned_type_for_ir(id)})
     {
         assert(arg.size() <= 2);
+
         ranges::copy(arg, _args.begin());
     }
 } // IR
