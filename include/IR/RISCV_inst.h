@@ -304,7 +304,7 @@ namespace SysYust::IR {
      * @brief 用来记录指令指令对应类型的模板(的主模版)
      */
     template <RiscVInst rv_inst>
-    struct _rv_inst_type {using type = void;};
+    struct _rv_inst_type {using type = RiscVInstType<void>;};
 
     /**
      * @brief 用于 **访问** 指令的类型信息的别名模板
@@ -443,6 +443,7 @@ struct _rv_inst_type<_details_select_inst<__VA_ARGS__>> { \
 #pragma pop_macro("DECL1F")
 #pragma pop_macro("DECLRF")
 
+    const Type * returned_type_for_ir(RiscVInst inst);
 
 }
 
