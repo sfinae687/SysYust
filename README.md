@@ -2,30 +2,17 @@
 
 ## 关于三方库的使用说明
 
-目录 `lib` 中的所有文件均为第三方库文件。本项目引用了以下库
+目录 `lib` 中的所有文件均为第三方库文件的源代码副本。本项目引用了以下库
 
-- `{fmt}`
-- `argparse`
+- [{fmt}](https://github.com/fmtlib/fmt)
+- [argparse](https://github.com/p-ranav/argparse)
+- [range-v3](https://github.com/ericniebler/range-v3?tab=readme-ov-file)
 
 项目开发过程中使用了 `Google Test` 但最终提交中不包含其代码及测试文件。
 
+前端使用 Antlr4 生成，提交文件中包含了语法文件的定义 `src/frontend/SysY.g4`. 
+
+生成的目标再本地生成后随着源代码提交，位于 `src/frontend/generated`. `include/antlr4_target` 有其中头文件的副本.
+
 ## 描述
 
-SySY2022编译器项目
-
-## 构建系统
-
-### 目标
-
-本项目目标
-
-- Document 调用Doxygen生成文档，可选的
-- Antlr4_SysY_Generate 自定义目标，用于调用Antlr4生成目标文件
-- Antlr4_SysY 常规库目标
-
-第三方库目标
-
-- `fmt::fmt` 库目标, 来自 `{fmt}`
-- `GTest::gtest_main` 包含 `main` 函数的库目标, 来自 `Google Test` 框架
-- `argparse` 库目标, 来自 `argparse`
-- `Doxygen::doxygen` 可执行目标, 指向 `doxygen` 可执行程序

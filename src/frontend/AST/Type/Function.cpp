@@ -1,4 +1,5 @@
-/// @file Function 类型标识的实现
+/// @file
+/// Function 类型标识的实现
 
 #include <utility>
 

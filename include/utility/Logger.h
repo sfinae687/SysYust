@@ -1,4 +1,5 @@
-/// @file 调试日志库头文件
+/// @file
+/// 调试日志库头文件
 
 #ifndef SYSYUST_UTILITY_LOGGER_H
 #define SYSYUST_UTILITY_LOGGER_H

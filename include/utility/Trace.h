@@ -1,4 +1,5 @@
-/// @file 日志调试库 Trace 栈的部分追踪
+/// @file
+/// 日志调试库 Trace 栈的部分追踪
 
 #ifndef SYSYUST_TRACE_H
 #define SYSYUST_TRACE_H

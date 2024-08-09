@@ -1,4 +1,5 @@
-/// @file Function 类型标识的定义
+/// @file
+/// Function 类型标识的定义
 
 #ifndef SYSYUST_AST_FUNCTION_H
 #define SYSYUST_AST_FUNCTION_H

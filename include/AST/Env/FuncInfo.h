@@ -1,4 +1,5 @@
-/// @file 函数符号信息
+/// @file
+/// 函数符号信息
 
 #ifndef SYSYUST_AST_FUNCINFO_H
 #define SYSYUST_AST_FUNCINFO_H

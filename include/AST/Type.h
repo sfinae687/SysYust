@@ -1,4 +1,5 @@
-/// @file 配置所有类型标识的头文件
+/// @file
+/// 配置所有类型标识的头文件
 
 #ifndef SYSYUST_AST_TYPE_H
 #define SYSYUST_AST_TYPE_H
