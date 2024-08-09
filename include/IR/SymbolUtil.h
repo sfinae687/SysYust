@@ -79,7 +79,7 @@ namespace SysYust::IR {
 
         [[nodiscard]] label_type full() const;
         friend bool operator< (const var_symbol &lhs, const var_symbol &rhs) {
-            if (auto key1 = lhs.symbol < rhs.symbol; key1 != 0) {
+            if (auto key1 = lhs.symbol < rhs.symbol; lhs.symbol != rhs.symbol) {
                 return key1;
             } else {
                 return lhs.revision < rhs.revision;
